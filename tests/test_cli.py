@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 from typing import Any
 
@@ -54,6 +55,40 @@ def test_doctor_reports_missing_demo_source(monkeypatch: Any, capsys: Any) -> No
     assert result == 1
     assert "[ERROR] Demo source" in output
     assert "Fix the ERROR item(s)" in output
+
+
+def test_doctor_json_report_is_machine_readable(capsys: Any) -> None:
+    result = cli.main(["doctor", "--skip-demo", "--skip-web", "--json"])
+
+    report = json.loads(capsys.readouterr().out)
+    assert result == 0
+    assert report["tool"] == "langgraph-memory-inspector"
+    assert report["ready"] is True
+    assert report["checks"][0]["name"] == "Python"
+    assert report["checks"][0]["status"] == "OK"
+    assert "checkpoint state" in report["privacy"]
+
+
+def test_doctor_json_report_preserves_error_exit(monkeypatch: Any, capsys: Any) -> None:
+    monkeypatch.setattr(cli, "_load_relocation_demo", lambda: None)
+
+    result = cli.main(["doctor", "--skip-web", "--json"])
+
+    report = json.loads(capsys.readouterr().out)
+    assert result == 1
+    assert report["ready"] is False
+    assert any(check["status"] == "ERROR" for check in report["checks"])
+
+
+def test_doctor_issue_report_is_pasteable_markdown(capsys: Any) -> None:
+    result = cli.main(["doctor", "--skip-demo", "--skip-web", "--issue"])
+
+    output = capsys.readouterr().out
+    assert result == 0
+    assert "### LangGraph Memory Inspector doctor report" in output
+    assert "```json" in output
+    assert '"ready": true' in output
+    assert "Privacy note:" in output
 
 
 def test_demo_serves_generated_database(monkeypatch: Any) -> None:

@@ -58,6 +58,16 @@ If the doctor reports a `WARN` or `ERROR`, follow the printed next command and
 run it again. This is the quickest way to verify the demo checkpoint, API reader,
 Node.js/npm, and web UI dependencies before opening the app.
 
+If you need to report a quickstart or demo startup issue, run:
+
+```bash
+uv run lgmi doctor --issue
+```
+
+Paste the generated Markdown into the GitHub issue. It includes environment and
+demo health checks, but not checkpoint state, message content, prompts, tokens,
+or production database rows.
+
 Build the web UI once, then start the demo:
 
 ```bash

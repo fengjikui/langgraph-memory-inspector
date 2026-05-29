@@ -4,6 +4,7 @@ import argparse
 import contextlib
 import importlib.util
 import io
+import json
 import platform
 import shutil
 import subprocess
@@ -53,6 +54,17 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         "--skip-web",
         action="store_true",
         help="Skip Node.js, npm, and web UI dependency checks.",
+    )
+    output_group = doctor_parser.add_mutually_exclusive_group()
+    output_group.add_argument(
+        "--json",
+        action="store_true",
+        help="Print a machine-readable doctor report.",
+    )
+    output_group.add_argument(
+        "--issue",
+        action="store_true",
+        help="Print a Markdown report that can be pasted into a GitHub issue.",
     )
 
     demo_parser = subparsers.add_parser(
@@ -163,13 +175,28 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
 
 
 def _run_doctor(args: argparse.Namespace) -> int:
+    report = _build_doctor_report(args)
+    has_error = any(check["status"] == "ERROR" for check in report["checks"])
+
+    if args.json:
+        print(json.dumps(report, indent=2), flush=True)
+    elif args.issue:
+        _print_doctor_issue(report)
+    else:
+        _print_doctor_text(report)
+
+    return 1 if has_error else 0
+
+
+def _build_doctor_report(args: argparse.Namespace) -> dict[str, object]:
     from lgmi.checkpoint_reader import SQLiteCheckpointReader
 
     repo_root = Path(__file__).resolve().parents[2]
-    checks: list[tuple[str, str, str]] = []
+    checks: list[dict[str, str]] = []
+    next_commands: list[str] = []
 
     def add(status: str, name: str, detail: str) -> None:
-        checks.append((status, name, detail))
+        checks.append({"status": status, "name": name, "detail": detail})
 
     add("OK", "Python", platform.python_version())
     add("OK", "CLI", "lgmi command imports successfully")
@@ -208,7 +235,7 @@ def _run_doctor(args: argparse.Namespace) -> int:
         web_dir = repo_root / "web"
         package_json = web_dir / "package.json"
         if package_json.exists():
-            add("OK", "Web source", str(package_json))
+            add("OK", "Web source", "web/package.json exists")
         else:
             add("ERROR", "Web source", "web/package.json was not found")
 
@@ -223,48 +250,90 @@ def _run_doctor(args: argparse.Namespace) -> int:
 
         web_dist = _resolve_ui_dir(None)
         if web_dist:
-            add("OK", "Built web UI", str(web_dist))
+            add("OK", "Built web UI", "web/dist exists")
         else:
             add("WARN", "Built web UI", "run `cd web && npm run build` for single-server demo mode")
 
+    has_error = any(check["status"] == "ERROR" for check in checks)
+    if not has_error:
+        if not args.skip_web:
+            if _resolve_ui_dir(None):
+                next_commands.append("uv run lgmi demo --no-browser")
+            else:
+                if demo is not None:
+                    next_commands.append("uv run lgmi demo --no-browser")
+                next_commands.append("cd web && npm install && npm run dev")
+                next_commands.append(
+                    "cd web && npm run build && cd .. && uv run lgmi demo --no-browser"
+                )
+        elif demo is not None:
+            next_commands.append("uv run lgmi demo --no-browser")
+
+    return {
+        "tool": "langgraph-memory-inspector",
+        "command": "lgmi doctor",
+        "ready": not has_error,
+        "result": (
+            "ready for the local demo path"
+            if not has_error
+            else "action required before the full demo is ready"
+        ),
+        "platform": {
+            "system": platform.system(),
+            "machine": platform.machine(),
+        },
+        "checks": checks,
+        "next_commands": next_commands,
+        "privacy": "This report does not include checkpoint state, message content, prompts, tokens, or production database rows.",
+    }
+
+
+def _print_doctor_text(report: dict[str, object]) -> None:
+    checks = list(report["checks"])  # type: ignore[index]
+    next_commands = list(report["next_commands"])  # type: ignore[index]
     print("LangGraph Memory Inspector doctor", flush=True)
     print("=" * 38, flush=True)
-    for status, name, detail in checks:
-        print(f"[{status}] {name}: {detail}", flush=True)
+    for check in checks:
+        print(f"[{check['status']}] {check['name']}: {check['detail']}", flush=True)
 
     print(flush=True)
-    if any(status == "ERROR" for status, _, _ in checks):
+    if not report["ready"]:
         print("Result: action required before the full demo is ready.", flush=True)
         print("Fix the ERROR item(s), then run `uv run lgmi doctor` again.", flush=True)
-        return 1
+        return
 
     print("Result: ready for the local demo path.", flush=True)
-    if not args.skip_web:
-        if _resolve_ui_dir(None):
-            print("Next command:", flush=True)
-            print("uv run lgmi demo --no-browser", flush=True)
-        else:
-            if demo is not None:
-                print("Next API command:", flush=True)
-                print("uv run lgmi demo --no-browser", flush=True)
-            print("Next UI command:", flush=True)
-            print("cd web && npm install && npm run dev", flush=True)
-            print("Optional single-server mode:", flush=True)
-            print("cd web && npm run build && cd .. && uv run lgmi demo --no-browser", flush=True)
-    elif demo is not None:
-        print("Next API command:", flush=True)
-        print("uv run lgmi demo --no-browser", flush=True)
-    return 0
+    if len(next_commands) == 1:
+        print("Next command:", flush=True)
+        print(next_commands[0], flush=True)
+    elif next_commands:
+        print("Next commands:", flush=True)
+        for command in next_commands:
+            print(command, flush=True)
+
+
+def _print_doctor_issue(report: dict[str, object]) -> None:
+    print("### LangGraph Memory Inspector doctor report", flush=True)
+    print(flush=True)
+    print("```json", flush=True)
+    print(json.dumps(report, indent=2), flush=True)
+    print("```", flush=True)
+    print(flush=True)
+    print(
+        "Privacy note: this report contains environment and demo health checks only. "
+        "It does not include checkpoint state, message content, prompts, tokens, or production database rows.",
+        flush=True,
+    )
 
 
 def _add_command_check(
-    checks: list[tuple[str, str, str]],
+    checks: list[dict[str, str]],
     label: str,
     command: str,
 ) -> None:
     executable = shutil.which(command)
     if executable is None:
-        checks.append(("ERROR", label, f"`{command}` was not found on PATH"))
+        checks.append({"status": "ERROR", "name": label, "detail": f"`{command}` was not found on PATH"})
         return
 
     try:
@@ -276,17 +345,29 @@ def _add_command_check(
             timeout=5,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
-        checks.append(("ERROR", label, f"could not run `{command} --version`: {exc}"))
+        checks.append(
+            {
+                "status": "ERROR",
+                "name": label,
+                "detail": f"could not run `{command} --version`: {exc}",
+            }
+        )
         return
 
     output_lines = (result.stdout or result.stderr).strip().splitlines()
     version = output_lines[0] if output_lines else ""
     if result.returncode == 0 and version:
-        checks.append(("OK", label, version))
+        checks.append({"status": "OK", "name": label, "detail": version})
     elif result.returncode == 0:
-        checks.append(("OK", label, executable))
+        checks.append({"status": "OK", "name": label, "detail": executable})
     else:
-        checks.append(("ERROR", label, f"`{command} --version` exited {result.returncode}"))
+        checks.append(
+            {
+                "status": "ERROR",
+                "name": label,
+                "detail": f"`{command} --version` exited {result.returncode}",
+            }
+        )
 
 
 def _run_demo(args: argparse.Namespace) -> int:

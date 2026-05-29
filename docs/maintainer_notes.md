@@ -370,3 +370,23 @@
 - `uv run lgmi doctor`
 - `uv run lgmi demo --no-browser --port 8771` 后，浏览器打开 `http://127.0.0.1:8771/`，页面标题为 LangGraph Memory Inspector，能看到 `conflicting_residence_memory`，控制台无 error。
 - `curl http://127.0.0.1:8771/`、`curl http://127.0.0.1:8771/api/summary` 和静态 JS 资源均返回 200。
+
+### Pasteable doctor reports
+
+用户价值改进：
+
+- `lgmi doctor --json` 输出机器可读的环境和 demo 健康报告。
+- `lgmi doctor --issue` 输出可直接粘贴到 GitHub issue 的 Markdown 片段。
+- 报告只包含 Python、CLI、demo checkpoint 计数、Node/npm、web dependencies、built UI 和下一步命令，不包含 checkpoint state、message content、prompts、tokens 或 production database rows。
+- Bug report issue template 增加 Doctor report 字段；public launch reply template 改成让外部用户贴 `uv run lgmi doctor --issue`。
+
+为什么重要：
+
+- 推广后最容易消耗维护者精力的是“跑不起来但信息不够”的问题。Pasteable report 把支持入口标准化，让维护者先看到同一份安全上下文。
+- 结构化 JSON 也给未来自动 triage、CI smoke bot 或 issue parser 留了接口。
+
+已验证：
+
+- `uv run lgmi doctor --json`
+- `uv run lgmi doctor --issue`
+- `uv run pytest tests/test_cli.py -q`

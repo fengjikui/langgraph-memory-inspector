@@ -10,6 +10,11 @@ body:
         Thanks for reporting a bug. Please include enough checkpoint context for
         someone else to reproduce or reason about the issue without seeing your
         private state.
+
+        If the bug is about install, quickstart, demo startup, or the web UI not
+        loading, please run `uv run lgmi doctor --issue` and paste the report
+        below. The report contains environment and demo health checks only, not
+        checkpoint state or message content.
   - type: dropdown
     id: surface
     attributes:
@@ -40,8 +45,13 @@ body:
     id: versions
     attributes:
       label: Versions
-      description: Include LangGraph, langgraph-checkpoint, Python, Node, and browser versions when relevant.
+      description: Include LangGraph, langgraph-checkpoint, Python, Node, and browser versions when relevant. You can paste `uv run lgmi doctor --issue` output in the next field instead.
       placeholder: "langgraph==..., langgraph-checkpoint-sqlite==..., Python 3.12, Node 22"
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Doctor report
+      description: Paste `uv run lgmi doctor --issue` output for quickstart, demo, dependency, or web UI startup problems.
   - type: textarea
     id: expected
     attributes:

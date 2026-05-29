@@ -323,7 +323,7 @@ https://github.com/fengjikui/langgraph-memory-inspector
 Demo startup issue:
 
 ```text
-Thanks for trying it. Could you run `uv run lgmi doctor` from the repo root and paste the output into the issue? It checks the demo checkpoint, API reader, Node.js/npm, and web dependency state without asking for any private checkpoint data.
+Thanks for trying it. Could you run `uv run lgmi doctor --issue` from the repo root and paste the generated Markdown into the issue? It checks the demo checkpoint, API reader, Node.js/npm, and web dependency state without asking for any private checkpoint data.
 ```
 
 LangSmith / Studio comparison:
