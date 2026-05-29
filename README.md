@@ -35,6 +35,7 @@ The inspector turns that failure into a navigable evidence trail:
 - checkpoint-to-checkpoint diffs
 - actionable diagnostics
 - write-channel highlighting for the diagnostic source
+- compact causal chains from a diagnostic back to related checkpoint writes
 - deterministic reducer-duplicate and checkpoint-lineage diagnostics
 
 ![Stale-memory debugging demo](docs/assets/stale-memory-debugging-demo.gif)
@@ -199,6 +200,7 @@ This is an MVP focused on local checkpoint inspection:
 - show diffs and writes
 - detect stale/conflicting memory patterns
 - detect reducer append duplicates and unexpected parent checkpoint jumps
+- show compact diagnostic causal chains across checkpoint ranges
 - export explicit debug bundles for issues and code review
 - provide a React UI for local debugging
 

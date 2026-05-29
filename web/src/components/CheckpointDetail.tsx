@@ -1,5 +1,5 @@
 import { Braces, Download, FileDiff, ListTree } from "lucide-react";
-import type { Checkpoint, DebugBundleExportResult, Diagnostic, NodeWrite, TimelineDiff } from "../types";
+import type { CausalChain, Checkpoint, DebugBundleExportResult, Diagnostic, NodeWrite, TimelineDiff } from "../types";
 
 type ExportStatus =
   | { state: "idle" }
@@ -11,6 +11,7 @@ type DetailProps = {
   checkpoint?: Checkpoint;
   writes: NodeWrite[];
   diff?: TimelineDiff;
+  causalChain?: CausalChain;
   selectedDiagnostic?: Diagnostic;
   activeTab: "state" | "diff" | "writes";
   onTabChange: (tab: "state" | "diff" | "writes") => void;
@@ -28,6 +29,7 @@ export function CheckpointDetail({
   checkpoint,
   writes,
   diff,
+  causalChain,
   selectedDiagnostic,
   activeTab,
   onTabChange,
@@ -179,6 +181,38 @@ export function CheckpointDetail({
               </span>
             </div>
           ) : null}
+          {selectedDiagnostic && causalChain ? (
+            <div className="causal-chain" aria-label="Causal chain">
+              <div className="causal-chain-header">
+                <strong>Causal chain</strong>
+                <span>{causalChain.summary}</span>
+              </div>
+              <div className="causal-chain-steps">
+                {causalChain.steps.map((step) => (
+                  <div className={`causal-step ${step.relation}`} key={`${step.checkpointId}-${step.relation}`}>
+                    <div>
+                      <strong>{step.checkpointId}</strong>
+                      <code>{step.node}</code>
+                    </div>
+                    <span>{labelForRelation(step.relation)}</span>
+                    <div className="causal-step-meta">
+                      {step.writeChannels.map((channel) => (
+                        <code key={channel}>write {channel}</code>
+                      ))}
+                      {step.updatedChannels.map((channel) => (
+                        <code key={channel}>updated {channel}</code>
+                      ))}
+                    </div>
+                    {step.writes.map((write) => (
+                      <p key={`${write.taskId}-${write.idx ?? "x"}-${write.channel}`}>
+                        <code>{write.statePath}</code> via {write.node}: {write.valuePreview}
+                      </p>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
           {writes.map((write) => (
             <div
               className={matchesDiagnosticWrite(write, selectedDiagnostic) ? "write-row focused" : "write-row"}
@@ -207,6 +241,12 @@ export function CheckpointDetail({
 function matchesDiagnosticWrite(write: NodeWrite, diagnostic?: Diagnostic): boolean {
   if (!diagnostic?.writeChannel) return false;
   return write.path === `state.${diagnostic.writeChannel}`;
+}
+
+function labelForRelation(relation: string): string {
+  if (relation === "introduced_diagnostic") return "introduced diagnostic";
+  if (relation === "selected_checkpoint") return "selected checkpoint";
+  return "related write";
 }
 
 function formatBytes(value: number): string {

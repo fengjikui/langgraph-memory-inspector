@@ -23,6 +23,9 @@ test("diagnostic click opens writes and highlights the related channel", async (
 
   await expect(page.getByRole("button", { name: /Writes/i })).toHaveClass(/active/);
   await expect(page.getByText("Looking for writes to")).toBeVisible();
+  await expect(page.getByLabel("Causal chain")).toContainText("conflicting_residence_memory is linked");
+  await expect(page.getByLabel("Causal chain")).toContainText("ckpt_002_shanghai");
+  await expect(page.getByLabel("Causal chain")).toContainText("ckpt_003_hangzhou_appended");
   await expect(page.locator(".write-row.focused")).toContainText("state.memory_events");
 
   await expect(page.getByLabel("Redact private fields")).toBeChecked();

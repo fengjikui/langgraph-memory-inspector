@@ -1,5 +1,8 @@
-import { mockCheckpoints, mockDiff, mockSummary, mockThreads } from "./mockData";
+import { mockCausalChain, mockCheckpoints, mockDiff, mockSummary, mockThreads } from "./mockData";
 import type {
+  CausalChain,
+  CausalChainStep,
+  CausalChainWrite,
   Checkpoint,
   CheckpointPage,
   DebugBundleExportResult,
@@ -130,6 +133,18 @@ export const inspectorApi = {
       `/api/threads/${threadId}/diff?from=${fromCheckpointId}&to=${toCheckpointId}${namespaceQueryPart(checkpointNs)}`
     );
     return raw ? normalizeDiff(raw, fromCheckpointId, toCheckpointId) : mockDiff;
+  },
+
+  async getCausalChain(
+    threadId: string,
+    checkpointId: string,
+    diagnosticId: string,
+    checkpointNs?: string
+  ): Promise<CausalChain> {
+    const raw = await requestJson<Record<string, unknown>>(
+      `/api/threads/${threadId}/causal-chain?checkpoint_id=${encodeURIComponent(checkpointId)}&diagnostic=${encodeURIComponent(diagnosticId)}${namespaceQueryPart(checkpointNs)}`
+    );
+    return raw ? normalizeCausalChain(raw) : mockCausalChain;
   },
 
   async exportDebugBundle(
@@ -276,6 +291,65 @@ function normalizeDiff(raw: Record<string, unknown>, fromCheckpointId: string, t
     toCheckpointId: String(raw.to_checkpoint_id ?? toCheckpointId),
     summary: rows.length > 0 ? `${rows.length} state field changes detected` : "No top-level state changes detected",
     rows
+  };
+}
+
+function normalizeCausalChain(raw: Record<string, unknown>): CausalChain {
+  const range = asRecord(raw.range);
+  const steps = asArray(raw.steps)
+    .map(asRecord)
+    .filter((item): item is Record<string, unknown> => Boolean(item));
+  return {
+    threadId: String(raw.thread_id ?? ""),
+    checkpointNs: String(raw.checkpoint_ns ?? ""),
+    diagnosticId: String(raw.diagnostic_id ?? ""),
+    selectedCheckpointId: String(raw.selected_checkpoint_id ?? ""),
+    statePaths: asStringArray(raw.state_paths),
+    writeChannels: asStringArray(raw.write_channels),
+    range: {
+      fromCheckpointId: range?.from_checkpoint_id ? String(range.from_checkpoint_id) : undefined,
+      toCheckpointId: String(range?.to_checkpoint_id ?? raw.selected_checkpoint_id ?? ""),
+      scannedCheckpointCount: Number(range?.scanned_checkpoint_count ?? 0),
+      returnedStepCount: Number(range?.returned_step_count ?? 0)
+    },
+    steps: steps.map(normalizeCausalStep),
+    summary: String(raw.summary ?? "")
+  };
+}
+
+function normalizeCausalStep(raw: Record<string, unknown>): CausalChainStep {
+  const writes = asArray(raw.writes)
+    .map(asRecord)
+    .filter((item): item is Record<string, unknown> => Boolean(item));
+  const statePreview = asArray(raw.state_preview)
+    .map(asRecord)
+    .filter((item): item is Record<string, unknown> => Boolean(item));
+  return {
+    checkpointId: String(raw.checkpoint_id ?? ""),
+    checkpointNs: String(raw.checkpoint_ns ?? ""),
+    ordinal: Number(raw.ordinal ?? 0),
+    node: String(raw.node ?? "unknown"),
+    relation: String(raw.relation ?? "related_write"),
+    statePaths: asStringArray(raw.state_paths),
+    writeChannels: asStringArray(raw.write_channels),
+    updatedChannels: asStringArray(raw.updated_channels),
+    writes: writes.map(normalizeCausalWrite),
+    statePreview: statePreview.map((item) => ({
+      statePath: String(item.state_path ?? ""),
+      valuePreview: String(item.value_preview ?? "")
+    }))
+  };
+}
+
+function normalizeCausalWrite(raw: Record<string, unknown>): CausalChainWrite {
+  return {
+    rowid: raw.rowid === null || raw.rowid === undefined ? undefined : Number(raw.rowid),
+    taskId: String(raw.task_id ?? "unknown"),
+    idx: raw.idx === null || raw.idx === undefined ? undefined : Number(raw.idx),
+    channel: String(raw.channel ?? "unknown"),
+    statePath: String(raw.state_path ?? ""),
+    node: String(raw.node ?? "unknown"),
+    valuePreview: String(raw.value_preview ?? "")
   };
 }
 

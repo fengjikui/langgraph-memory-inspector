@@ -60,6 +60,8 @@ npm run dev
 - Thread and checkpoint namespace selection.
 - Paginated checkpoint timeline with diagnostic and state-path filters.
 - State snapshots, checkpoint diffs, writes, and deterministic diagnostics.
+- Compact causal chain view from a selected diagnostic back to related
+  checkpoint writes.
 - Diagnostics for stale/conflicting memory, stale selected city, oversized
   messages, repeated retrieval context, reducer append duplicates, checkpoint
   size spikes, and unexpected parent checkpoint jumps.

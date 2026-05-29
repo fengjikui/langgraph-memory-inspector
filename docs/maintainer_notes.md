@@ -334,3 +334,19 @@
 已验证：
 
 - RC commit 需要通过完整本地验证和 GitHub CI 后才能关闭 #18。
+
+### Diagnostic causal chain
+
+用户价值改进：
+
+- 新增 `GET /api/threads/{thread_id}/causal-chain`，给定 diagnostic、checkpoint 和 namespace 后，返回相关 state paths、write channels、checkpoint range、node/task 和 write evidence。
+- 前端点击 diagnostic 后，Writes 面板会展示 compact Causal chain，连接“诊断 -> checkpoint 范围 -> 相关 write channel -> node/task”。
+- stale-memory demo 现在可以从最终错误回答追到 `conflicting_residence_memory`，再追到 `state.memory_events` 的 Shanghai/Hangzhou 写入证据。
+
+为什么重要：
+
+- 单个 write highlight 只能回答“这个 checkpoint 有什么写入”，causal chain 开始回答“这个错误是怎么一路形成的”。这是从 JSON viewer 走向真正 checkpoint forensics 的关键一步。
+
+已验证：
+
+- API contract、真实 relocation demo causal chain、前端 build/e2e 需要在提交前通过。

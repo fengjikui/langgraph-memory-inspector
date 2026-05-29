@@ -1,4 +1,4 @@
-import type { Checkpoint, Diagnostic, Summary, Thread, TimelineDiff } from "../types";
+import type { CausalChain, Checkpoint, Diagnostic, Summary, Thread, TimelineDiff } from "../types";
 
 export const mockThreads: Thread[] = [
   {
@@ -336,6 +336,78 @@ export const mockDiff: TimelineDiff = {
       before: "(missing)",
       after: "conflicting_residence_memory",
       kind: "added"
+    }
+  ]
+};
+
+export const mockCausalChain: CausalChain = {
+  threadId: "thread_relocation_demo",
+  checkpointNs: "relocation_policy_agent",
+  diagnosticId: "conflicting_residence_memory",
+  selectedCheckpointId: "ckpt_003_hangzhou_appended",
+  statePaths: ["memory_events[type=residence_city]"],
+  writeChannels: ["memory_events"],
+  range: {
+    fromCheckpointId: "ckpt_001_start",
+    toCheckpointId: "ckpt_003_hangzhou_appended",
+    scannedCheckpointCount: 3,
+    returnedStepCount: 2
+  },
+  summary: "conflicting_residence_memory is linked to 2 checkpoint step(s) and 2 relevant write(s).",
+  steps: [
+    {
+      checkpointId: "ckpt_002_shanghai",
+      checkpointNs: "relocation_policy_agent",
+      ordinal: 2,
+      node: "extract_profile",
+      relation: "related_write",
+      statePaths: ["memory_events[type=residence_city]"],
+      writeChannels: ["memory_events"],
+      updatedChannels: ["memory_events"],
+      writes: [
+        {
+          rowid: 1,
+          taskId: "task-profile-1",
+          idx: 0,
+          channel: "memory_events",
+          statePath: "state.memory_events",
+          node: "extract_profile",
+          valuePreview: "{ key: 'residence_city', value: 'Shanghai' }"
+        }
+      ],
+      statePreview: [
+        {
+          statePath: "memory_events[type=residence_city]",
+          valuePreview: "[{ key: 'residence_city', value: 'Shanghai' }]"
+        }
+      ]
+    },
+    {
+      checkpointId: "ckpt_003_hangzhou_appended",
+      checkpointNs: "relocation_policy_agent",
+      ordinal: 3,
+      node: "extract_profile",
+      relation: "introduced_diagnostic",
+      statePaths: ["memory_events[type=residence_city]"],
+      writeChannels: ["memory_events"],
+      updatedChannels: ["memory_events"],
+      writes: [
+        {
+          rowid: 3,
+          taskId: "task-profile-2",
+          idx: 0,
+          channel: "memory_events",
+          statePath: "state.memory_events",
+          node: "extract_profile",
+          valuePreview: "{ key: 'residence_city', value: 'Hangzhou' }"
+        }
+      ],
+      statePreview: [
+        {
+          statePath: "memory_events[type=residence_city]",
+          valuePreview: "[{ value: 'Shanghai' }, { value: 'Hangzhou' }]"
+        }
+      ]
     }
   ]
 };

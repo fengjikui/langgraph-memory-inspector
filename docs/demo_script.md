@@ -138,21 +138,25 @@ Narrate the debugging path:
 6. Click `conflicting_residence_memory`.
 7. Confirm the UI jumps to the related checkpoint, opens Writes, and highlights
    `state.memory_events`.
-8. Move to the final answer checkpoint and show `selected_city=Shanghai`.
-9. Explain the root cause: the newest memory is Hangzhou, but retrieval used the
+8. Point to the Causal chain panel: it should show the earlier Shanghai memory
+   write, the Hangzhou append, and where `conflicting_residence_memory` first
+   appears.
+9. Move to the final answer checkpoint and show `selected_city=Shanghai`.
+10. Explain the root cause: the newest memory is Hangzhou, but retrieval used the
    oldest memory.
-10. Keep `Redact private fields` enabled and click `Export redacted`.
-11. Show that the UI reports the exported bundle path, file size, and diagnostic
+11. Keep `Redact private fields` enabled and click `Export redacted`.
+12. Show that the UI reports the exported bundle path, file size, and diagnostic
     ids.
-12. Point out the redaction status so the interviewer sees that shareable
+13. Point out the redaction status so the interviewer sees that shareable
     evidence does not require exposing raw checkpoint state.
 
 Say:
 
 "The value of the tool is not just showing JSON. It connects the final bad
-answer to the checkpoint where the bad state became visible, then points to the
-node/write path that made it happen. Export turns that local diagnosis into a
-shareable, redacted artifact for a teammate, issue, or PR."
+answer to the checkpoint where the bad state became visible, then turns the
+diagnostic into a compact causal chain of state paths, checkpoint writes, and
+node/task evidence. Export turns that local diagnosis into a shareable,
+redacted artifact for a teammate, issue, or PR."
 
 ## 5:30-6:45 - Show The Fix Direction
 
@@ -168,8 +172,8 @@ the bug remains reproducible.
 Say:
 
 "A production inspector should make this diagnosis before I read the code. The
-code confirms the diagnosis after the checkpoint timeline tells me where to
-look."
+causal chain tells me which checkpoint and write to inspect first; the code
+confirms the diagnosis after the checkpoint timeline tells me where to look."
 
 ## 6:45-8:00 - Close With Engineering Depth
 

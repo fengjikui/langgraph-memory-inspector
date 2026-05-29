@@ -111,6 +111,49 @@ export type TimelineDiff = {
   }>;
 };
 
+export type CausalChainWrite = {
+  rowid?: number;
+  taskId: string;
+  idx?: number;
+  channel: string;
+  statePath: string;
+  node: string;
+  valuePreview: string;
+};
+
+export type CausalChainStep = {
+  checkpointId: string;
+  checkpointNs: string;
+  ordinal: number;
+  node: string;
+  relation: "related_write" | "introduced_diagnostic" | "selected_checkpoint" | string;
+  statePaths: string[];
+  writeChannels: string[];
+  updatedChannels: string[];
+  writes: CausalChainWrite[];
+  statePreview: Array<{
+    statePath: string;
+    valuePreview: string;
+  }>;
+};
+
+export type CausalChain = {
+  threadId: string;
+  checkpointNs: string;
+  diagnosticId: string;
+  selectedCheckpointId: string;
+  statePaths: string[];
+  writeChannels: string[];
+  range: {
+    fromCheckpointId?: string;
+    toCheckpointId: string;
+    scannedCheckpointCount: number;
+    returnedStepCount: number;
+  };
+  steps: CausalChainStep[];
+  summary: string;
+};
+
 export type DebugBundleExportResult = {
   path: string;
   fileSizeBytes: number;

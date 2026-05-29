@@ -714,6 +714,80 @@ pre {
   color: #075985;
 }
 
+.causal-chain {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #c7d2fe;
+  border-radius: 7px;
+  background: #f5f7ff;
+}
+
+.causal-chain-header {
+  display: grid;
+  gap: 4px;
+}
+
+.causal-chain-header strong {
+  color: #3730a3;
+  font-size: 12px;
+}
+
+.causal-chain-header span {
+  color: #48566a;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.causal-chain-steps {
+  display: grid;
+  gap: 8px;
+}
+
+.causal-step {
+  display: grid;
+  gap: 7px;
+  padding: 9px;
+  border: 1px solid #dbe2eb;
+  border-radius: 7px;
+  background: #ffffff;
+  font-size: 12px;
+}
+
+.causal-step.introduced_diagnostic {
+  border-color: #fbbf24;
+  background: #fffbeb;
+}
+
+.causal-step div:first-child,
+.causal-step-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.causal-step strong {
+  color: #1f2937;
+}
+
+.causal-step > span {
+  color: #6b7280;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.causal-step code {
+  color: #4f46e5;
+  overflow-wrap: anywhere;
+}
+
+.causal-step p {
+  margin: 0;
+  color: #344054;
+  line-height: 1.45;
+}
+
 .write-row {
   display: grid;
   gap: 8px;

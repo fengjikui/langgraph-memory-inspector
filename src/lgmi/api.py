@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from lgmi.analysis import diff_states
 from lgmi.adapters import CheckpointReader
+from lgmi.causal_chain import build_causal_chain
 from lgmi.checkpoint_reader import SQLiteCheckpointReader
 from lgmi.export_bundle import export_debug_bundle
 
@@ -120,6 +121,25 @@ def create_app(source: str | Path | CheckpointReader) -> FastAPI:
             "to_checkpoint_id": to_checkpoint_id,
             "diff": diff_states(_state_from_checkpoint(before), _state_from_checkpoint(after)),
         }
+
+    @app.get("/api/threads/{thread_id}/causal-chain")
+    def causal_chain(
+        thread_id: str,
+        checkpoint_id: str = Query(...),
+        diagnostic: str = Query(...),
+        checkpoint_ns: str | None = Query(default=None),
+        max_steps: int = Query(default=8, ge=1, le=25),
+    ) -> dict[str, Any]:
+        return _read_or_404(
+            lambda: build_causal_chain(
+                reader,
+                thread_id=thread_id,
+                checkpoint_id=checkpoint_id,
+                diagnostic_id=diagnostic,
+                checkpoint_ns=checkpoint_ns,
+                max_steps=max_steps,
+            )
+        )
 
     @app.post("/api/exports/debug-bundle")
     def debug_bundle(request: DebugBundleRequest) -> dict[str, Any]:

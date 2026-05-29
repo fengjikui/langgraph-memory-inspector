@@ -7,6 +7,7 @@ import { ThreadSelector } from "./components/ThreadSelector";
 import { Timeline } from "./components/Timeline";
 import type {
   Checkpoint,
+  CausalChain,
   TimelineFilters,
   TimelinePagination,
   DebugBundleExportResult,
@@ -41,6 +42,7 @@ function App() {
   const [selectedCheckpointId, setSelectedCheckpointId] = useState<string>();
   const [writes, setWrites] = useState<NodeWrite[]>([]);
   const [diff, setDiff] = useState<TimelineDiff>();
+  const [causalChain, setCausalChain] = useState<CausalChain>();
   const [activeTab, setActiveTab] = useState<ViewerTab>("state");
   const [selectedDiagnostic, setSelectedDiagnostic] = useState<Diagnostic>();
   const [exportStatus, setExportStatus] = useState<ExportStatus>({ state: "idle" });
@@ -111,6 +113,28 @@ function App() {
     void loadDetail();
   }, [checkpoints, selectedCheckpointId, selectedNamespace, selectedThreadId]);
 
+  useEffect(() => {
+    if (!selectedThreadId || !selectedDiagnostic) {
+      setCausalChain(undefined);
+      return;
+    }
+    const threadId = selectedThreadId;
+    const checkpointNs = selectedNamespace;
+    const diagnostic = selectedDiagnostic;
+
+    async function loadCausalChain() {
+      const nextChain = await inspectorApi.getCausalChain(
+        threadId,
+        diagnostic.checkpointId,
+        diagnostic.code,
+        checkpointNs
+      );
+      setCausalChain(nextChain);
+    }
+
+    void loadCausalChain();
+  }, [selectedDiagnostic, selectedNamespace, selectedThreadId]);
+
   const selectedCheckpoint = useMemo(
     () => checkpoints.find((checkpoint) => checkpoint.id === selectedCheckpointId),
     [checkpoints, selectedCheckpointId]
@@ -143,6 +167,7 @@ function App() {
 
   function selectDiagnostic(diagnostic: Diagnostic) {
     setSelectedDiagnostic(diagnostic);
+    setCausalChain(undefined);
     setSelectedCheckpointId(diagnostic.checkpointId);
     setActiveTab(diagnostic.writeChannel ? "writes" : diagnostic.suggestedTab ?? "state");
     setExportStatus({ state: "idle" });
@@ -221,6 +246,7 @@ function App() {
           checkpoint={selectedCheckpoint}
           writes={writes}
           diff={diff}
+          causalChain={causalChain}
           selectedDiagnostic={selectedDiagnostic}
           activeTab={activeTab}
           onTabChange={setActiveTab}

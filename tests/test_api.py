@@ -80,23 +80,31 @@ class FakeCheckpointReader:
         checkpoint_ns: str | None = None,
     ) -> dict[str, Any] | None:
         assert thread_id == "thread-1"
-        assert checkpoint_id == "checkpoint-1"
+        assert checkpoint_id in {f"checkpoint-{index}" for index in range(1, 7)}
         assert checkpoint_ns in {None, "ns-a"}
+        memory_events = [
+            {"type": "residence_city", "value": "Shanghai", "source": "extract_profile"}
+        ]
+        selected_city = "Hangzhou" if checkpoint_id == "checkpoint-1" else "Shanghai"
+        diagnostics: list[str] = []
+        updated_channels = ["selected_city"]
+        if checkpoint_id in {"checkpoint-3", "checkpoint-4", "checkpoint-5", "checkpoint-6"}:
+            memory_events.append(
+                {"type": "residence_city", "value": "Hangzhou", "source": "extract_profile"}
+            )
+            diagnostics = ["conflicting_residence_memory"]
+            updated_channels = ["memory_events"] if checkpoint_id == "checkpoint-3" else ["selected_city"]
         return {
             "checkpoint_id": checkpoint_id,
             "checkpoint_ns": checkpoint_ns or "",
+            "updated_channels": updated_channels,
             "checkpoint": {
                 "value": {
                     "channel_values": {
-                        "selected_city": "Hangzhou",
+                        "selected_city": selected_city,
                         "messages": [{"role": "user", "content": "email me at user@example.com"}],
-                        "memory_events": [
-                            {
-                                "type": "residence_city",
-                                "value": "Hangzhou",
-                                "evidence": "My phone is +1 415 555 0199.",
-                            }
-                        ],
+                        "memory_events": memory_events,
+                        "diagnostics": diagnostics,
                     }
                 }
             },
@@ -109,8 +117,18 @@ class FakeCheckpointReader:
         checkpoint_ns: str | None = None,
     ) -> list[dict[str, Any]]:
         assert thread_id == "thread-1"
-        assert checkpoint_id == "checkpoint-1"
+        assert checkpoint_id in {f"checkpoint-{index}" for index in range(1, 7)}
         assert checkpoint_ns in {None, "ns-a"}
+        if checkpoint_id == "checkpoint-3":
+            return [
+                {
+                    "rowid": 3,
+                    "task_id": "task-profile-2",
+                    "idx": 0,
+                    "channel": "memory_events",
+                    "value": {"decoded": True, "value": [{"type": "residence_city", "value": "Hangzhou"}]},
+                }
+            ]
         return [{"channel": "selected_city", "value": {"decoded": True, "value": "Hangzhou"}}]
 
 
@@ -185,6 +203,28 @@ def test_api_filters_checkpoint_page() -> None:
     assert [item["checkpoint_id"] for item in diagnostic_payload["items"]] == ["checkpoint-3", "checkpoint-5"]
     assert diagnostic_payload["pagination"]["total_count"] == 2
     assert [item["checkpoint_id"] for item in changed_payload["items"]] == ["checkpoint-3"]
+
+
+def test_api_returns_diagnostic_causal_chain() -> None:
+    client = TestClient(create_app(FakeCheckpointReader()))
+
+    response = client.get(
+        "/api/threads/thread-1/causal-chain"
+        "?checkpoint_id=checkpoint-5&diagnostic=conflicting_residence_memory&checkpoint_ns=ns-a"
+    )
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert payload["diagnostic_id"] == "conflicting_residence_memory"
+    assert payload["selected_checkpoint_id"] == "checkpoint-5"
+    assert payload["state_paths"] == ["memory_events[type=residence_city]"]
+    assert payload["write_channels"] == ["memory_events"]
+    assert payload["range"]["scanned_checkpoint_count"] == 5
+    assert any(step["checkpoint_id"] == "checkpoint-3" for step in payload["steps"])
+    write_steps = [step for step in payload["steps"] if step["writes"]]
+    assert write_steps[0]["writes"][0]["channel"] == "memory_events"
+    assert write_steps[0]["writes"][0]["state_path"] == "state.memory_events"
+    assert write_steps[0]["writes"][0]["node"] == "extract_profile"
 
 
 def test_api_exports_debug_bundle_only_when_requested(tmp_path: Path, monkeypatch) -> None:

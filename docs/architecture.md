@@ -133,6 +133,7 @@ Current API surface:
 - `GET /api/threads/{thread_id}/checkpoints/{checkpoint_id}?checkpoint_ns=...`
 - `GET /api/threads/{thread_id}/checkpoints/{checkpoint_id}/writes?checkpoint_ns=...`
 - `GET /api/threads/{thread_id}/diff?from=...&to=...&checkpoint_ns=...`
+- `GET /api/threads/{thread_id}/causal-chain?checkpoint_id=...&diagnostic=...&checkpoint_ns=...`
 - `POST /api/exports/debug-bundle`
 
 `GET /api/threads` includes `checkpoint_namespaces` per thread. When
@@ -142,6 +143,14 @@ contract: `{ items, pagination, filters }`. The API supports `limit`, `offset`,
 `from_end`, `diagnostic`, and `changed_path`; the UI uses `from_end=true` for
 the first page so large production threads open on the most recent evidence
 without loading the full history.
+
+`GET /api/threads/{thread_id}/causal-chain` is a deterministic evidence view
+for one diagnostic. It maps the diagnostic id to state paths and write
+channels, scans checkpoints up to the selected checkpoint, and returns related
+checkpoint ids, nodes/tasks, updated channels, relevant writes, and state
+previews. The first supported path is the stale-memory demo:
+`conflicting_residence_memory` -> `memory_events[type=residence_city]` ->
+`state.memory_events` writes from `extract_profile`.
 
 `POST /api/exports/debug-bundle` is an explicit user action. It writes a JSON
 artifact under `exports/` with database summary, thread/checkpoint metadata,
@@ -176,6 +185,8 @@ Recommended views:
   contains more than one checkpoint namespace.
 - Timeline: checkpoint order, parent relationship, task/write attribution, and
   size deltas.
+- Causal chain: compact diagnostic -> checkpoint range -> state path -> write
+  channel -> node/task evidence.
 - State inspector: decoded JSON tree with channels such as `memory_events`,
   `retrieved_docs`, `diagnostics`, and `selected_city`.
 - Diff viewer: added, removed, and changed state fields between two selected
