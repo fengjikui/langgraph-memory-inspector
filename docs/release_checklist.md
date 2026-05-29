@@ -8,6 +8,8 @@ Use this before making the repository public or announcing a release candidate.
 - [ ] `LICENSE` is present and linked from `README.md`.
 - [ ] `CONTRIBUTING.md` is present and linked from `README.md`.
 - [ ] README includes clear known limitations.
+- [ ] GitHub issue templates exist for bugs, checkpoint bug patterns, and
+  feature/diagnostic requests.
 - [ ] Generated demo databases, exports, package builds, web build output, and
   test artifacts are ignored by git.
 - [ ] Open issues describe the next product gaps instead of hiding them.

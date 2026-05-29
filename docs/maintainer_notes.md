@@ -198,3 +198,20 @@
 已验证：
 
 - 文档一致性检查和完整测试在本次提交前执行。
+
+### GitHub issue templates
+
+用户价值改进：
+
+- 新增 bug report、checkpoint bug pattern、feature/diagnostic request 三类 GitHub issue forms。
+- 模板会引导用户填写 checkpoint backend、thread/checkpoint namespace、state path、write channel、debug bundle 和隐私确认。
+- `docs/release_checklist.md` 新增 issue templates 检查项，避免公开仓库后反馈入口失控。
+
+为什么重要：
+
+- 早期用户最有价值的不是一句“很好用”，而是真实状态调试场景。issue templates 可以把零散反馈变成可复现、可归类、可转化为 diagnostic 的输入。
+- checkpoint bug pattern 单独成表单，是为了把项目的社区增长和产品学习绑定在一起：每个好反馈都应该能变成一个更聪明的诊断规则或更清晰的调试路径。
+
+已验证：
+
+- YAML issue forms 结构检查和文档一致性检查在提交前执行。

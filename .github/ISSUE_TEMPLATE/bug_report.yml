@@ -1,0 +1,84 @@
+name: Bug report
+description: Report a bug in the inspector, CLI, API, or web UI.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please include enough checkpoint context for
+        someone else to reproduce or reason about the issue without seeing your
+        private state.
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where did the bug happen?
+      options:
+        - Web UI
+        - CLI
+        - FastAPI backend
+        - SQLite reader
+        - Postgres reader
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: checkpoint_backend
+    attributes:
+      label: Checkpoint backend
+      options:
+        - SQLite
+        - PostgresSaver
+        - Other LangGraph saver
+        - Mock/demo data
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Include LangGraph, langgraph-checkpoint, Python, Node, and browser versions when relevant.
+      placeholder: "langgraph==..., langgraph-checkpoint-sqlite==..., Python 3.12, Node 22"
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should the inspector have shown or done?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happened instead? Paste errors or screenshots when useful.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      description: Commands, route, checkpoint DB shape, or UI clicks.
+      placeholder: |
+        1. Run ...
+        2. Open ...
+        3. Click ...
+  - type: textarea
+    id: checkpoint_context
+    attributes:
+      label: Checkpoint context
+      description: Share thread id, checkpoint namespace, state path, write channel, or a redacted debug bundle path.
+      placeholder: |
+        thread_id:
+        checkpoint_ns:
+        checkpoint_id:
+        state path:
+        write channel:
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I removed or redacted private user state from pasted logs, screenshots, and bundles.

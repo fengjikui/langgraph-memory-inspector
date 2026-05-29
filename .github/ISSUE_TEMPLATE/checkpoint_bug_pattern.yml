@@ -1,0 +1,75 @@
+name: Checkpoint bug pattern
+description: Share a real LangGraph state/debugging pattern the inspector should detect.
+title: "[Pattern]: "
+labels:
+  - diagnostic
+  - user-research
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This template is for product feedback from real LangGraph workflows. The
+        most useful reports describe a confusing state transition, not just a
+        desired UI feature.
+  - type: dropdown
+    id: pattern_type
+    attributes:
+      label: Pattern type
+      options:
+        - Stale memory or profile
+        - Reducer append / merge mistake
+        - Wrong resume point
+        - Namespace confusion
+        - Oversized message history
+        - Missing write attribution
+        - Production-store safety
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: checkpoint_backend
+    attributes:
+      label: Checkpoint backend
+      options:
+        - SQLite
+        - PostgresSaver
+        - Redis/custom saver
+        - Unknown
+    validations:
+      required: true
+  - type: textarea
+    id: story
+    attributes:
+      label: Debugging story
+      description: What was the user-visible failure, and what earlier state/write caused it?
+      placeholder: |
+        The agent answered ...
+        The checkpoint state actually showed ...
+        The write that mattered was ...
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence the inspector should surface
+      description: State path, write channel, node name, checkpoint metadata, or a redacted debug bundle.
+      placeholder: |
+        state path:
+        write channel:
+        node/task:
+        checkpoint_ns:
+  - type: textarea
+    id: desired_diagnostic
+    attributes:
+      label: Desired diagnostic
+      description: What should the inspector call out, and what should happen when a user clicks it?
+      placeholder: "Clicking the diagnostic should open ... and highlight ..."
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Constraints
+      options:
+        - label: This pattern must work without uploading checkpoint data.
+        - label: This pattern matters for production-size stores.
+        - label: This pattern includes multiple checkpoint namespaces.
+        - label: I can provide a redacted fixture or debug bundle.

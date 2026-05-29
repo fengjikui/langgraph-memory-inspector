@@ -1,0 +1,52 @@
+name: Feature or diagnostic request
+description: Suggest an inspector capability, adapter, diagnostic, or workflow improvement.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please anchor the request in a developer workflow. Features are more
+        likely to land when they make a specific checkpoint debugging path
+        faster, safer, or easier to explain.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Diagnostic rule
+        - Checkpoint reader / backend
+        - Timeline or diff UI
+        - Writes attribution
+        - Debug bundle export
+        - Privacy / redaction
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Developer workflow
+      description: What is the developer trying to debug or hand off?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: What should the inspector do?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Current workaround
+      description: How do you debug this today without the feature?
+  - type: textarea
+    id: proof
+    attributes:
+      label: Proof of value
+      description: What test, fixture, screenshot, or smoke path would prove the feature works?
+      placeholder: "A good acceptance test would ..."
