@@ -140,6 +140,9 @@ class SQLiteCheckpointReader:
 
     def list_writes(self, thread_id: str, checkpoint_id: str) -> list[dict[str, Any]]:
         with self._connect() as conn:
+            writes_checkpoint_id = self._incoming_writes_checkpoint_id(
+                conn, thread_id, checkpoint_id
+            )
             rows = conn.execute(
                 """
                 select rowid, thread_id, checkpoint_ns, checkpoint_id,
@@ -148,9 +151,36 @@ class SQLiteCheckpointReader:
                 where thread_id = ? and checkpoint_id = ?
                 order by task_id, idx, rowid
                 """,
-                (thread_id, checkpoint_id),
+                (thread_id, writes_checkpoint_id),
             ).fetchall()
             return [self._write_row_to_dict(row) for row in rows]
+
+    def _incoming_writes_checkpoint_id(
+        self, conn: sqlite3.Connection, thread_id: str, checkpoint_id: str
+    ) -> str:
+        row = conn.execute(
+            """
+            select parent_checkpoint_id
+            from checkpoints
+            where thread_id = ? and checkpoint_id = ?
+            order by rowid
+            limit 1
+            """,
+            (thread_id, checkpoint_id),
+        ).fetchone()
+        if not row or not row["parent_checkpoint_id"]:
+            return checkpoint_id
+
+        parent_checkpoint_id = str(row["parent_checkpoint_id"])
+        parent_write_count = conn.execute(
+            """
+            select count(*)
+            from writes
+            where thread_id = ? and checkpoint_id = ?
+            """,
+            (thread_id, parent_checkpoint_id),
+        ).fetchone()[0]
+        return parent_checkpoint_id if parent_write_count else checkpoint_id
 
     def _connect(self) -> sqlite3.Connection:
         if not self.db_path.exists():

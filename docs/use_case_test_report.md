@@ -69,6 +69,8 @@ PASS 检查器证据链已经证明 stale memory 故障路径。
 - 点击 diagnostic 会跳转到对应 checkpoint，缩短从问题到证据的路径。
 - 如果 diagnostic 带有 write channel，点击后会自动打开 Writes tab。
 - Writes tab 会高亮匹配的写入行，例如 `state.memory_events`。
+- 当前 reader 返回的是生成该 checkpoint snapshot 的 incoming writes，因此 live
+  demo 可以直接看到 `extract_profile -> state.memory_events` 的写入证据。
 
 新增的浏览器 e2e 覆盖了这个关键交互：
 

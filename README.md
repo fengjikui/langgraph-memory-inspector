@@ -31,7 +31,7 @@ The inspector turns that failure into a navigable evidence trail:
 - actionable diagnostics
 - write-channel highlighting for the diagnostic source
 
-![Stale-memory debugging demo placeholder](docs/assets/stale-memory-demo-placeholder.svg)
+![Stale-memory debugging demo](docs/assets/stale-memory-debugging-demo.gif)
 
 Recording checklist for the future GIF:
 

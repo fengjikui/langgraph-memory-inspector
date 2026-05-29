@@ -41,6 +41,27 @@ def test_reader_lists_demo_threads_checkpoints_and_writes(tmp_path: Path) -> Non
     assert {write["channel"] for write in writes}
 
 
+def test_reader_lists_writes_that_created_checkpoint_snapshot(tmp_path: Path) -> None:
+    db_path = _write_demo_db(tmp_path)
+    reader = SQLiteCheckpointReader(db_path)
+
+    for listed_checkpoint in reader.list_checkpoints(THREAD_ID):
+        checkpoint_id = listed_checkpoint["checkpoint_id"]
+        checkpoint = reader.get_checkpoint(THREAD_ID, checkpoint_id)
+        assert checkpoint is not None
+        value = checkpoint["checkpoint"]["value"]
+        state = value["channel_values"]
+        if (
+            "memory_events" in value.get("updated_channels", [])
+            and len(state.get("memory_events", [])) > 1
+        ):
+            writes = reader.list_writes(THREAD_ID, checkpoint_id)
+            assert "memory_events" in {write["channel"] for write in writes}
+            break
+    else:
+        raise AssertionError("No checkpoint with a second memory_events write found")
+
+
 def test_reader_summarizes_bad_blobs_without_crashing(tmp_path: Path) -> None:
     db_path = tmp_path / "bad.sqlite"
     with sqlite3.connect(db_path) as conn:

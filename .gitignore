@@ -13,3 +13,4 @@ examples/relocation_policy_agent/data/*.sqlite-wal
 # Inspector export artifacts should be explicit user outputs, not accidental commits.
 exports/
 web/dist/
+docs/assets/demo-video-raw/

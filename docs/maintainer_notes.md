@@ -38,3 +38,24 @@
 - `cd web && npm run build`
 - `cd web && npm run test:e2e`
 - `uv run python scripts/use_case_smoke.py`
+
+### 真实录屏与 incoming writes 修正
+
+用户价值改进：
+
+- README 已经使用真实 UI GIF，而不是占位图。
+- 录制过程中发现 LangGraph SQLite `writes.checkpoint_id` 更接近“从父 checkpoint 生成当前快照的写入边”。
+- `SQLiteCheckpointReader.list_writes()` 现在优先返回生成当前 checkpoint snapshot 的 incoming writes。
+
+为什么重要：
+
+- 用户在某个 checkpoint detail 里点击 Writes，预期看到的是“这个快照为什么变成现在这样”，而不是“这个 checkpoint 之后又写了什么”。
+- 这个修正让 live demo 中 `conflicting_residence_memory` 能真正高亮 `state.memory_events`，展示杭州记忆写入的证据。
+
+已验证：
+
+- `uv run pytest -q`
+- `cd web && npm run build`
+- `cd web && npm run test:e2e`
+- `uv run python scripts/use_case_smoke.py`
+- 重新录制 `docs/assets/stale-memory-debugging-demo.gif`
