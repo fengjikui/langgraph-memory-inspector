@@ -497,3 +497,20 @@
   故障路径。
 - 这也让面试演示更顺：先 doctor 证明环境，再 prove-demo 证明价值，最后打开 UI
   展示交互证据。
+
+### Product proof in CI and bug reports
+
+用户价值改进：
+
+- GitHub Actions 的 stale-memory gate 改为运行
+  `uv run lgmi prove-demo --reset-demo --json`，不再依赖旧的脚本入口。
+- Bug report 模板新增 Demo proof report 字段，引导用户在 demo/diagnostic
+  行为异常时粘贴安全 JSON proof。
+
+为什么重要：
+
+- CI 应该验证用户真正会复制的命令。这样 README、Forum 首帖、release
+  checklist 和 CI 讲的是同一条产品路径。
+- Doctor report 回答“环境是否能跑”，proof report 回答“这个 demo 是否真的证明了
+  checkpoint 故障路径”。两者分开后，外部 issue 会更容易定位是安装问题、数据问题，
+  还是诊断逻辑问题。
