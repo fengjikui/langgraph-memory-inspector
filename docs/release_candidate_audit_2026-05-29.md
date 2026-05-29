@@ -39,7 +39,7 @@ are not valid yet.
 | CI green on main | Pass | Latest checked main CI before this pass was green. |
 | Fresh-clone quickstart | Pass with condition | Private repo required authenticated clone; otherwise README quickstart passed in the audit. |
 | Demo GIF | Pass | `docs/assets/stale-memory-debugging-demo.gif` exists. |
-| Product smoke test | Pass | `uv run python scripts/use_case_smoke.py --reset-demo` passes locally. |
+| Product smoke test | Pass | `uv run lgmi prove-demo --reset-demo` passes locally. |
 | Diagnostic click e2e | Pass | `npm run test:e2e` covers diagnostic click and writes highlight. |
 | Redacted debug bundle | Pass | Tests cover redaction and non-mutating export behavior. |
 | Namespace selector | Pass | README, API tests, reader tests, and UI code cover namespace switching. |

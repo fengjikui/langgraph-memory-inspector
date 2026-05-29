@@ -41,6 +41,7 @@ Run it locally:
 ```bash
 uv sync
 uv run lgmi doctor
+uv run lgmi prove-demo --reset-demo
 uv run lgmi demo --build-ui
 ```
 
@@ -76,6 +77,8 @@ uv run --extra postgres lgmi inspect-postgres "$DATABASE_URL" --schema public --
 - Explicit debug bundle export from CLI, API, and UI.
 - Redacted export mode for private fields, message content, evidence, prompts,
   secrets, tokens, emails, and phone-like strings.
+- `lgmi prove-demo` command that turns the stale-memory story into a
+  repeatable product-value proof, with optional JSON output for automation.
 - Fixture intake policy and diagnostic matrix for turning user feedback into
   regression tests.
 
@@ -85,7 +88,7 @@ Release-candidate verification commands:
 
 ```bash
 uv run pytest -q
-uv run python scripts/use_case_smoke.py --reset-demo
+uv run lgmi prove-demo --reset-demo
 cd web
 npm run build
 npm run test:e2e

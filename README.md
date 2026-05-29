@@ -199,17 +199,26 @@ docker stop lgmi-postgres-confidence
 Run the real use-case smoke test:
 
 ```bash
-uv run python scripts/use_case_smoke.py --reset-demo
+uv run lgmi prove-demo --reset-demo
 ```
 
 Expected result:
 
 ```text
-PASS 检查器证据链已经证明 stale memory 故障路径。
+PASS The checkpoint evidence proves the stale-memory failure path.
 ```
 
 This test proves from checkpoint evidence that the user moved to Hangzhou while
 the final retrieval still used Shanghai.
+
+For automation or issue triage, use the JSON report:
+
+```bash
+uv run lgmi prove-demo --reset-demo --json
+```
+
+The JSON proof excludes diagnostic evidence payloads, message content, prompts,
+tokens, and raw database rows.
 
 Run backend tests:
 

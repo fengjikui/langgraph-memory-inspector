@@ -476,3 +476,24 @@
 本机限制：
 
 - 当前本机没有 Docker CLI，因此 Docker 端到端命令依赖 GitHub Actions 的真实 Postgres service 和有 Docker 的用户机器继续验证。
+
+### Product proof CLI
+
+用户价值改进：
+
+- 新增 `lgmi prove-demo --reset-demo`，把原本藏在 `scripts/use_case_smoke.py`
+  里的用例冒烟测试提升成正式 CLI 入口。
+- 新增 `--json` 输出，方便 CI、issue triage 或外部用户把“工具是否真的证明了
+  stale-memory 路径”贴成机器可读证据。
+- `scripts/use_case_smoke.py` 仍保留为兼容 wrapper，但实现迁移到
+  `src/lgmi/use_case_smoke.py`，让产品证明逻辑跟 CLI 和测试共用同一份代码。
+- README、release notes、release checklist、diagnostic matrix、demo script 和
+  launch draft 都改成推荐 `uv run lgmi prove-demo --reset-demo`。
+
+为什么重要：
+
+- 外部用户第一次看项目时，需要一个比“跑测试”更像产品承诺的命令。`prove-demo`
+  直接回答：这个工具能不能从 checkpoint 证据证明上海到杭州的 stale-memory
+  故障路径。
+- 这也让面试演示更顺：先 doctor 证明环境，再 prove-demo 证明价值，最后打开 UI
+  展示交互证据。

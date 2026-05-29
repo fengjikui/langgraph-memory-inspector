@@ -149,6 +149,20 @@ def test_doctor_reports_missing_sqlite_checkpoint_db(tmp_path: Path, capsys: Any
     )
 
 
+def test_prove_demo_json_reports_passed_use_case(capsys: Any) -> None:
+    result = cli.main(["prove-demo", "--reset-demo", "--json"])
+
+    report = json.loads(capsys.readouterr().out)
+    assert result == 0
+    assert report["passed"] is True
+    assert report["latest_residence_city"] == "Hangzhou"
+    assert report["final_selected_city"] == "Shanghai"
+    assert {"conflicting_residence_memory", "stale_selected_city"} <= set(report["diagnostic_ids"])
+    assert '"evidence":' not in json.dumps(report)
+    assert "I moved to Hangzhou" not in json.dumps(report)
+    assert "message content" in report["privacy"]
+
+
 def test_doctor_validates_postgres_checkpoint_store(monkeypatch: Any, capsys: Any) -> None:
     class FakePostgresReader:
         def __init__(self, conninfo: str, *, schema: str = "public") -> None:

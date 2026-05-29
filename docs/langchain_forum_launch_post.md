@@ -9,6 +9,7 @@ stars.
 - [ ] GitHub social preview image uploaded in repository Settings.
 - [ ] CI is green on `main`.
 - [ ] `uv run lgmi doctor` works from a fresh clone.
+- [ ] `uv run lgmi prove-demo --reset-demo` proves the stale-memory path.
 - [ ] `uv run lgmi demo --build-ui` opens the demo.
 - [ ] `uv run --extra postgres python scripts/postgres_confidence.py --help` works.
 - [ ] Issue #20 is open and ready as the feedback home base.
@@ -71,6 +72,7 @@ Quickstart:
 ```bash
 uv sync
 uv run lgmi doctor
+uv run lgmi prove-demo --reset-demo
 uv run lgmi demo --build-ui
 ```
 

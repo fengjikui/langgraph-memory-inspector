@@ -5,7 +5,7 @@ from pathlib import Path
 from examples.relocation_policy_agent.run_demo import DB_PATH, run_demo
 from lgmi.causal_chain import build_causal_chain
 from lgmi.checkpoint_reader import SQLiteCheckpointReader
-from scripts.use_case_smoke import collect_use_case_evidence
+from lgmi.use_case_smoke import collect_use_case_evidence
 
 
 def test_relocation_use_case_smoke_detects_stale_memory_path(tmp_path: Path) -> None:

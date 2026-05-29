@@ -21,10 +21,10 @@ repeatable validation command.
 
 | Diagnostic ID | Fixture ID | Backend Shape | Source Safety | State Channels | Validation Command | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| `conflicting_residence_memory` | `relocation_demo_checkpoint_db` | `sqlite` | `synthetic` | `memory_events`, `retrieved_docs` | `uv run python scripts/use_case_smoke.py --reset-demo` | Protected by the deterministic Shanghai-to-Hangzhou demo. |
-| `stale_selected_city` | `relocation_demo_checkpoint_db` | `sqlite` | `synthetic` | `memory_events`, `selected_city` | `uv run python scripts/use_case_smoke.py --reset-demo` | Protected by the deterministic Shanghai-to-Hangzhou demo. |
-| `oversized_message_history` | `relocation_demo_checkpoint_db` | `sqlite` | `synthetic` | `messages` | `uv run python scripts/use_case_smoke.py --reset-demo` | Protected by the deterministic demo smoke path. |
-| `checkpoint_size_spike` | `relocation_demo_checkpoint_db` | `sqlite` | `synthetic` | `checkpoints` | `uv run python scripts/use_case_smoke.py --reset-demo` | Protected by the deterministic demo smoke path. |
+| `conflicting_residence_memory` | `relocation_demo_checkpoint_db` | `sqlite` | `synthetic` | `memory_events`, `retrieved_docs` | `uv run lgmi prove-demo --reset-demo` | Protected by the deterministic Shanghai-to-Hangzhou demo. |
+| `stale_selected_city` | `relocation_demo_checkpoint_db` | `sqlite` | `synthetic` | `memory_events`, `selected_city` | `uv run lgmi prove-demo --reset-demo` | Protected by the deterministic Shanghai-to-Hangzhou demo. |
+| `oversized_message_history` | `relocation_demo_checkpoint_db` | `sqlite` | `synthetic` | `messages` | `uv run lgmi prove-demo --reset-demo` | Protected by the deterministic demo smoke path. |
+| `checkpoint_size_spike` | `relocation_demo_checkpoint_db` | `sqlite` | `synthetic` | `checkpoints` | `uv run lgmi prove-demo --reset-demo` | Protected by the deterministic demo smoke path. |
 | `reducer_append_duplicate_state` | `synthetic_reducer_append_duplicate_memory_v1` | `synthetic_json` | `synthetic` | `memory_events` | `uv run pytest tests/test_fixtures.py -q` | Protected by a committed safe fixture. |
 | `checkpoint_namespace_confusion` | `synthetic_namespace_confusion_multi_ns_v1` | `synthetic_json` | `synthetic` | `checkpoint_ns`, `memory_events`, `messages`, `selected_city` | `uv run pytest tests/test_fixtures.py -q` | Protected by a committed safe fixture with two namespaces under one thread. |
 | `repeated_retrieved_context` | `unit_state_repeated_docs` | `in_memory` | `synthetic` | `retrieved_docs` | `uv run pytest tests/test_analysis.py -q` | Unit-only coverage; needs a safe fixture from a real retrieval-repeat pattern. |

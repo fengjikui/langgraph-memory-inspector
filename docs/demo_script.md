@@ -11,7 +11,7 @@ From the repository root:
 ```bash
 uv sync
 uv run lgmi demo --prepare-only
-uv run python scripts/use_case_smoke.py
+uv run lgmi prove-demo
 ```
 
 Optional LLM mode:
@@ -198,7 +198,7 @@ Highlight the engineering choices:
 - Diff-first UX: compare snapshots instead of scanning raw blobs.
 - Storage hygiene: generated SQLite files and exports are disposable and should
   not be committed.
-- Use-case smoke testing: `scripts/use_case_smoke.py` proves the value path from
+- Use-case smoke testing: `lgmi prove-demo` proves the value path from
   checkpoint evidence, not from hand-waved UI claims.
 
 Close:
@@ -214,7 +214,7 @@ If the inspector UI is not ready during a demo, use this fallback:
 1. Run the demo agent.
 2. Show the final printed summary.
 3. Show the SQLite schema and row counts.
-4. Run `uv run python scripts/use_case_smoke.py`.
+4. Run `uv run lgmi prove-demo`.
 5. Open `run_demo.py` and confirm the root cause in `retrieve_policy`.
 
 The fallback still demonstrates the project thesis: LangGraph checkpoint state

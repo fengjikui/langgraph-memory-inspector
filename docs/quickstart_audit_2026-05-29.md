@@ -90,13 +90,13 @@ Result: passed. Vite served `http://127.0.0.1:5173/`.
 Run product smoke test:
 
 ```bash
-uv run python scripts/use_case_smoke.py --reset-demo
+uv run lgmi prove-demo --reset-demo
 ```
 
 Result: passed.
 
 ```text
-PASS 检查器证据链已经证明 stale memory 故障路径。
+PASS The checkpoint evidence proves the stale-memory failure path.
 ```
 
 ## Findings

@@ -26,7 +26,8 @@ Draft release notes: `docs/release_notes_v0.1.0.md`.
 - [x] The stale-memory demo GIF is present at
   `docs/assets/stale-memory-debugging-demo.gif`.
 - [x] SQLite quickstart starts the API and UI against the demo checkpoint DB.
-- [x] `uv run python scripts/use_case_smoke.py --reset-demo` passes.
+- [x] `uv run lgmi prove-demo --reset-demo` passes and proves the
+  stale-memory workflow from checkpoint evidence.
 - [x] Diagnostic click opens Writes and highlights `state.memory_events`.
 - [x] Diagnostics include reducer append duplicate and unexpected parent
   checkpoint warning rules with documented false-positive boundaries.
@@ -69,7 +70,7 @@ Draft release notes: `docs/release_notes_v0.1.0.md`.
 
 ```bash
 uv run pytest -q
-uv run python scripts/use_case_smoke.py --reset-demo
+uv run lgmi prove-demo --reset-demo
 cd web
 npm run build
 npm run test:e2e

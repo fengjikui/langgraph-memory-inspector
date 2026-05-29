@@ -31,6 +31,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_inspect(args)
     if args.command == "inspect-postgres":
         return _run_inspect_postgres(args)
+    if args.command == "prove-demo":
+        return _run_prove_demo(args)
     if args.command == "export-debug-bundle":
         return _run_export_debug_bundle(args)
     raise SystemExit(f"Unknown command: {args.command}")
@@ -169,6 +171,25 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         "--build-ui",
         action="store_true",
         help="Install web dependencies if needed, build web/dist, and serve it with the inspector API.",
+    )
+    prove_parser = subparsers.add_parser(
+        "prove-demo",
+        help="Run the stale-memory demo proof and report whether checkpoint evidence explains the bug.",
+    )
+    prove_parser.add_argument(
+        "--db-path",
+        default=None,
+        help="Use an existing LangGraph SQLite checkpoint database instead of the default demo DB.",
+    )
+    prove_parser.add_argument(
+        "--reset-demo",
+        action="store_true",
+        help="Regenerate deterministic demo checkpoint data before proving the use case.",
+    )
+    prove_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print machine-readable evidence instead of the rich text report.",
     )
     export_parser = subparsers.add_parser(
         "export-debug-bundle",
@@ -692,6 +713,29 @@ def _run_inspect_postgres(args: argparse.Namespace) -> int:
         args,
         f"Checkpoint store: {_redact_conninfo(args.conninfo)} schema={args.schema}",
     )
+
+
+def _run_prove_demo(args: argparse.Namespace) -> int:
+    from lgmi.use_case_smoke import (
+        collect_use_case_evidence,
+        default_demo_db_path,
+        render_report,
+        reset_demo_checkpoint_data,
+    )
+
+    if args.reset_demo:
+        db_path = reset_demo_checkpoint_data()
+    elif args.db_path:
+        db_path = Path(args.db_path).expanduser().resolve()
+    else:
+        db_path = default_demo_db_path()
+
+    evidence = collect_use_case_evidence(db_path)
+    if args.json:
+        print(json.dumps(evidence.to_report(), indent=2), flush=True)
+    else:
+        render_report(evidence)
+    return 0 if evidence.passed else 1
 
 
 def _run_export_debug_bundle(args: argparse.Namespace) -> int:

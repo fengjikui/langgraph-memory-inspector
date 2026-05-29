@@ -68,7 +68,7 @@ LangGraph Memory Inspector 的长期原则是：
 - 清晰 README 首屏。
 - 一张能看出价值的截图。
 - 一个 15-60 秒 GIF：从错误回答到 Inspector 定位 checkpoint。
-- `uv run python scripts/use_case_smoke.py --reset-demo` 作为可信 demo 证明。
+- `uv run lgmi prove-demo --reset-demo` 作为可信 demo 证明。
 - Issues 里预置 good first issue，例如 Postgres adapter、namespace selector、debug bundle export。
 
 README 首屏建议采用英文为主、中文材料另放 docs：

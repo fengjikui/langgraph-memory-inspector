@@ -15,7 +15,7 @@ checkpoint 状态定位 stale memory，而不是靠猜测排查。
 ## 运行命令
 
 ```bash
-uv run python scripts/use_case_smoke.py --reset-demo
+uv run lgmi prove-demo --reset-demo
 ```
 
 ## 预期证据
@@ -34,7 +34,7 @@ uv run python scripts/use_case_smoke.py --reset-demo
 当前实现已经通过 smoke test：
 
 ```text
-PASS 检查器证据链已经证明 stale memory 故障路径。
+PASS The checkpoint evidence proves the stale-memory failure path.
 ```
 
 默认确定性 demo 会生成 18 条 checkpoint rows 和 41 条 write rows。
