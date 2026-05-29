@@ -59,7 +59,8 @@ the prepared LangChain Forum thread.
 - [x] GitHub feedback issue #20 is open.
 - [x] LangChain Forum launch draft is ready.
 - [ ] GitHub social preview asset still needs manual upload in repository
-  Settings; tracked in #23.
+  Settings; tracked in #23. The verified upload guide is
+  `docs/social_preview_upload_guide.md`.
 - [ ] LangChain Forum post has not been posted yet.
 
 ## CI Annotation Decision

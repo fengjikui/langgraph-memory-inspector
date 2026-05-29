@@ -67,6 +67,9 @@ Draft release notes: `docs/release_notes_v0.1.0.md`.
 - [x] Community feedback asks for checkpoint bug patterns, not only stars.
 - [x] GitHub social preview asset exists at
   `docs/assets/github-social-preview.png`.
+- [x] GitHub social preview upload guide exists at
+  `docs/social_preview_upload_guide.md`, with verified asset dimensions and
+  manual upload steps.
 - [ ] GitHub social preview asset has been uploaded in repository Settings.
 
 ## Commands

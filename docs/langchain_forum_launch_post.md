@@ -7,6 +7,8 @@ stars.
 ## Pre-Post Checklist
 
 - [ ] GitHub social preview image uploaded in repository Settings.
+      Use `docs/social_preview_upload_guide.md`; the asset has been verified as
+      PNG, 1280 x 640, and under 1 MB.
 - [ ] CI is green on `main`.
 - [ ] `uv run lgmi doctor` works from a fresh clone.
 - [ ] `uv run lgmi prove-demo --reset-demo` proves the stale-memory path.

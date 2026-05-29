@@ -631,3 +631,27 @@
 
 - `uv run pytest -q`
 - `git diff --check`
+
+### Social preview upload gate documented
+
+用户价值改进：
+
+- 新增 `docs/social_preview_upload_guide.md`，把 GitHub social preview 的手动上传
+  步骤、上传后验证和 #23 关闭命令写清楚。
+- 已验证 `docs/assets/github-social-preview.png` 为 PNG、1280 x 640、375 KB，
+  符合 GitHub 当前推荐的 1280 x 640 且小于 1 MB 要求。
+- Release checklist、community launch playbook、public launch packet、Forum
+  pre-post checklist 和 release candidate audit 都链接到这份 guide。
+
+为什么重要：
+
+- 这是公开首发前最后一个需要账号/Settings 权限的 gate。Codex 不应在没有明确确认时
+  代替用户改 GitHub 设置，但可以把手动步骤压缩到几分钟内完成。
+- 社交预览不是装饰，它会影响 Forum、Slack、X、LinkedIn、V2EX 或 Show HN 分享时的
+  第一眼信任感。
+
+已验证：
+
+- `file docs/assets/github-social-preview.png`
+- `ls -lh docs/assets/github-social-preview.png`
+- GitHub 官方 social preview 文档

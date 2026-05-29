@@ -43,6 +43,8 @@ should see a version of the same user story:
 - [x] Fixture policy is linked wherever users are asked to share checkpoint data.
 - [x] GitHub social preview image exists at
   `docs/assets/github-social-preview.png`.
+- [x] Social preview upload guide exists at
+  `docs/social_preview_upload_guide.md`.
 - [ ] GitHub social preview image has been uploaded in repository Settings.
 - [x] LangChain Forum post draft is ready at
   `docs/langchain_forum_launch_post.md`.
@@ -343,6 +345,8 @@ manually:
 3. Click **Edit**.
 4. Upload `docs/assets/github-social-preview.png`.
 5. Save and verify `gh repo view fengjikui/langgraph-memory-inspector --json openGraphImageUrl`.
+
+The short, verified checklist lives in `docs/social_preview_upload_guide.md`.
 
 Sources checked on 2026-05-29:
 

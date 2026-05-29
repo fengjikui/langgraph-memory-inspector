@@ -22,13 +22,16 @@ copy-paste-ready first external post lives in
   https://github.com/fengjikui/langgraph-memory-inspector/blob/main/docs/diagnostic_matrix.md
 - Social preview asset:
   `docs/assets/github-social-preview.png`
+- Social preview upload guide:
+  `docs/social_preview_upload_guide.md`
 - LangChain Forum launch draft:
   `docs/langchain_forum_launch_post.md`
 
 Known manual gate before broad posting:
 
 - Upload `docs/assets/github-social-preview.png` in repository Settings >
-  Social preview. Issue #23 tracks this.
+  Social preview. `docs/social_preview_upload_guide.md` has the verified
+  asset checks and exact steps. Issue #23 tracks this.
 
 ## Launch Order
 
