@@ -32,6 +32,8 @@ export function Timeline({
   const selectedItemRef = useRef<HTMLButtonElement | null>(null);
   const [changedPathDraft, setChangedPathDraft] = useState(filters.changedPath ?? "");
   const [checkpointIdPrefixDraft, setCheckpointIdPrefixDraft] = useState(filters.checkpointIdPrefix ?? "");
+  const [metadataKeyDraft, setMetadataKeyDraft] = useState(filters.metadataKey ?? "");
+  const [metadataValueDraft, setMetadataValueDraft] = useState(filters.metadataValue ?? "");
 
   useEffect(() => {
     setChangedPathDraft(filters.changedPath ?? "");
@@ -42,6 +44,14 @@ export function Timeline({
   }, [filters.checkpointIdPrefix]);
 
   useEffect(() => {
+    setMetadataKeyDraft(filters.metadataKey ?? "");
+  }, [filters.metadataKey]);
+
+  useEffect(() => {
+    setMetadataValueDraft(filters.metadataValue ?? "");
+  }, [filters.metadataValue]);
+
+  useEffect(() => {
     selectedItemRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [selectedCheckpointId]);
 
@@ -50,13 +60,20 @@ export function Timeline({
     onFiltersChange({
       ...filters,
       changedPath: changedPathDraft.trim() || undefined,
-      checkpointIdPrefix: checkpointIdPrefixDraft.trim() || undefined
+      checkpointIdPrefix: checkpointIdPrefixDraft.trim() || undefined,
+      metadataKey: metadataKeyDraft.trim() || undefined,
+      metadataValue: metadataValueDraft.trim() || undefined
     });
   }
 
   const rangeStart = pagination && pagination.totalCount > 0 ? pagination.offset + 1 : 0;
   const rangeEnd = pagination ? pagination.offset + checkpoints.length : checkpoints.length;
-  const isFiltered = Boolean(filters.diagnostic || filters.changedPath || filters.checkpointIdPrefix);
+  const isFiltered = Boolean(
+    filters.diagnostic ||
+    filters.changedPath ||
+    filters.checkpointIdPrefix ||
+    filters.metadataKey
+  );
   const totalLabel = pagination && isFiltered && pagination.unfilteredTotalCount !== pagination.totalCount
     ? `${rangeStart}-${rangeEnd} of ${pagination.totalCount} filtered from ${pagination.unfilteredTotalCount}`
     : pagination
@@ -93,10 +110,28 @@ export function Timeline({
             placeholder="state.memory_events"
             value={changedPathDraft}
           />
+          <input
+            aria-label="Metadata key filter"
+            onChange={(event) => setMetadataKeyDraft(event.currentTarget.value)}
+            placeholder="metadata key"
+            value={metadataKeyDraft}
+          />
+          <input
+            aria-label="Metadata value filter"
+            onChange={(event) => setMetadataValueDraft(event.currentTarget.value)}
+            placeholder="metadata value"
+            value={metadataValueDraft}
+          />
           <button type="submit">Apply</button>
-          {filters.changedPath || filters.checkpointIdPrefix ? (
+          {filters.changedPath || filters.checkpointIdPrefix || filters.metadataKey ? (
             <button
-              onClick={() => onFiltersChange({ ...filters, changedPath: undefined, checkpointIdPrefix: undefined })}
+              onClick={() => onFiltersChange({
+                ...filters,
+                changedPath: undefined,
+                checkpointIdPrefix: undefined,
+                metadataKey: undefined,
+                metadataValue: undefined
+              })}
               type="button"
             >
               Clear

@@ -347,6 +347,8 @@ This is an MVP focused on local checkpoint inspection:
 - show and switch checkpoint namespaces per thread
 - filter long timelines by diagnostic presence, changed state path, or
   checkpoint id prefix
+- filter checkpoint timelines by metadata key/value when a log or checkpoint
+  store records useful metadata such as `source` or `step`
 - decode common state channels
 - show diffs and writes
 - detect stale/conflicting memory and stale retrieved-context patterns

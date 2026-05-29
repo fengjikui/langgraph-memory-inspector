@@ -149,6 +149,8 @@ pre {
 }
 
 .timeline-panel {
+  display: flex;
+  flex-direction: column;
   min-height: 0;
   flex: 1 1 0;
   overflow: hidden;
@@ -290,7 +292,9 @@ pre {
 }
 
 .timeline-list {
-  height: calc(100% - 96px);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
   padding: 8px 10px 12px;
 }
 

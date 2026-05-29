@@ -90,6 +90,16 @@ def test_reader_paginates_and_filters_checkpoints(tmp_path: Path) -> None:
     assert prefix_page
     assert all(item["checkpoint_id"].startswith(prefix) for item in prefix_page)
 
+    source = next(item["source"] for item in reader.list_checkpoints(THREAD_ID) if item.get("source"))
+    metadata_count = reader.count_checkpoints(
+        THREAD_ID, metadata_key="source", metadata_value=source
+    )
+    metadata_page = reader.list_checkpoints(
+        THREAD_ID, metadata_key="source", metadata_value=source, limit=2
+    )
+    assert metadata_count >= len(metadata_page) > 0
+    assert all(item.get("source") == source for item in metadata_page)
+
 
 def test_reader_summarizes_bad_blobs_without_crashing(tmp_path: Path) -> None:
     db_path = tmp_path / "bad.sqlite"

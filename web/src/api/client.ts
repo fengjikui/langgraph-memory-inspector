@@ -412,6 +412,13 @@ function mockCheckpointPage(
   if (checkpointIdPrefix) {
     rows = rows.filter((checkpoint) => checkpoint.id.startsWith(checkpointIdPrefix));
   }
+  const metadataKey = options.filters?.metadataKey?.trim();
+  const metadataValue = options.filters?.metadataValue?.trim();
+  if (metadataKey) {
+    rows = rows.filter((checkpoint) =>
+      metadataKey === "source" ? !metadataValue || checkpoint.node === metadataValue : false
+    );
+  }
   const limit = options.limit ?? 50;
   const requestedOffset = options.fromEnd ? Math.max(rows.length - limit, 0) : options.offset ?? 0;
   const offset = Math.min(requestedOffset, rows.length);
@@ -490,6 +497,10 @@ function checkpointPageQuery(
   if (changedPath) params.set("changed_path", changedPath);
   const checkpointIdPrefix = options.filters?.checkpointIdPrefix?.trim();
   if (checkpointIdPrefix) params.set("checkpoint_id_prefix", checkpointIdPrefix);
+  const metadataKey = options.filters?.metadataKey?.trim();
+  if (metadataKey) params.set("metadata_key", metadataKey);
+  const metadataValue = options.filters?.metadataValue?.trim();
+  if (metadataValue) params.set("metadata_value", metadataValue);
   return `?${params.toString()}`;
 }
 

@@ -1003,3 +1003,26 @@
 
 - `uv run pytest tests/test_launch_status.py -q`
 - `uv run python scripts/launch_status.py`
+
+### Metadata timeline filter
+
+用户价值改进：
+
+- Timeline API 新增 `metadata_key` / `metadata_value` 过滤参数，并沿用现有分页 contract。
+- SQLite 和 read-only Postgres reader 都支持这个过滤；SQLite 会解码 checkpoint metadata，Postgres
+  会使用已读取的 JSONB metadata。
+- Web timeline 增加 metadata key/value 输入框；README 和 architecture doc 记录这个 large-store
+  navigation 切片。
+
+为什么重要：
+
+- #27 的核心用户问题是长 checkpoint 时间线不好定位。很多真实 LangGraph store 会在 metadata
+  里保留 `source`、`step`、节点/运行来源等线索；按 metadata 过滤是比全文搜索更小、更可验证的
+  第一步。
+- 这不是广义 observability 平台，而是保持 local-first 的窄搜索入口。
+
+已验证：
+
+- `uv run pytest tests/test_api.py tests/test_checkpoint_reader.py -q`
+- `cd web && npm run build`
+- `cd web && npm run test:e2e`

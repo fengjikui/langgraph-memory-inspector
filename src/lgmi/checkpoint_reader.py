@@ -117,13 +117,15 @@ class SQLiteCheckpointReader:
         diagnostic: bool | None = None,
         changed_path: str | None = None,
         checkpoint_id_prefix: str | None = None,
+        metadata_key: str | None = None,
+        metadata_value: str | None = None,
     ) -> list[dict[str, Any]]:
         if offset < 0:
             raise ValueError("offset must be >= 0")
         if limit is not None and limit < 1:
             raise ValueError("limit must be >= 1")
         with self._connect() as conn:
-            if diagnostic is not None or changed_path:
+            if diagnostic is not None or changed_path or metadata_key:
                 rows = self._filtered_checkpoint_rows(
                     conn,
                     thread_id,
@@ -131,6 +133,8 @@ class SQLiteCheckpointReader:
                     diagnostic=diagnostic,
                     changed_path=changed_path,
                     checkpoint_id_prefix=checkpoint_id_prefix,
+                    metadata_key=metadata_key,
+                    metadata_value=metadata_value,
                 )
                 selected_rows = rows[offset : offset + limit if limit is not None else None]
                 return [
@@ -168,9 +172,11 @@ class SQLiteCheckpointReader:
         diagnostic: bool | None = None,
         changed_path: str | None = None,
         checkpoint_id_prefix: str | None = None,
+        metadata_key: str | None = None,
+        metadata_value: str | None = None,
     ) -> int:
         with self._connect() as conn:
-            if diagnostic is not None or changed_path:
+            if diagnostic is not None or changed_path or metadata_key:
                 return len(
                     self._filtered_checkpoint_rows(
                         conn,
@@ -179,6 +185,8 @@ class SQLiteCheckpointReader:
                         diagnostic=diagnostic,
                         changed_path=changed_path,
                         checkpoint_id_prefix=checkpoint_id_prefix,
+                        metadata_key=metadata_key,
+                        metadata_value=metadata_value,
                     )
                 )
 
@@ -307,6 +315,8 @@ class SQLiteCheckpointReader:
         diagnostic: bool | None,
         changed_path: str | None,
         checkpoint_id_prefix: str | None,
+        metadata_key: str | None,
+        metadata_value: str | None,
     ) -> list[sqlite3.Row]:
         namespace_sql, params = self._namespace_filter(checkpoint_ns)
         prefix_sql, prefix_params = _checkpoint_id_prefix_filter(checkpoint_id_prefix, placeholder="?")
@@ -326,7 +336,13 @@ class SQLiteCheckpointReader:
         return [
             row
             for row in rows
-            if self._checkpoint_row_matches(row, diagnostic=diagnostic, changed_channel=channel)
+            if self._checkpoint_row_matches(
+                row,
+                diagnostic=diagnostic,
+                changed_channel=channel,
+                metadata_key=metadata_key,
+                metadata_value=metadata_value,
+            )
         ]
 
     def _checkpoint_row_matches(
@@ -335,7 +351,11 @@ class SQLiteCheckpointReader:
         *,
         diagnostic: bool | None,
         changed_channel: str | None,
+        metadata_key: str | None,
+        metadata_value: str | None,
     ) -> bool:
+        if metadata_key and not self._metadata_row_matches(row, metadata_key, metadata_value):
+            return False
         checkpoint = self._decode_blob(row["type"], row["checkpoint"])
         value = checkpoint.get("value") if checkpoint.get("decoded") else None
         if not isinstance(value, Mapping):
@@ -355,6 +375,17 @@ class SQLiteCheckpointReader:
             if not isinstance(updated_channels, list) or changed_channel not in updated_channels:
                 return False
         return True
+
+    def _metadata_row_matches(
+        self,
+        row: sqlite3.Row,
+        metadata_key: str,
+        metadata_value: str | None,
+    ) -> bool:
+        metadata = self._decode_blob(None, row["metadata"], prefer_json=True)
+        if not metadata.get("decoded") or not isinstance(metadata.get("value"), Mapping):
+            return False
+        return _metadata_matches(metadata["value"], metadata_key, metadata_value)
 
     def _namespace_filter(self, checkpoint_ns: str | None) -> tuple[str, tuple[str, ...]]:
         if checkpoint_ns is None:
@@ -564,6 +595,43 @@ def _checkpoint_id_prefix_filter(
 
 def _escape_like(value: str) -> str:
     return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def _metadata_matches(
+    metadata: Mapping[str, Any],
+    metadata_key: str,
+    metadata_value: str | None,
+) -> bool:
+    found, value = _metadata_path_value(metadata, metadata_key)
+    if not found:
+        return False
+    expected = (metadata_value or "").strip()
+    if not expected:
+        return True
+    return _metadata_value_text(value) == expected
+
+
+def _metadata_path_value(metadata: Mapping[str, Any], metadata_key: str) -> tuple[bool, Any]:
+    path = metadata_key.strip().strip(".")
+    if path.startswith("metadata."):
+        path = path.removeprefix("metadata.")
+    if not path:
+        return False, None
+
+    current: Any = metadata
+    for part in path.split("."):
+        if not isinstance(current, Mapping) or part not in current:
+            return False, None
+        current = current[part]
+    return True, current
+
+
+def _metadata_value_text(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    if value is None or isinstance(value, bool | int | float):
+        return str(value)
+    return json.dumps(value, ensure_ascii=False, sort_keys=True)
 
 
 def _to_jsonable(

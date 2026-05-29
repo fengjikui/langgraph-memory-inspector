@@ -59,6 +59,8 @@ export type TimelineFilters = {
   diagnostic?: boolean;
   changedPath?: string;
   checkpointIdPrefix?: string;
+  metadataKey?: string;
+  metadataValue?: string;
 };
 
 export type TimelinePagination = {

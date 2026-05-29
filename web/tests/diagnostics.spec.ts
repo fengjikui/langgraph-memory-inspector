@@ -60,4 +60,11 @@ test("diagnostic click opens writes and highlights the related channel", async (
   await page.getByRole("button", { name: "Apply" }).click();
   await expect(page.getByText("1-1 of 1 filtered from 5")).toBeVisible();
   await expect(page.getByText("Retrieval reads stale city")).toBeVisible();
+
+  await page.getByRole("button", { name: "Clear" }).click();
+  await page.getByLabel("Metadata key filter").fill("source");
+  await page.getByLabel("Metadata value filter").fill("retrieve_policy_context");
+  await page.getByRole("button", { name: "Apply" }).click();
+  await expect(page.getByText("1-1 of 1 filtered from 5")).toBeVisible();
+  await expect(page.getByText("Retrieval reads stale city")).toBeVisible();
 });

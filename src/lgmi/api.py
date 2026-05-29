@@ -70,6 +70,8 @@ def create_app(
         diagnostic: bool | None = Query(default=None),
         changed_path: str | None = Query(default=None),
         checkpoint_id_prefix: str | None = Query(default=None),
+        metadata_key: str | None = Query(default=None),
+        metadata_value: str | None = Query(default=None),
     ) -> dict[str, Any]:
         return _read_or_404(
             lambda: _checkpoint_page(
@@ -82,6 +84,8 @@ def create_app(
                 diagnostic=diagnostic,
                 changed_path=changed_path,
                 checkpoint_id_prefix=checkpoint_id_prefix,
+                metadata_key=metadata_key,
+                metadata_value=metadata_value,
             )
         )
 
@@ -218,11 +222,14 @@ def _checkpoint_page(
     diagnostic: bool | None,
     changed_path: str | None,
     checkpoint_id_prefix: str | None,
+    metadata_key: str | None,
+    metadata_value: str | None,
 ) -> dict[str, Any]:
     active_filters = (
         diagnostic is not None
         or bool(changed_path and changed_path.strip())
         or bool(checkpoint_id_prefix and checkpoint_id_prefix.strip())
+        or bool(metadata_key and metadata_key.strip())
     )
     total_count = reader.count_checkpoints(
         thread_id,
@@ -230,6 +237,8 @@ def _checkpoint_page(
         diagnostic=diagnostic,
         changed_path=changed_path,
         checkpoint_id_prefix=checkpoint_id_prefix,
+        metadata_key=metadata_key,
+        metadata_value=metadata_value,
     )
     unfiltered_total_count = (
         reader.count_checkpoints(thread_id, checkpoint_ns)
@@ -246,6 +255,8 @@ def _checkpoint_page(
         diagnostic=diagnostic,
         changed_path=changed_path,
         checkpoint_id_prefix=checkpoint_id_prefix,
+        metadata_key=metadata_key,
+        metadata_value=metadata_value,
     )
     returned_count = len(items)
     next_offset = resolved_offset + returned_count
@@ -267,6 +278,8 @@ def _checkpoint_page(
             "diagnostic": diagnostic,
             "changed_path": changed_path,
             "checkpoint_id_prefix": checkpoint_id_prefix,
+            "metadata_key": metadata_key,
+            "metadata_value": metadata_value,
         },
     }
 

@@ -140,9 +140,10 @@ Current API surface:
 `checkpoint_ns` is provided, timeline, checkpoint, writes, diff, and debug
 bundle export are scoped to that namespace. Timeline responses use a paginated
 contract: `{ items, pagination, filters }`. The API supports `limit`, `offset`,
-`from_end`, `diagnostic`, and `changed_path`; the UI uses `from_end=true` for
-the first page so large production threads open on the most recent evidence
-without loading the full history.
+`from_end`, `diagnostic`, `changed_path`, `checkpoint_id_prefix`,
+`metadata_key`, and `metadata_value`; the UI uses `from_end=true` for the first
+page so large production threads open on the most recent evidence without
+loading the full history.
 
 `GET /api/threads/{thread_id}/causal-chain` is a deterministic evidence view
 for one diagnostic. It maps the diagnostic id to state paths and write

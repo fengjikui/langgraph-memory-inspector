@@ -11,6 +11,7 @@ from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from lgmi.checkpoint_reader import (
     _channel_from_state_path,
     _checkpoint_id_prefix_filter,
+    _metadata_matches,
     _preview_bytes,
     _preview_value,
     _to_jsonable,
@@ -134,6 +135,8 @@ class PostgresCheckpointReader:
         diagnostic: bool | None = None,
         changed_path: str | None = None,
         checkpoint_id_prefix: str | None = None,
+        metadata_key: str | None = None,
+        metadata_value: str | None = None,
     ) -> list[dict[str, Any]]:
         if offset < 0:
             raise ValueError("offset must be >= 0")
@@ -141,7 +144,7 @@ class PostgresCheckpointReader:
             raise ValueError("limit must be >= 1")
         with self._connect() as conn:
             with conn.cursor() as cur:
-                if diagnostic is not None or changed_path:
+                if diagnostic is not None or changed_path or metadata_key:
                     rows = self._filtered_checkpoint_rows(
                         cur,
                         thread_id,
@@ -149,6 +152,8 @@ class PostgresCheckpointReader:
                         diagnostic=diagnostic,
                         changed_path=changed_path,
                         checkpoint_id_prefix=checkpoint_id_prefix,
+                        metadata_key=metadata_key,
+                        metadata_value=metadata_value,
                     )
                     selected_rows = rows[offset : offset + limit if limit is not None else None]
                     return [
@@ -188,10 +193,12 @@ class PostgresCheckpointReader:
         diagnostic: bool | None = None,
         changed_path: str | None = None,
         checkpoint_id_prefix: str | None = None,
+        metadata_key: str | None = None,
+        metadata_value: str | None = None,
     ) -> int:
         with self._connect() as conn:
             with conn.cursor() as cur:
-                if diagnostic is not None or changed_path:
+                if diagnostic is not None or changed_path or metadata_key:
                     return len(
                         self._filtered_checkpoint_rows(
                             cur,
@@ -200,6 +207,8 @@ class PostgresCheckpointReader:
                             diagnostic=diagnostic,
                             changed_path=changed_path,
                             checkpoint_id_prefix=checkpoint_id_prefix,
+                            metadata_key=metadata_key,
+                            metadata_value=metadata_value,
                         )
                     )
 
@@ -458,6 +467,8 @@ class PostgresCheckpointReader:
         diagnostic: bool | None,
         changed_path: str | None,
         checkpoint_id_prefix: str | None,
+        metadata_key: str | None,
+        metadata_value: str | None,
     ) -> list[dict[str, Any]]:
         namespace_sql, params = self._namespace_filter(checkpoint_ns)
         prefix_sql, prefix_params = _checkpoint_id_prefix_filter(checkpoint_id_prefix, placeholder="%s")
@@ -480,7 +491,14 @@ class PostgresCheckpointReader:
         return [
             row
             for row in rows
-            if self._checkpoint_row_matches(cur, row, diagnostic=diagnostic, changed_channel=changed_channel)
+            if self._checkpoint_row_matches(
+                cur,
+                row,
+                diagnostic=diagnostic,
+                changed_channel=changed_channel,
+                metadata_key=metadata_key,
+                metadata_value=metadata_value,
+            )
         ]
 
     def _checkpoint_row_matches(
@@ -490,7 +508,12 @@ class PostgresCheckpointReader:
         *,
         diagnostic: bool | None,
         changed_channel: str | None,
+        metadata_key: str | None,
+        metadata_value: str | None,
     ) -> bool:
+        metadata = _dict_copy(row["metadata"])
+        if metadata_key and not _metadata_matches(metadata, metadata_key, metadata_value):
+            return False
         item = self._checkpoint_row_to_dict(cur, row, include_checkpoint=True)
         value = item.get("checkpoint", {}).get("value")
         if not isinstance(value, Mapping):

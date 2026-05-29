@@ -37,6 +37,8 @@ class FakeCheckpointReader:
         diagnostic: bool | None = None,
         changed_path: str | None = None,
         checkpoint_id_prefix: str | None = None,
+        metadata_key: str | None = None,
+        metadata_value: str | None = None,
     ) -> list[dict[str, Any]]:
         assert thread_id == "thread-1"
         assert checkpoint_ns in {None, "ns-a"}
@@ -44,6 +46,7 @@ class FakeCheckpointReader:
             {
                 "checkpoint_id": f"checkpoint-{index}",
                 "checkpoint_ns": checkpoint_ns or "",
+                "metadata": {"value": {"source": "retrieval" if index == 5 else "loop", "step": index}},
                 "updated_channels": ["memory_events"] if index == 3 else ["selected_city"],
                 "checkpoint": {"preview": "{}"},
             }
@@ -55,6 +58,12 @@ class FakeCheckpointReader:
             rows = [row for row in rows if "memory_events" in row["updated_channels"]]
         if checkpoint_id_prefix:
             rows = [row for row in rows if row["checkpoint_id"].startswith(checkpoint_id_prefix)]
+        if metadata_key:
+            rows = [
+                row
+                for row in rows
+                if row["metadata"]["value"].get(metadata_key) == metadata_value
+            ]
         if limit is None:
             return rows[offset:]
         return rows[offset : offset + limit]
@@ -67,6 +76,8 @@ class FakeCheckpointReader:
         diagnostic: bool | None = None,
         changed_path: str | None = None,
         checkpoint_id_prefix: str | None = None,
+        metadata_key: str | None = None,
+        metadata_value: str | None = None,
     ) -> int:
         return len(
             self.list_checkpoints(
@@ -75,6 +86,8 @@ class FakeCheckpointReader:
                 diagnostic=diagnostic,
                 changed_path=changed_path,
                 checkpoint_id_prefix=checkpoint_id_prefix,
+                metadata_key=metadata_key,
+                metadata_value=metadata_value,
             )
         )
 
@@ -226,6 +239,9 @@ def test_api_filters_checkpoint_page() -> None:
     diagnostic_payload = client.get("/api/threads/thread-1/checkpoints?diagnostic=true").json()
     changed_payload = client.get("/api/threads/thread-1/checkpoints?changed_path=state.memory_events").json()
     prefix_payload = client.get("/api/threads/thread-1/checkpoints?checkpoint_id_prefix=checkpoint-5").json()
+    metadata_payload = client.get(
+        "/api/threads/thread-1/checkpoints?metadata_key=source&metadata_value=retrieval"
+    ).json()
 
     assert [item["checkpoint_id"] for item in diagnostic_payload["items"]] == ["checkpoint-3", "checkpoint-5"]
     assert diagnostic_payload["pagination"]["total_count"] == 2
@@ -235,6 +251,11 @@ def test_api_filters_checkpoint_page() -> None:
     assert prefix_payload["pagination"]["total_count"] == 1
     assert prefix_payload["pagination"]["unfiltered_total_count"] == 6
     assert prefix_payload["filters"]["checkpoint_id_prefix"] == "checkpoint-5"
+    assert [item["checkpoint_id"] for item in metadata_payload["items"]] == ["checkpoint-5"]
+    assert metadata_payload["pagination"]["total_count"] == 1
+    assert metadata_payload["pagination"]["unfiltered_total_count"] == 6
+    assert metadata_payload["filters"]["metadata_key"] == "source"
+    assert metadata_payload["filters"]["metadata_value"] == "retrieval"
 
 
 def test_api_returns_diagnostic_causal_chain() -> None:
