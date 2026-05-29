@@ -15,6 +15,8 @@ type DetailProps = {
   activeTab: "state" | "diff" | "writes";
   onTabChange: (tab: "state" | "diff" | "writes") => void;
   exportStatus: ExportStatus;
+  exportRedacted: boolean;
+  onExportRedactedChange: (enabled: boolean) => void;
   onExportDebugBundle: () => void;
 };
 
@@ -30,6 +32,8 @@ export function CheckpointDetail({
   activeTab,
   onTabChange,
   exportStatus,
+  exportRedacted,
+  onExportRedactedChange,
   onExportDebugBundle
 }: DetailProps) {
   if (!checkpoint) {
@@ -49,15 +53,27 @@ export function CheckpointDetail({
         </div>
         <div className="detail-actions">
           <code>{checkpoint.node}</code>
+          <label className="redaction-toggle">
+            <input
+              checked={exportRedacted}
+              onChange={(event) => onExportRedactedChange(event.currentTarget.checked)}
+              type="checkbox"
+            />
+            <span>Redact private fields</span>
+          </label>
           <button
             className="export-button"
             disabled={exportStatus.state === "exporting"}
             onClick={onExportDebugBundle}
-            title="Export a shareable debug bundle for this checkpoint"
+            title={
+              exportRedacted
+                ? "Export a redacted debug bundle for this checkpoint"
+                : "Export a raw debug bundle that may contain private state"
+            }
             type="button"
           >
             <Download size={14} />
-            {exportStatus.state === "exporting" ? "Exporting" : "Export"}
+            {exportStatus.state === "exporting" ? "Exporting" : exportRedacted ? "Export redacted" : "Export raw"}
           </button>
         </div>
       </div>
@@ -73,6 +89,14 @@ export function CheckpointDetail({
             {exportStatus.result.diagnosticIds.length > 0 ? (
               <> · {exportStatus.result.diagnosticIds.join(", ")}</>
             ) : null}
+          </span>
+          <span>
+            Redaction: <strong>{exportStatus.result.redactionMode}</strong>
+            {exportStatus.result.redactionMode === "redacted" ? (
+              <> · {exportStatus.result.redactionCount} path(s)</>
+            ) : (
+              <> · may contain private state</>
+            )}
           </span>
         </div>
       ) : null}

@@ -127,9 +127,10 @@ The e2e test uses `VITE_LGMI_API_MODE=mock`, opens the inspector, clicks the
 
 ## Export A Debug Bundle
 
-When you find a suspicious checkpoint, click **Export** in the checkpoint detail
-panel to create an explicit JSON bundle that can be attached to an issue, pull
-request, or teammate handoff.
+When you find a suspicious checkpoint, keep **Redact private fields** enabled
+and click **Export redacted** in the checkpoint detail panel to create an
+explicit JSON bundle that can be attached to an issue, pull request, or
+teammate handoff.
 
 You can also export the same bundle from the CLI:
 
@@ -137,6 +138,7 @@ You can also export the same bundle from the CLI:
 uv run lgmi export-debug-bundle examples/relocation_policy_agent/data/checkpoints.sqlite \
   --thread-id relocation-demo-user-001 \
   --checkpoint-id <checkpoint-id> \
+  --redact \
   --output-dir exports
 ```
 
@@ -154,6 +156,25 @@ The inspector never exports automatically. Files are created only after the UI
 button, this CLI command, or the `POST /api/exports/debug-bundle` API action.
 Generated bundles are written under `exports/`, ignored by git, and safe to
 delete after you share or archive the evidence.
+
+Redacted exports mask common private fields such as message `content`,
+`evidence`, prompts, tokens, passwords, emails, and phone-like strings while
+keeping structural fields such as checkpoint ids, state paths, diagnostics, and
+write channels useful for debugging. The CLI also supports advanced path
+controls:
+
+```bash
+uv run lgmi export-debug-bundle examples/relocation_policy_agent/data/checkpoints.sqlite \
+  --thread-id relocation-demo-user-001 \
+  --checkpoint-id <checkpoint-id> \
+  --redact \
+  --redact-path selected_checkpoint.checkpoint.value.channel_values.selected_city \
+  --keep-path selected_checkpoint.checkpoint.value.channel_values.memory_events
+```
+
+Raw exports remain available with `--redaction-mode raw` or by disabling the UI
+checkbox, but raw bundles may contain private checkpoint state. Do not share raw
+bundles publicly without reviewing them first.
 
 ## Current Scope
 
@@ -186,7 +207,8 @@ Planned next steps:
 - Postgres support targets the full historical `PostgresSaver` schema. It does
   not target `ShallowPostgresSaver` yet.
 - The inspector is local-first and read-only for checkpoint stores, but exported
-  debug bundles can contain private state. Redact before sharing publicly.
+  raw debug bundles can contain private state. Use redacted exports before
+  sharing publicly.
 
 ## Optional Postgres Inspection
 

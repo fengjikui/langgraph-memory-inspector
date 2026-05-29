@@ -34,6 +34,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<ViewerTab>("state");
   const [selectedDiagnostic, setSelectedDiagnostic] = useState<Diagnostic>();
   const [exportStatus, setExportStatus] = useState<ExportStatus>({ state: "idle" });
+  const [exportRedacted, setExportRedacted] = useState(true);
 
   useEffect(() => {
     async function loadShell() {
@@ -109,7 +110,8 @@ function App() {
       const result = await inspectorApi.exportDebugBundle(
         selectedThreadId,
         selectedCheckpointId,
-        selectedNamespace
+        selectedNamespace,
+        exportRedacted ? "redacted" : "raw"
       );
       setExportStatus({ state: "success", result });
     } catch (error) {
@@ -168,6 +170,11 @@ function App() {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           exportStatus={exportStatus}
+          exportRedacted={exportRedacted}
+          onExportRedactedChange={(enabled) => {
+            setExportRedacted(enabled);
+            setExportStatus({ state: "idle" });
+          }}
           onExportDebugBundle={exportSelectedCheckpoint}
         />
       </main>

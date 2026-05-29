@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import json
 import sqlite3
 from pathlib import Path
@@ -58,6 +59,58 @@ def test_build_debug_bundle_rejects_unknown_checkpoint(tmp_path: Path) -> None:
         raise AssertionError("Expected missing checkpoint to raise ValueError")
 
 
+def test_redacted_debug_bundle_masks_private_fields_without_mutating_db(tmp_path: Path) -> None:
+    db_path = _write_demo_db(tmp_path)
+    before_hash = _sha256(db_path)
+    reader = SQLiteCheckpointReader(db_path)
+    checkpoint_id = _checkpoint_with_second_memory_write(reader)
+
+    result = export_debug_bundle(
+        reader,
+        thread_id=THREAD_ID,
+        checkpoint_id=checkpoint_id,
+        output_dir=tmp_path / "exports",
+        redaction_mode="redacted",
+        redact_paths=["selected_checkpoint.checkpoint.value.channel_values.selected_city"],
+    )
+
+    assert _sha256(db_path) == before_hash
+    assert result["redaction_mode"] == "redacted"
+    assert result["redaction_count"] > 0
+    assert "selected_checkpoint.checkpoint.value.channel_values.selected_city" in result["redacted_paths"]
+
+    bundle = json.loads(Path(result["path"]).read_text(encoding="utf-8"))
+    state = bundle["selected_checkpoint"]["checkpoint"]["value"]["channel_values"]
+    serialized = json.dumps(bundle, ensure_ascii=False)
+
+    assert bundle["privacy"]["redaction_mode"] == "redacted"
+    assert state["selected_city"] == "[REDACTED]"
+    assert state["memory_events"][-1]["value"] == "Hangzhou"
+    assert state["memory_events"][-1]["evidence"] == "[REDACTED]"
+    assert "I moved to Hangzhou last week" not in serialized
+
+
+def test_redacted_debug_bundle_can_keep_explicit_paths(tmp_path: Path) -> None:
+    db_path = _write_demo_db(tmp_path)
+    reader = SQLiteCheckpointReader(db_path)
+    checkpoint_id = _checkpoint_with_second_memory_write(reader)
+
+    bundle = build_debug_bundle(
+        reader,
+        thread_id=THREAD_ID,
+        checkpoint_id=checkpoint_id,
+        redaction_mode="redacted",
+        keep_paths=["selected_checkpoint.checkpoint.value.channel_values.memory_events"],
+    )
+
+    state = bundle["selected_checkpoint"]["checkpoint"]["value"]["channel_values"]
+    assert state["memory_events"][-1]["evidence"] == "I moved to Hangzhou last week. Please remember that."
+    assert not any(
+        path.startswith("selected_checkpoint.checkpoint.value.channel_values.memory_events")
+        for path in bundle["privacy"]["redacted_paths"]
+    )
+
+
 def test_cli_export_debug_bundle_reports_path_and_size(tmp_path: Path, capsys) -> None:
     db_path = _write_demo_db(tmp_path)
     reader = SQLiteCheckpointReader(db_path)
@@ -81,8 +134,38 @@ def test_cli_export_debug_bundle_reports_path_and_size(tmp_path: Path, capsys) -
     assert exit_code == 0
     assert "Debug bundle:" in output
     assert "File size:" in output
+    assert "Redaction: raw" in output
     assert "conflicting_residence_memory" in output
     assert list(output_dir.glob("lgmi-debug-*.json"))
+
+
+def test_cli_export_debug_bundle_can_redact(tmp_path: Path, capsys) -> None:
+    db_path = _write_demo_db(tmp_path)
+    reader = SQLiteCheckpointReader(db_path)
+    checkpoint_id = _checkpoint_with_second_memory_write(reader)
+    output_dir = tmp_path / "cli-redacted-exports"
+
+    exit_code = main(
+        [
+            "export-debug-bundle",
+            str(db_path),
+            "--thread-id",
+            THREAD_ID,
+            "--checkpoint-id",
+            checkpoint_id,
+            "--output-dir",
+            str(output_dir),
+            "--redact",
+        ]
+    )
+
+    output = capsys.readouterr().out
+    bundle_path = next(output_dir.glob("lgmi-debug-*.json"))
+    bundle = json.loads(bundle_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert "Redaction: redacted" in output
+    assert bundle["privacy"]["redaction_mode"] == "redacted"
 
 
 def _write_demo_db(tmp_path: Path) -> Path:
@@ -131,3 +214,7 @@ def _checkpoint_with_second_memory_write(reader: SQLiteCheckpointReader) -> str:
         ):
             return str(checkpoint_id)
     raise AssertionError("No checkpoint with a second memory_events write found")
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()

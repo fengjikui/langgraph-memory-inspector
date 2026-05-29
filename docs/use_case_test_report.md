@@ -83,13 +83,14 @@ cd web && npm run test:e2e
 
 ## 可分享调试证据包
 
-最新实现新增显式 debug bundle 导出。用户可以在 checkpoint detail 里点击
-`Export`，也可以使用 CLI：
+最新实现新增显式 debug bundle 导出。用户可以在 checkpoint detail 里保持
+`Redact private fields` 开启并点击 `Export redacted`，也可以使用 CLI：
 
 ```bash
 uv run lgmi export-debug-bundle examples/relocation_policy_agent/data/checkpoints.sqlite \
   --thread-id relocation-demo-user-001 \
   --checkpoint-id <checkpoint-id> \
+  --redact \
   --output-dir exports
 ```
 
@@ -105,7 +106,9 @@ diagnostics 和复现备注。
 - 对应 checkpoint 的 `memory_events` 写入
 
 导出动作不会自动发生，必须由 UI、CLI 或 API 显式触发。生成文件位于
-`exports/`，已被 git ignore，可以在分享或归档后直接删除。
+`exports/`，已被 git ignore，可以在分享或归档后直接删除。redacted bundle
+会保留 checkpoint id、state path、diagnostic、write channel 等调试结构，同时
+遮住 message content、evidence、token、email、phone-like string 等容易泄露的值。
 
 ## 剩余展示缺口
 

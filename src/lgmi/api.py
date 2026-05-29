@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,6 +18,9 @@ class DebugBundleRequest(BaseModel):
     checkpoint_id: str
     checkpoint_ns: str | None = None
     context: int = Field(default=2, ge=0, le=20)
+    redaction_mode: Literal["raw", "redacted"] = "raw"
+    redact_paths: list[str] = Field(default_factory=list)
+    keep_paths: list[str] = Field(default_factory=list)
 
 
 def create_app(source: str | Path | CheckpointReader) -> FastAPI:
@@ -111,6 +114,9 @@ def create_app(source: str | Path | CheckpointReader) -> FastAPI:
                 checkpoint_id=request.checkpoint_id,
                 checkpoint_ns=request.checkpoint_ns,
                 context=request.context,
+                redaction_mode=request.redaction_mode,
+                redact_paths=request.redact_paths,
+                keep_paths=request.keep_paths,
             )
         )
 

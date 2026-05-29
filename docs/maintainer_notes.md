@@ -215,3 +215,24 @@
 已验证：
 
 - YAML issue forms 结构检查和文档一致性检查在提交前执行。
+
+### Redacted debug bundle export
+
+用户价值改进：
+
+- debug bundle 支持 `raw` / `redacted` 两种导出模式。
+- CLI 新增 `--redact`、`--redaction-mode`、`--redact-path`、`--keep-path`。
+- API request 支持 `redaction_mode`、`redact_paths`、`keep_paths`，response 返回 redaction mode、redacted paths 和 redaction count。
+- UI 默认开启 `Redact private fields`，导出按钮显示 `Export redacted`，导出结果会标明 redaction 状态。
+- 默认 redaction 会遮住 message `content`、`evidence`、prompt/text/input/output、secret/token/password 类字段，以及字符串里的 email、phone-like string 和常见 token。
+
+为什么重要：
+
+- debug bundle 的价值在于分享证据，但真实 checkpoint state 可能包含用户消息和隐私字段。redacted export 让“把问题发给同事或 issue”更接近真实生产流程。
+- 结构性字段仍然保留，例如 checkpoint id、state path、write channel、diagnostic id。这样 bundle 既能保护隐私，又不会失去调试价值。
+
+已验证：
+
+- redacted export 不修改原 SQLite checkpoint DB。
+- CLI、API、UI mock path 都能请求 redacted export。
+- 完整测试和 CI 在提交前执行。

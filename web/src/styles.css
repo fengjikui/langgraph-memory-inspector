@@ -420,6 +420,21 @@ pre {
   gap: 8px;
 }
 
+.redaction-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #48566a;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.redaction-toggle input {
+  width: 14px;
+  height: 14px;
+  accent-color: #0f766e;
+}
+
 .export-button {
   display: inline-flex;
   align-items: center;

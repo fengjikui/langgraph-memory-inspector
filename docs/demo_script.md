@@ -141,16 +141,18 @@ Narrate the debugging path:
 8. Move to the final answer checkpoint and show `selected_city=Shanghai`.
 9. Explain the root cause: the newest memory is Hangzhou, but retrieval used the
    oldest memory.
-10. Click `Export`.
+10. Keep `Redact private fields` enabled and click `Export redacted`.
 11. Show that the UI reports the exported bundle path, file size, and diagnostic
     ids.
+12. Point out the redaction status so the interviewer sees that shareable
+    evidence does not require exposing raw checkpoint state.
 
 Say:
 
 "The value of the tool is not just showing JSON. It connects the final bad
 answer to the checkpoint where the bad state became visible, then points to the
 node/write path that made it happen. Export turns that local diagnosis into a
-shareable artifact for a teammate, issue, or PR."
+shareable, redacted artifact for a teammate, issue, or PR."
 
 ## 5:30-6:45 - Show The Fix Direction
 

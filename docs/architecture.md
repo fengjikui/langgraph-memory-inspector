@@ -143,8 +143,10 @@ remains simple and keeps the previous all-checkpoints behavior.
 `POST /api/exports/debug-bundle` is an explicit user action. It writes a JSON
 artifact under `exports/` with database summary, thread/checkpoint metadata,
 timeline context, selected checkpoint state, incoming writes, diagnostics, and
-reproduction notes. The response returns the generated path and file size so
-the UI can make the artifact visible instead of silently writing files.
+reproduction notes. The request accepts `redaction_mode`, `redact_paths`, and
+`keep_paths`; the response returns the generated path, file size, redaction
+mode, and redacted paths so the UI can make the artifact visible instead of
+silently writing files.
 
 The backend should never require an OpenAI key to inspect checkpoints. Optional
 LLM features can be layered later, but the MVP diagnostic path should remain

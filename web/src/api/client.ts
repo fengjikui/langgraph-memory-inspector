@@ -118,14 +118,16 @@ export const inspectorApi = {
   async exportDebugBundle(
     threadId: string,
     checkpointId: string,
-    checkpointNs?: string
+    checkpointNs?: string,
+    redactionMode: "raw" | "redacted" = "redacted"
   ): Promise<DebugBundleExportResult> {
     const raw = await postJson<Record<string, unknown>>("/api/exports/debug-bundle", {
       thread_id: threadId,
       checkpoint_id: checkpointId,
-      checkpoint_ns: checkpointNs
+      checkpoint_ns: checkpointNs,
+      redaction_mode: redactionMode
     });
-    return raw ? normalizeExportResult(raw) : mockExportResult(threadId, checkpointId, checkpointNs);
+    return raw ? normalizeExportResult(raw) : mockExportResult(threadId, checkpointId, checkpointNs, redactionMode);
   }
 };
 
@@ -254,11 +256,19 @@ function normalizeExportResult(raw: Record<string, unknown>): DebugBundleExportR
     fileSizeBytes: Number(raw.file_size_bytes ?? 0),
     threadId: String(raw.thread_id ?? ""),
     checkpointId: String(raw.checkpoint_id ?? ""),
-    diagnosticIds: asStringArray(raw.diagnostic_ids)
+    diagnosticIds: asStringArray(raw.diagnostic_ids),
+    redactionMode: raw.redaction_mode === "raw" ? "raw" : "redacted",
+    redactedPaths: asStringArray(raw.redacted_paths),
+    redactionCount: Number(raw.redaction_count ?? 0)
   };
 }
 
-function mockExportResult(threadId: string, checkpointId: string, checkpointNs?: string): DebugBundleExportResult {
+function mockExportResult(
+  threadId: string,
+  checkpointId: string,
+  checkpointNs: string | undefined,
+  redactionMode: "raw" | "redacted"
+): DebugBundleExportResult {
   const diagnostics =
     (mockCheckpoints[mockCheckpointKey(threadId, checkpointNs)] ?? mockCheckpoints[threadId])
       ?.find((checkpoint) => checkpoint.id === checkpointId)
@@ -268,7 +278,10 @@ function mockExportResult(threadId: string, checkpointId: string, checkpointNs?:
     fileSizeBytes: 21946,
     threadId,
     checkpointId,
-    diagnosticIds: diagnostics.length > 0 ? diagnostics : ["conflicting_residence_memory"]
+    diagnosticIds: diagnostics.length > 0 ? diagnostics : ["conflicting_residence_memory"],
+    redactionMode,
+    redactedPaths: redactionMode === "redacted" ? ["selected_checkpoint.checkpoint.value.channel_values.messages[0].content"] : [],
+    redactionCount: redactionMode === "redacted" ? 7 : 0
   };
 }
 

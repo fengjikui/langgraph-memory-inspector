@@ -24,6 +24,8 @@ Use this before making the repository public or announcing a release candidate.
 - [ ] `uv run python scripts/use_case_smoke.py --reset-demo` passes.
 - [ ] Diagnostic click opens Writes and highlights `state.memory_events`.
 - [ ] Debug bundle export shows path, file size, and diagnostic ids.
+- [ ] Redacted debug bundle export records redaction mode and masks private
+  message/evidence fields without modifying the checkpoint store.
 - [ ] Namespace selector is visible for multi-namespace threads and switching
   namespaces changes the timeline without changing thread context.
 

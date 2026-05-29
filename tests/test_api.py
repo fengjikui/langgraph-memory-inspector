@@ -46,7 +46,21 @@ class FakeCheckpointReader:
         return {
             "checkpoint_id": checkpoint_id,
             "checkpoint_ns": checkpoint_ns or "",
-            "checkpoint": {"value": {"channel_values": {"selected_city": "Hangzhou"}}},
+            "checkpoint": {
+                "value": {
+                    "channel_values": {
+                        "selected_city": "Hangzhou",
+                        "messages": [{"role": "user", "content": "email me at user@example.com"}],
+                        "memory_events": [
+                            {
+                                "type": "residence_city",
+                                "value": "Hangzhou",
+                                "evidence": "My phone is +1 415 555 0199.",
+                            }
+                        ],
+                    }
+                }
+            },
         }
 
     def list_writes(
@@ -96,7 +110,12 @@ def test_api_exports_debug_bundle_only_when_requested(tmp_path: Path, monkeypatc
     assert not (tmp_path / "exports").exists()
     response = client.post(
         "/api/exports/debug-bundle",
-        json={"thread_id": "thread-1", "checkpoint_id": "checkpoint-1", "checkpoint_ns": "ns-a"},
+        json={
+            "thread_id": "thread-1",
+            "checkpoint_id": "checkpoint-1",
+            "checkpoint_ns": "ns-a",
+            "redaction_mode": "redacted",
+        },
     )
 
     assert response.status_code == 200
@@ -104,6 +123,9 @@ def test_api_exports_debug_bundle_only_when_requested(tmp_path: Path, monkeypatc
     assert payload["thread_id"] == "thread-1"
     assert payload["checkpoint_id"] == "checkpoint-1"
     assert payload["checkpoint_ns"] == "ns-a"
+    assert payload["redaction_mode"] == "redacted"
+    assert payload["redaction_count"] > 0
     assert payload["file_size_bytes"] > 0
     assert Path(payload["path"]).exists()
     assert Path(payload["path"]).parent == tmp_path / "exports"
+    assert "user@example.com" not in Path(payload["path"]).read_text(encoding="utf-8")

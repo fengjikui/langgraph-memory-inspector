@@ -95,4 +95,7 @@ export type DebugBundleExportResult = {
   threadId: string;
   checkpointId: string;
   diagnosticIds: string[];
+  redactionMode: "raw" | "redacted";
+  redactedPaths: string[];
+  redactionCount: number;
 };

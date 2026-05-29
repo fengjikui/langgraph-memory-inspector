@@ -68,6 +68,29 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     )
     export_parser.add_argument("--output-dir", default="exports")
     export_parser.add_argument("--context", default=2, type=int)
+    export_parser.add_argument(
+        "--redact",
+        action="store_true",
+        help="Export a redacted bundle using the default privacy denylist.",
+    )
+    export_parser.add_argument(
+        "--redaction-mode",
+        choices=["raw", "redacted"],
+        default=None,
+        help="Choose raw or redacted export output. Overrides --redact.",
+    )
+    export_parser.add_argument(
+        "--redact-path",
+        action="append",
+        default=[],
+        help="Additional dot path to redact. Can be passed multiple times.",
+    )
+    export_parser.add_argument(
+        "--keep-path",
+        action="append",
+        default=[],
+        help="Dot path to keep even in redacted mode. Can be passed multiple times.",
+    )
     return parser.parse_args(argv)
 
 
@@ -100,6 +123,7 @@ def _run_export_debug_bundle(args: argparse.Namespace) -> int:
         print(f"Checkpoint database not found: {db_path}", file=sys.stderr)
         return 2
 
+    redaction_mode = args.redaction_mode or ("redacted" if args.redact else "raw")
     result = export_debug_bundle(
         SQLiteCheckpointReader(db_path),
         thread_id=args.thread_id,
@@ -107,9 +131,16 @@ def _run_export_debug_bundle(args: argparse.Namespace) -> int:
         checkpoint_ns=args.checkpoint_ns,
         output_dir=args.output_dir,
         context=args.context,
+        redaction_mode=redaction_mode,
+        redact_paths=args.redact_path,
+        keep_paths=args.keep_path,
     )
     print(f"Debug bundle: {result['path']}")
     print(f"File size: {result['file_size_bytes']} bytes")
+    print(
+        f"Redaction: {result['redaction_mode']}"
+        f" ({result['redaction_count']} path(s) redacted)"
+    )
     print(f"Diagnostics: {', '.join(str(item) for item in result['diagnostic_ids'])}")
     return 0
 
