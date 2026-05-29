@@ -77,6 +77,7 @@ def test_doctor_json_report_is_machine_readable(capsys: Any) -> None:
 
 def test_doctor_prefers_build_ui_when_dist_is_missing(monkeypatch: Any, capsys: Any) -> None:
     monkeypatch.setattr(cli, "_resolve_ui_dir", lambda ui_dir: None)
+    monkeypatch.setattr(cli, "_add_command_check", _add_ok_command_check)
 
     result = cli.main(["doctor", "--json"])
 
@@ -87,6 +88,10 @@ def test_doctor_prefers_build_ui_when_dist_is_missing(monkeypatch: Any, capsys: 
         check["name"] == "Built web UI" and check["status"] == "WARN"
         for check in report["checks"]
     )
+
+
+def _add_ok_command_check(checks: list[dict[str, str]], label: str, command: str) -> None:
+    checks.append({"status": "OK", "name": label, "detail": f"{command} available"})
 
 
 def test_doctor_json_report_preserves_error_exit(monkeypatch: Any, capsys: Any) -> None:
