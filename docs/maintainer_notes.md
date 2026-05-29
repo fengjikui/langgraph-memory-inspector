@@ -451,7 +451,7 @@
 - `cd web && npm run build`
 - `cd web && npm run test:e2e`
 - `uv build`
-- `uv run python scripts/use_case_smoke.py --reset-demo`
+- `uv run lgmi prove-demo --reset-demo`
 - `ruby -e 'require "yaml"; Dir[".github/ISSUE_TEMPLATE/*.yml"].each { |path| YAML.load_file(path); puts "OK #{path}" }'`
 
 ### Postgres confidence mini-pack

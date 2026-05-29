@@ -1,77 +1,81 @@
 # v0.1.0 Release Candidate Audit
 
 Date: 2026-05-29
+Last refreshed: 2026-05-29 after repository was made public
 
 ## Summary
 
-The v0.1.0 release candidate is technically close to public launch: the demo,
-tests, CI, docs, fixture policy, and launch materials are in place. The main
-remaining launch blocker is repository visibility: the GitHub repository is
-currently private, so public launch posts and unauthenticated clone instructions
-are not valid yet.
+The v0.1.0 release candidate is publicly reachable and technically ready for the
+first feedback-oriented launch. The demo, tests, CI, fixture policy, release
+notes, and community launch materials are in place. The remaining launch gate is
+manual/community-facing: upload the GitHub social preview image and then post
+the prepared LangChain Forum thread.
 
 ## Current Evidence
 
 - Repository: `https://github.com/fengjikui/langgraph-memory-inspector`
 - Default branch: `main`
-- Visibility at audit time: private
-- Latest audited commit before this RC pass: `bd4946e`
-- Latest green CI before this RC pass:
-  `https://github.com/fengjikui/langgraph-memory-inspector/actions/runs/26634357989`
-- Fresh-clone audit:
+- Current visibility: public (`gh repo view` reports `PUBLIC`)
+- Latest audited commit: `59f34a3`
+- Latest green CI:
+  `https://github.com/fengjikui/langgraph-memory-inspector/actions/runs/26640706354`
+- Public fresh-clone audit:
   `docs/quickstart_audit_2026-05-29.md`
 - Fixture policy: `docs/fixture_policy.md`
 - Diagnostic matrix: `docs/diagnostic_matrix.md`
 - Launch playbook: `docs/community_launch_playbook.md`
+- Forum launch draft: `docs/langchain_forum_launch_post.md`
 - Draft release notes: `docs/release_notes_v0.1.0.md`
 
 ## Gate Review
 
 | Gate | Status | Evidence |
 | --- | --- | --- |
-| Repository visibility intentionally set | Blocked | `gh repo view` reports `PRIVATE`; public launch requires maintainer approval and is tracked in #19. |
+| Repository visibility intentionally set | Pass | `gh repo view fengjikui/langgraph-memory-inspector --json visibility` reports `PUBLIC`. |
 | License and contribution docs | Pass | `LICENSE`, `CONTRIBUTING.md`, and README links exist. |
 | Known limitations | Pass | README documents namespace, pagination, diagnostic, Postgres, and privacy boundaries. |
 | Issue templates | Pass | Bug, checkpoint bug pattern, and feature/diagnostic request forms exist. |
 | Fixture privacy policy | Pass | README, CONTRIBUTING, issue template, and launch playbook link to `docs/fixture_policy.md`. |
 | Generated artifacts ignored | Pass | `.gitignore` covers demo SQLite files, exports, package builds, web build output, and test artifacts. |
-| Open roadmap issues | Pass | #16 tracks node-level causal chain; #18 tracks release-candidate readiness during this pass. |
-| CI green on main | Pass | Latest checked main CI before this pass was green. |
-| Fresh-clone quickstart | Pass with condition | Private repo required authenticated clone; otherwise README quickstart passed in the audit. |
+| Open feedback loop | Pass | #20 is open for real checkpoint bug patterns; #23 tracks the remaining social preview upload. |
+| CI green on main | Pass | Latest checked main CI is green at run `26640706354`. |
+| Public fresh-clone quickstart | Pass | HTTPS clone, `uv sync`, `lgmi doctor --skip-web`, and `lgmi prove-demo --reset-demo --json` pass from `/tmp/lgmi-public-quickstart-audit-20260529`. |
 | Demo GIF | Pass | `docs/assets/stale-memory-debugging-demo.gif` exists. |
-| Product smoke test | Pass | `uv run lgmi prove-demo --reset-demo` passes locally. |
-| Diagnostic click e2e | Pass | `npm run test:e2e` covers diagnostic click and writes highlight. |
+| Product proof CLI | Pass | `uv run lgmi prove-demo --reset-demo --json` proves the stale-memory path and excludes raw evidence payloads. |
+| Diagnostic click e2e | Pass | `npm run test:e2e` covers diagnostic click, Writes highlight, causal chain, and redacted export. |
 | Redacted debug bundle | Pass | Tests cover redaction and non-mutating export behavior. |
-| Namespace selector | Pass | README, API tests, reader tests, and UI code cover namespace switching. |
+| Namespace selector | Pass | README, API tests, reader tests, and UI/e2e code cover namespace switching. |
 | Timeline pagination | Pass | API and UI tests cover the paginated timeline contract. |
 | Safe fixture regression | Pass | `tests/test_fixtures.py` validates fixture metadata and matrix alignment. |
-| Postgres confidence | Pass | CI includes a real PostgresSaver integration job. |
-| Launch assets | Pass | Community launch playbook includes English, Chinese, HN, Reddit, LangChain, X, and OpenClaw drafts. |
+| Postgres confidence | Pass | CI includes a real PostgresSaver integration job, and README documents `scripts/postgres_confidence.py`. |
+| Launch assets | Pass | Community launch playbook, public launch packet, and Forum draft are present. |
+
+## Current Launch Gates
+
+- [x] Repository is public.
+- [x] Main CI is green.
+- [x] Public fresh-clone proof path passes.
+- [x] GitHub feedback issue #20 is open.
+- [x] LangChain Forum launch draft is ready.
+- [ ] GitHub social preview asset still needs manual upload in repository
+  Settings; tracked in #23.
+- [ ] LangChain Forum post has not been posted yet.
 
 ## CI Annotation Decision
 
 Previous CI runs emitted GitHub Actions Node 20 deprecation annotations even
-though the workflow forced JavaScript actions onto Node 24. The RC pass upgrades
-the workflow to actions whose metadata uses `node24`:
+though the workflow forced JavaScript actions onto Node 24. The workflow now
+uses actions whose metadata targets Node 24:
 
 - `actions/checkout@v6.0.2`
 - `actions/setup-node@v6.4.0`
 - `astral-sh/setup-uv@v8.1.0`
 
-The release-candidate commit must pass CI after this upgrade. If annotations
-remain, they should be tracked as a non-blocking GitHub Actions ecosystem issue
-only if the jobs are green.
-
-## Remaining Launch Blockers
-
-- Public repository visibility still needs explicit maintainer approval and is
-  tracked in #19.
-- #16 remains the next meaningful product improvement, but it is not required
-  for the first v0.1.0 release candidate because the current demo flow is
-  already runnable, tested, and documented.
+The current main CI run is green with Python tests, the `lgmi prove-demo` proof
+CLI, Web build/e2e, and real PostgresSaver integration.
 
 ## Recommendation
 
-After the RC commit passes CI, the project can be treated as a private release
-candidate. Public launch should wait until the maintainer intentionally switches
-the repository to public and confirms the launch post timing.
+Proceed with the first feedback-oriented launch after uploading the GitHub
+social preview image. The first external post should be the prepared LangChain
+Forum / LangGraph category draft, with #20 as the feedback home base.

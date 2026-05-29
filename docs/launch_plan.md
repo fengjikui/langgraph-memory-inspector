@@ -13,7 +13,7 @@ demo locally.
 - Deterministic relocation-policy LangGraph demo.
 - Local SQLite inspector path.
 - Read-only PostgresSaver reader with CI-backed Postgres integration.
-- Use-case smoke test proving the stale-memory evidence chain.
+- `lgmi prove-demo` product proof command for the stale-memory evidence chain.
 - Explicit debug bundle export for teammate, issue, and PR handoff.
 - Community launch playbook with channel-specific drafts and feedback prompts
   in `docs/community_launch_playbook.md`.
@@ -112,3 +112,5 @@ The first public release candidate is ready when:
 - The next user-centered product issue is explicit, even if only one or two
   issues remain open after the release-candidate cleanup.
 - The repo has license, contribution notes, and clear known limitations.
+- The GitHub social preview image has been uploaded before broad social
+  posting.

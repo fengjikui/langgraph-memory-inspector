@@ -2,7 +2,7 @@
 
 This script is designed for a 5-8 minute interview demo. The current MVP has a
 real LangGraph demo, a local FastAPI checkpoint reader, a React inspector UI,
-and a use-case smoke test that verifies the stale-memory debugging path.
+and a product proof command that verifies the stale-memory debugging path.
 
 ## Setup Before The Call
 

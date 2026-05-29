@@ -196,7 +196,7 @@ docker stop lgmi-postgres-confidence
 
 ## Verify The Product Value
 
-Run the real use-case smoke test:
+Run the product proof command:
 
 ```bash
 uv run lgmi prove-demo --reset-demo
