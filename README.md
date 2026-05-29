@@ -114,6 +114,24 @@ uv run python examples/relocation_policy_agent/run_demo.py --reset
 uv run lgmi inspect examples/relocation_policy_agent/data/checkpoints.sqlite --no-browser --port 8765
 ```
 
+## Inspect Your Own SQLite Checkpoint DB
+
+Before opening a private checkpoint copy, validate the file shape locally:
+
+```bash
+uv run lgmi doctor --sqlite-db ./checkpoints.sqlite
+```
+
+If the report is ready, start the inspector with the built UI:
+
+```bash
+uv run lgmi inspect ./checkpoints.sqlite --build-ui
+```
+
+The SQLite doctor report includes counts, namespaces, and file health only. It
+does not include checkpoint state, message content, prompts, tokens, or raw
+database rows.
+
 ## Verify The Product Value
 
 Run the real use-case smoke test:

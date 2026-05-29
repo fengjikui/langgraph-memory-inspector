@@ -104,6 +104,13 @@ uv run lgmi doctor
 uv run lgmi demo --build-ui
 ```
 
+To try it on your own local SQLite checkpoint copy:
+
+```bash
+uv run lgmi doctor --sqlite-db ./checkpoints.sqlite
+uv run lgmi inspect ./checkpoints.sqlite --build-ui
+```
+
 Repo:
 https://github.com/fengjikui/langgraph-memory-inspector
 
@@ -229,6 +236,13 @@ uv run lgmi doctor
 uv run lgmi demo --build-ui
 ```
 
+如果想先检查自己的 SQLite checkpoint 文件：
+
+```bash
+uv run lgmi doctor --sqlite-db ./checkpoints.sqlite
+uv run lgmi inspect ./checkpoints.sqlite --build-ui
+```
+
 现在支持：
 
 - SQLite checkpoint DB
@@ -316,6 +330,12 @@ Demo startup issue:
 
 ```text
 Thanks for trying it. Could you run `uv run lgmi doctor --issue` from the repo root and paste the generated Markdown into the issue? It checks the demo checkpoint, API reader, Node.js/npm, and web dependency state without asking for any private checkpoint data.
+```
+
+Own SQLite DB issue:
+
+```text
+Thanks for the report. Could you run `uv run lgmi doctor --sqlite-db ./checkpoints.sqlite --issue` against your local copy and paste the generated Markdown? It includes file health, counts, and namespaces, but not checkpoint state or message content.
 ```
 
 LangSmith / Studio comparison:

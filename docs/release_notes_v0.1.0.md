@@ -46,6 +46,13 @@ uv run lgmi demo --build-ui
 
 Open `http://127.0.0.1:8765/`.
 
+Inspect your own local SQLite checkpoint copy:
+
+```bash
+uv run lgmi doctor --sqlite-db ./checkpoints.sqlite
+uv run lgmi inspect ./checkpoints.sqlite --build-ui
+```
+
 ## Highlights
 
 - Local SQLite checkpoint inspection.

@@ -15,6 +15,10 @@ body:
         loading, please run `uv run lgmi doctor --issue` and paste the report
         below. The report contains environment and demo health checks only, not
         checkpoint state or message content.
+
+        If the bug appears only with your own SQLite checkpoint copy, run
+        `uv run lgmi doctor --sqlite-db ./checkpoints.sqlite --issue` instead.
+        It reports file health and counts without including checkpoint state.
   - type: dropdown
     id: surface
     attributes:
@@ -51,7 +55,7 @@ body:
     id: doctor
     attributes:
       label: Doctor report
-      description: Paste `uv run lgmi doctor --issue` output for quickstart, demo, dependency, or web UI startup problems.
+      description: Paste `uv run lgmi doctor --issue` output for quickstart/demo issues, or `uv run lgmi doctor --sqlite-db ./checkpoints.sqlite --issue` for SQLite DB issues.
   - type: textarea
     id: expected
     attributes:

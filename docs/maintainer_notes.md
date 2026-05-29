@@ -408,3 +408,22 @@
 
 - `uv run pytest tests/test_cli.py -q`
 - `uv run lgmi demo --help`
+
+### SQLite DB doctor path
+
+用户价值改进：
+
+- `lgmi doctor --sqlite-db ./checkpoints.sqlite` 会只读检查用户自己的 SQLite checkpoint 文件，报告文件是否存在、checkpoint/write/thread 计数、diagnostic 计数和 namespace 列表。
+- 报告不包含 checkpoint state、message content、prompts、tokens、raw database rows，也不会默认暴露 thread id。
+- `lgmi inspect ./checkpoints.sqlite --build-ui` 让用户自己的 DB 也能一条命令启动完整 UI，不再只对 demo 有单服务体验。
+- Bug report template 和 launch reply template 增加 SQLite DB doctor 路径。
+
+为什么重要：
+
+- Demo 能跑起来只是 adoption 的第一步。真正采用发生在用户把自己的 checkpoint store 接进来，并且能快速判断“是我的 DB 形状不对，还是 inspector 有 bug”。
+- SQLite doctor 给维护者和用户一个共享的安全诊断边界，减少来回追问，也降低误贴生产状态的风险。
+
+已验证：
+
+- `uv run lgmi doctor --skip-demo --skip-web --sqlite-db examples/relocation_policy_agent/data/checkpoints.sqlite --json`
+- `uv run pytest tests/test_cli.py -q`

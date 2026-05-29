@@ -55,6 +55,11 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="store_true",
         help="Skip Node.js, npm, and web UI dependency checks.",
     )
+    doctor_parser.add_argument(
+        "--sqlite-db",
+        default=None,
+        help="Validate a LangGraph SQLite checkpoint database and include a safe summary.",
+    )
     output_group = doctor_parser.add_mutually_exclusive_group()
     output_group.add_argument(
         "--json",
@@ -117,10 +122,16 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="store_true",
         help="Do not open the API URL in a browser.",
     )
-    inspect_parser.add_argument(
+    inspect_ui_group = inspect_parser.add_mutually_exclusive_group()
+    inspect_ui_group.add_argument(
         "--ui-dir",
         default=None,
         help="Directory containing a built web UI, such as web/dist. Defaults to web/dist when it exists.",
+    )
+    inspect_ui_group.add_argument(
+        "--build-ui",
+        action="store_true",
+        help="Install web dependencies if needed, build web/dist, and serve it with the inspector API.",
     )
     postgres_parser = subparsers.add_parser(
         "inspect-postgres",
@@ -135,10 +146,16 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="store_true",
         help="Do not open the API URL in a browser.",
     )
-    postgres_parser.add_argument(
+    postgres_ui_group = postgres_parser.add_mutually_exclusive_group()
+    postgres_ui_group.add_argument(
         "--ui-dir",
         default=None,
         help="Directory containing a built web UI, such as web/dist. Defaults to web/dist when it exists.",
+    )
+    postgres_ui_group.add_argument(
+        "--build-ui",
+        action="store_true",
+        help="Install web dependencies if needed, build web/dist, and serve it with the inspector API.",
     )
     export_parser = subparsers.add_parser(
         "export-debug-bundle",
@@ -273,6 +290,13 @@ def _build_doctor_report(args: argparse.Namespace) -> dict[str, object]:
         elif demo is not None:
             next_commands.append("uv run lgmi demo --no-browser")
 
+    sqlite_db_summary: dict[str, object] | None = None
+    if args.sqlite_db:
+        sqlite_db_summary = _add_sqlite_db_checks(checks, next_commands, args.sqlite_db)
+        has_error = any(check["status"] == "ERROR" for check in checks)
+        if has_error:
+            next_commands.clear()
+
     return {
         "tool": "langgraph-memory-inspector",
         "command": "lgmi doctor",
@@ -288,7 +312,8 @@ def _build_doctor_report(args: argparse.Namespace) -> dict[str, object]:
         },
         "checks": checks,
         "next_commands": next_commands,
-        "privacy": "This report does not include checkpoint state, message content, prompts, tokens, or production database rows.",
+        "sqlite_db": sqlite_db_summary,
+        "privacy": "This report does not include checkpoint state, message content, prompts, tokens, or production database rows. It may include local file paths when --sqlite-db is used.",
     }
 
 
@@ -325,7 +350,8 @@ def _print_doctor_issue(report: dict[str, object]) -> None:
     print(flush=True)
     print(
         "Privacy note: this report contains environment and demo health checks only. "
-        "It does not include checkpoint state, message content, prompts, tokens, or production database rows.",
+        "It does not include checkpoint state, message content, prompts, tokens, or production database rows. "
+        "Review local file paths before posting publicly.",
         flush=True,
     )
 
@@ -374,6 +400,73 @@ def _add_command_check(
         )
 
 
+def _add_sqlite_db_checks(
+    checks: list[dict[str, str]],
+    next_commands: list[str],
+    db_path: str,
+) -> dict[str, object]:
+    from lgmi.checkpoint_reader import SQLiteCheckpointReader
+
+    path = Path(db_path).expanduser().resolve()
+    summary: dict[str, object] = {
+        "path": str(path),
+        "exists": path.exists(),
+    }
+    if not path.exists():
+        checks.append(
+            {
+                "status": "ERROR",
+                "name": "SQLite checkpoint DB",
+                "detail": f"database not found: {path}",
+            }
+        )
+        return summary
+
+    try:
+        db_summary = SQLiteCheckpointReader(path).summary()
+    except (FileNotFoundError, ValueError, OSError) as exc:
+        checks.append(
+            {
+                "status": "ERROR",
+                "name": "SQLite checkpoint DB",
+                "detail": str(exc),
+            }
+        )
+        summary["error"] = str(exc)
+        return summary
+
+    summary.update(
+        {
+            "file_size_bytes": db_summary["file_size_bytes"],
+            "checkpoint_count": db_summary["checkpoint_count"],
+            "write_count": db_summary["write_count"],
+            "thread_count": db_summary["thread_count"],
+            "diagnostics_count": db_summary["diagnostics_count"],
+            "checkpoint_namespaces": db_summary["checkpoint_namespaces"],
+            "sample_threads": [
+                {
+                    "checkpoint_count": item["checkpoint_count"],
+                    "latest_rowid": item["latest_rowid"],
+                }
+                for item in db_summary["threads"][:5]
+            ],
+        }
+    )
+    checks.append(
+        {
+            "status": "OK",
+            "name": "SQLite checkpoint DB",
+            "detail": (
+                f"{db_summary['thread_count']} threads, "
+                f"{db_summary['checkpoint_count']} checkpoints, "
+                f"{db_summary['write_count']} writes"
+            ),
+        }
+    )
+    next_commands.insert(0, f"uv run lgmi inspect {path} --build-ui --no-browser")
+    return summary
+
+
 def _run_demo(args: argparse.Namespace) -> int:
     demo = _load_relocation_demo()
     if demo is None:
@@ -410,6 +503,9 @@ def _run_inspect(args: argparse.Namespace) -> int:
         print(f"Checkpoint database not found: {db_path}", file=sys.stderr)
         return 2
 
+    if args.build_ui and not _build_web_ui():
+        return 2
+
     return _serve_app(
         create_app(db_path, ui_dir=_resolve_ui_dir(args.ui_dir)),
         args,
@@ -419,6 +515,9 @@ def _run_inspect(args: argparse.Namespace) -> int:
 
 def _run_inspect_postgres(args: argparse.Namespace) -> int:
     from lgmi.postgres_reader import PostgresCheckpointReader
+
+    if args.build_ui and not _build_web_ui():
+        return 2
 
     reader = PostgresCheckpointReader(args.conninfo, schema=args.schema)
     return _serve_app(

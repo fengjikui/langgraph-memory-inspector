@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sqlite3
 from pathlib import Path
 from typing import Any
 
@@ -105,6 +106,39 @@ def test_doctor_issue_report_is_pasteable_markdown(capsys: Any) -> None:
     assert "Privacy note:" in output
 
 
+def test_doctor_validates_sqlite_checkpoint_db(tmp_path: Path, capsys: Any) -> None:
+    db_path = tmp_path / "checkpoints.sqlite"
+    _write_empty_checkpoint_db(db_path)
+
+    result = cli.main(["doctor", "--skip-demo", "--skip-web", "--sqlite-db", str(db_path), "--json"])
+
+    report = json.loads(capsys.readouterr().out)
+    assert result == 0
+    assert report["sqlite_db"]["path"] == str(db_path)
+    assert report["sqlite_db"]["checkpoint_count"] == 0
+    assert report["next_commands"][0] == f"uv run lgmi inspect {db_path} --build-ui --no-browser"
+    assert any(
+        check["name"] == "SQLite checkpoint DB" and check["status"] == "OK"
+        for check in report["checks"]
+    )
+
+
+def test_doctor_reports_missing_sqlite_checkpoint_db(tmp_path: Path, capsys: Any) -> None:
+    db_path = tmp_path / "missing.sqlite"
+
+    result = cli.main(["doctor", "--skip-demo", "--skip-web", "--sqlite-db", str(db_path), "--json"])
+
+    report = json.loads(capsys.readouterr().out)
+    assert result == 1
+    assert report["ready"] is False
+    assert report["next_commands"] == []
+    assert report["sqlite_db"]["exists"] is False
+    assert any(
+        check["name"] == "SQLite checkpoint DB" and check["status"] == "ERROR"
+        for check in report["checks"]
+    )
+
+
 def test_demo_serves_generated_database(monkeypatch: Any) -> None:
     served: dict[str, Any] = {}
     monkeypatch.setattr(cli, "_resolve_ui_dir", lambda ui_dir: None)
@@ -204,3 +238,62 @@ def test_demo_build_ui_failure_exits_before_serving(monkeypatch: Any) -> None:
 
     assert result == 2
     assert "served" not in served
+
+
+def test_inspect_builds_ui_before_serving(monkeypatch: Any, tmp_path: Path) -> None:
+    db_path = tmp_path / "checkpoints.sqlite"
+    _write_empty_checkpoint_db(db_path)
+    ui_dir = tmp_path / "dist"
+    ui_dir.mkdir()
+    (ui_dir / "index.html").write_text("<div id='root'></div>", encoding="utf-8")
+    served: dict[str, Any] = {}
+
+    monkeypatch.setattr(cli, "_build_web_ui", lambda: ui_dir)
+    monkeypatch.setattr(cli, "_resolve_ui_dir", lambda ui_dir_arg: ui_dir)
+
+    def fake_create_app(source: Path, *, ui_dir: Path | None = None) -> object:
+        served["source"] = source
+        served["ui_dir"] = ui_dir
+        return object()
+
+    def fake_serve_app(app: object, args: argparse.Namespace, source_label: str) -> int:
+        served["port"] = args.port
+        served["source_label"] = source_label
+        return 0
+
+    monkeypatch.setattr(cli, "create_app", fake_create_app)
+    monkeypatch.setattr(cli, "_serve_app", fake_serve_app)
+
+    result = cli.main(["inspect", str(db_path), "--build-ui", "--no-browser", "--port", "8766"])
+
+    assert result == 0
+    assert served["source"] == db_path.resolve()
+    assert served["ui_dir"] == ui_dir
+    assert served["port"] == 8766
+
+
+def _write_empty_checkpoint_db(path: Path) -> None:
+    with sqlite3.connect(path) as conn:
+        conn.executescript(
+            """
+            create table checkpoints (
+                thread_id text,
+                checkpoint_ns text,
+                checkpoint_id text,
+                parent_checkpoint_id text,
+                type text,
+                checkpoint blob,
+                metadata blob
+            );
+            create table writes (
+                thread_id text,
+                checkpoint_ns text,
+                checkpoint_id text,
+                task_id text,
+                idx integer,
+                channel text,
+                type text,
+                value blob
+            );
+            """
+        )
