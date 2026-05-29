@@ -53,6 +53,13 @@ gh issue comment 23 --body "Uploaded docs/assets/github-social-preview.png as th
 gh issue close 23 --reason completed
 ```
 
+Then confirm the remote launch status no longer reports the social preview as a
+manual gate:
+
+```bash
+uv run python scripts/launch_status.py
+```
+
 Then post the prepared LangChain Forum draft:
 
 ```text

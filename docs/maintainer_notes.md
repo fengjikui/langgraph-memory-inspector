@@ -720,3 +720,26 @@
 
 - `uv run python scripts/release_smoke.py`
 - `uv run pytest tests/test_release_smoke.py -q`
+
+### Remote launch status command
+
+用户价值改进：
+
+- 新增 `scripts/launch_status.py`，把本地 git 状态、repo visibility、最新 main CI、
+  v0.1.0 release、#20、#23 和 repository OpenGraph image 状态汇总成一条命令。
+- `#23` open 和默认 GitHub OpenGraph URL 会被标成 `MANUAL`，让维护者清楚知道当前不是
+  代码失败，而是等待 Settings 上传 social preview。
+- 新增 `tests/test_launch_status.py`，用 fake `gh`/`git` 输出保护状态分类逻辑。
+- `docs/release_checklist.md` 和 `docs/social_preview_upload_guide.md` 都记录了
+  `uv run python scripts/launch_status.py`。
+
+为什么重要：
+
+- 技术 gate、发布 gate 和社区 gate 现在分布在 CI、issue、release 和 repo settings。
+  一个远端状态命令可以减少维护者来回查 GitHub 的认知成本。
+- social preview 上传后，也可以用这条命令确认 #23 是否应该关闭、Forum 首帖是否可以发。
+
+已验证：
+
+- `uv run python scripts/launch_status.py`
+- `uv run pytest tests/test_launch_status.py -q`

@@ -79,6 +79,12 @@ Draft release notes: `docs/release_notes_v0.1.0.md`.
 
 ## Commands
 
+Remote launch status:
+
+```bash
+uv run python scripts/launch_status.py
+```
+
 Default local smoke:
 
 ```bash
