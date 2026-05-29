@@ -10,7 +10,7 @@ From the repository root:
 
 ```bash
 uv sync
-uv run python examples/relocation_policy_agent/run_demo.py --reset
+uv run lgmi demo --prepare-only
 uv run python scripts/use_case_smoke.py
 ```
 
@@ -54,7 +54,7 @@ Show:
 Run:
 
 ```bash
-uv run python examples/relocation_policy_agent/run_demo.py --reset
+uv run lgmi demo --prepare-only
 ```
 
 Narrate the three turns:
@@ -107,7 +107,7 @@ sqlite3 examples/relocation_policy_agent/data/checkpoints.sqlite \
 Start the API:
 
 ```bash
-uv run lgmi inspect examples/relocation_policy_agent/data/checkpoints.sqlite --no-browser --port 8765
+uv run lgmi demo
 ```
 
 Start the UI in another terminal:

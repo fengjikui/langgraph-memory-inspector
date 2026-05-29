@@ -47,17 +47,11 @@ Prerequisites:
 - `uv`
 - Node.js and npm
 
-Generate demo checkpoint data:
+Prepare the demo checkpoint data and start the Inspector API:
 
 ```bash
 uv sync
-uv run python examples/relocation_policy_agent/run_demo.py
-```
-
-Start the Inspector API in terminal 1:
-
-```bash
-uv run lgmi inspect examples/relocation_policy_agent/data/checkpoints.sqlite --no-browser --port 8765
+uv run lgmi demo
 ```
 
 Optional API health check:
@@ -83,6 +77,19 @@ http://127.0.0.1:5173/
 The Vite dev server proxies `/api` to `http://127.0.0.1:8765`, so the UI reads
 the live checkpoint database by default. If the API is not running, it falls
 back to mock relocation-demo data.
+
+If you want to generate checkpoint data without starting the API, run:
+
+```bash
+uv run lgmi demo --prepare-only
+```
+
+Contributors can still run the explicit demo and inspector commands:
+
+```bash
+uv run python examples/relocation_policy_agent/run_demo.py --reset
+uv run lgmi inspect examples/relocation_policy_agent/data/checkpoints.sqlite --no-browser --port 8765
+```
 
 ## Verify The Product Value
 

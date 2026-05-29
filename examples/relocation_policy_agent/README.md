@@ -23,6 +23,20 @@ should be able to inspect the checkpoint timeline and discover:
 
 ## Run
 
+From the repository root, prepare this fixture and start the Inspector API:
+
+```bash
+uv run lgmi demo
+```
+
+Only generate or refresh the checkpoint database:
+
+```bash
+uv run lgmi demo --prepare-only
+```
+
+Run the demo script directly:
+
 ```bash
 uv run python examples/relocation_policy_agent/run_demo.py
 ```
