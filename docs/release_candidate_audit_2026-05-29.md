@@ -1,7 +1,7 @@
 # v0.1.0 Release Candidate Audit
 
 Date: 2026-05-29
-Last refreshed: 2026-05-29 after diagnostic matrix coverage was completed
+Last refreshed: 2026-05-29 after launch status automation and CI verification
 
 ## Summary
 
@@ -16,9 +16,11 @@ the prepared LangChain Forum thread.
 - Repository: `https://github.com/fengjikui/langgraph-memory-inspector`
 - Default branch: `main`
 - Current visibility: public (`gh repo view` reports `PUBLIC`)
-- Latest audited commit: `505db34`
+- Latest audited commit: `9c6572a`
 - Latest green CI:
-  `https://github.com/fengjikui/langgraph-memory-inspector/actions/runs/26644150328`
+  `https://github.com/fengjikui/langgraph-memory-inspector/actions/runs/26645996221`
+- Launch status command:
+  `uv run python scripts/launch_status.py`
 - Public fresh-clone audit:
   `docs/quickstart_audit_2026-05-29.md`
 - Fixture policy: `docs/fixture_policy.md`
@@ -38,7 +40,7 @@ the prepared LangChain Forum thread.
 | Fixture privacy policy | Pass | README, CONTRIBUTING, issue template, and launch playbook link to `docs/fixture_policy.md`. |
 | Generated artifacts ignored | Pass | `.gitignore` covers demo SQLite files, exports, package builds, web build output, and test artifacts. |
 | Open feedback loop | Pass | #20 is open for real checkpoint bug patterns; #23 tracks the remaining social preview upload. |
-| CI green on main | Pass | Latest checked main CI is green at run `26640706354`. |
+| CI green on main | Pass | Latest checked main CI is green at run `26645996221`. |
 | Public fresh-clone quickstart | Pass | HTTPS clone, `uv sync`, `lgmi doctor --skip-web`, and `lgmi prove-demo --reset-demo --json` pass from `/tmp/lgmi-public-quickstart-audit-20260529`. |
 | Demo GIF | Pass | `docs/assets/stale-memory-debugging-demo.gif` exists. |
 | Product proof CLI | Pass | `uv run lgmi prove-demo --reset-demo --json` proves the stale-memory path and excludes raw evidence payloads. |
@@ -50,6 +52,7 @@ the prepared LangChain Forum thread.
 | Diagnostic matrix coverage | Pass | Every current diagnostic is protected by the deterministic demo or a committed safe fixture; no row is unit-only. |
 | Postgres confidence | Pass | CI includes a real PostgresSaver integration job, and README documents `scripts/postgres_confidence.py`. |
 | Launch assets | Pass | Community launch playbook, public launch packet, and Forum draft are present. |
+| Launch status automation | Pass | `scripts/launch_status.py` checks local git status, repository visibility, latest main CI, v0.1.0 release, #20, #23, and the repository OpenGraph image. |
 
 ## Current Launch Gates
 
@@ -58,6 +61,8 @@ the prepared LangChain Forum thread.
 - [x] Public fresh-clone proof path passes.
 - [x] GitHub feedback issue #20 is open.
 - [x] LangChain Forum launch draft is ready.
+- [x] `uv run python scripts/launch_status.py` reports PASS for local git
+  status, repository visibility, latest main CI, v0.1.0 release, and #20.
 - [ ] GitHub social preview asset still needs manual upload in repository
   Settings; tracked in #23. The verified upload guide is
   `docs/social_preview_upload_guide.md`.

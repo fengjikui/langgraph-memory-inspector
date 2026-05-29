@@ -743,3 +743,25 @@
 
 - `uv run python scripts/launch_status.py`
 - `uv run pytest tests/test_launch_status.py -q`
+
+### CI environment boundary for doctor tests
+
+用户价值改进：
+
+- 修复 `tests/test_cli.py::test_doctor_prefers_build_ui_when_dist_is_missing`
+  对 CI runner Node/npm 环境的隐式依赖。
+- 这个测试现在只验证它真正关心的行为：当 `web/dist` 不存在时，`lgmi doctor --json`
+  应该推荐 `uv run lgmi demo --build-ui --no-browser`，而不是被 Python CI job
+  是否安装 Node/npm 影响。
+
+为什么重要：
+
+- `lgmi doctor` 是新用户遇到启动问题时最先运行的诊断入口，相关测试必须稳定。
+- CI 失败暴露了一个维护经验：测试如果想验证某条用户指引，就应该显式固定无关环境，
+  避免把 runner 工具链当成产品行为的一部分。
+
+已验证：
+
+- `uv run pytest tests/test_cli.py::test_doctor_prefers_build_ui_when_dist_is_missing -q`
+- `uv run pytest -q`
+- GitHub Actions main CI run `26645996221`
