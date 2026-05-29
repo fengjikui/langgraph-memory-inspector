@@ -158,6 +158,19 @@ diagnostic into a compact causal chain of state paths, checkpoint writes, and
 node/task evidence. Export turns that local diagnosis into a shareable,
 redacted artifact for a teammate, issue, or PR."
 
+### GIF Capture Checklist
+
+Use this flow when refreshing `docs/assets/stale-memory-debugging-demo.gif`:
+
+1. Start from the final wrong answer.
+2. Click `conflicting_residence_memory`.
+3. Show the selected checkpoint in the timeline.
+4. Open Writes and show `state.memory_events` highlighted.
+5. Show the Causal chain panel with the earlier Shanghai memory and later
+   Hangzhou append.
+6. Close by showing `selected_city=Shanghai` while the latest residence memory
+   is Hangzhou.
+
 ## 5:30-6:45 - Show The Fix Direction
 
 Open the retrieval function and explain the expected fix:

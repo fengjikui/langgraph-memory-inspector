@@ -40,14 +40,6 @@ The inspector turns that failure into a navigable evidence trail:
 
 ![Stale-memory debugging demo](docs/assets/stale-memory-debugging-demo.gif)
 
-Recording checklist for the future GIF:
-
-- start from the final wrong answer
-- click `conflicting_residence_memory`
-- show the selected checkpoint in the timeline
-- open Writes and show `state.memory_events` highlighted
-- close by showing `selected_city=Shanghai` while the latest residence memory is Hangzhou
-
 ## Quickstart
 
 Prerequisites:

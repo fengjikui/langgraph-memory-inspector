@@ -20,14 +20,14 @@ demo locally.
 
 ## Pre-Public Checklist
 
-- Confirm repository visibility.
+- [x] Confirm repository visibility is public.
 - [x] Add `LICENSE`.
 - [x] Add `CONTRIBUTING.md`.
-- Add issue templates for bug reports and feature requests.
+- [x] Add issue templates for bug reports and feature requests.
 - [x] Add a release checklist.
 - [x] Add a community launch playbook.
 - [x] Add a short "known limitations" section to README.
-- Verify README quickstart from a fresh clone.
+- [x] Verify README quickstart from a fresh public clone.
 - Keep generated checkpoint DBs and export artifacts out of commits.
 
 ## Next Product Issues

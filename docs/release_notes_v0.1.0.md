@@ -1,7 +1,6 @@
-# v0.1.0 Release Notes Draft
+# v0.1.0 Release Notes
 
-Status: draft release candidate notes. Do not publish until the repository is
-public and the release checklist has no blocking unchecked items.
+Status: published public release notes.
 
 ## Headline
 
@@ -88,8 +87,6 @@ stale-memory smoke test, web build/e2e, and real PostgresSaver integration.
 
 ## Known Limitations
 
-- The repository is still private until the maintainer intentionally switches
-  visibility for launch.
 - Cross-namespace diffing is not supported.
 - Very large production stores still need richer indexing, virtualized
   rendering, and server-side search.

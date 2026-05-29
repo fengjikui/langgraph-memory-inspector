@@ -24,16 +24,17 @@ should see a version of the same user story:
 
 ## Launch Gates
 
-- [ ] Repository visibility is intentionally public.
-- [ ] CI is green on `main`.
-- [ ] README quickstart passes from a fresh clone.
-- [ ] `LICENSE`, `CONTRIBUTING.md`, and known limitations are present.
-- [ ] Demo GIF exists at `docs/assets/stale-memory-debugging-demo.gif`.
-- [ ] SQLite quickstart and read-only Postgres inspection are documented.
-- [ ] Namespace selector is documented as a production-store safety feature.
-- [ ] Demo script includes diagnostic click, Writes highlight, and Export bundle.
-- [ ] First pinned GitHub issue asks for real checkpoint bug patterns.
-- [ ] Fixture policy is linked wherever users are asked to share checkpoint data.
+- [x] Repository visibility is intentionally public.
+- [x] CI is green on `main`.
+- [x] README quickstart passes from a fresh public clone.
+- [x] `LICENSE`, `CONTRIBUTING.md`, and known limitations are present.
+- [x] Demo GIF exists at `docs/assets/stale-memory-debugging-demo.gif`.
+- [x] SQLite quickstart and read-only Postgres inspection are documented.
+- [x] Namespace selector is documented as a production-store safety feature.
+- [x] Demo script includes diagnostic click, Writes highlight, Causal chain, and
+  Export bundle.
+- [x] First pinned GitHub issue asks for real checkpoint bug patterns.
+- [x] Fixture policy is linked wherever users are asked to share checkpoint data.
 - [ ] No launch post asks for stars as the primary call to action.
 
 ## Channel Strategy
@@ -86,13 +87,13 @@ I am looking for real bug patterns from LangGraph users. Useful feedback:
 - What would you need to safely inspect a production copy locally?
 
 If you can share a file, please follow the fixture policy:
-<repo url>/blob/main/docs/fixture_policy.md
+https://github.com/fengjikui/langgraph-memory-inspector/blob/main/docs/fixture_policy.md
 
 The safest inputs are redacted debug bundles, small synthetic fixtures, or
 schema-only backend snapshots. Please do not attach raw production checkpoint
 stores or unredacted user state.
 
-Repo/demo: <repo url>
+Repo/demo: https://github.com/fengjikui/langgraph-memory-inspector
 ```
 
 ## English Short Post
@@ -110,9 +111,9 @@ I am looking for real LangGraph bug patterns to turn into diagnostics: stale
 memory, reducer append mistakes, wrong resume points, namespace confusion, or
 anything else you have hit in production. If you can share evidence, please use
 a redacted bundle, synthetic fixture, or schema-only snapshot:
-<repo url>/blob/main/docs/fixture_policy.md
+https://github.com/fengjikui/langgraph-memory-inspector/blob/main/docs/fixture_policy.md
 
-Repo/demo: <repo url>
+Repo/demo: https://github.com/fengjikui/langgraph-memory-inspector
 ```
 
 ## Hacker News Draft
@@ -166,7 +167,7 @@ reducers, resume bugs, message bloat, custom state channels, or production-store
 constraints. If you can share evidence, please use a redacted bundle, synthetic
 fixture, or schema-only snapshot and avoid raw/private checkpoint data.
 
-Repo/demo: <repo url>
+Repo/demo: https://github.com/fengjikui/langgraph-memory-inspector
 ```
 
 ## Reddit Draft
@@ -193,7 +194,7 @@ If you can share evidence, please use the fixture policy: redacted bundle,
 synthetic fixture, or schema-only snapshot. Please do not post raw production
 checkpoint state.
 
-Repo/demo: <repo url>
+Repo/demo: https://github.com/fengjikui/langgraph-memory-inspector
 ```
 
 ## Chinese Long Post Draft
@@ -248,7 +249,7 @@ Inspector 会读取本地 checkpoint store，然后把这条因果链串起来�
 synthetic fixture 或 schema-only backend snapshot，不要公开贴 raw production
 checkpoint 或未脱敏用户状态。
 
-Repo/demo: <repo url>
+Repo/demo: https://github.com/fengjikui/langgraph-memory-inspector
 ```
 
 ## Chinese Short Social Post
@@ -261,8 +262,34 @@ timeline 追到 diff、diagnostic、writes，并高亮导致问题的 `state.mem
 
 想找真正写 LangGraph / Agent 的同学给反馈：你们最头疼的状态调试问题是什么？
 
-Repo/demo: <repo url>
+Repo/demo: https://github.com/fengjikui/langgraph-memory-inspector
 ```
+
+## Channel Rule Notes
+
+- LangChain Forum: use the LangGraph category for questions, issues, or
+  discussions about LangGraph.
+- LangChain Slack: share in one appropriate public channel, use a thread for
+  details, avoid tagging maintainers, and do not use unsolicited DMs.
+- Hacker News: use Show HN only while the repo is runnable by other people, and
+  do not ask friends to upvote or comment.
+- Product Hunt: requires a personal account to post, vote, or comment; treat it
+  as a later launch rather than the first feedback loop.
+- V2EX: rewrite by hand before posting; the community explicitly discourages
+  low-information AI-generated content.
+
+Sources checked on 2026-05-29:
+
+- LangGraph Forum category:
+  https://forum.langchain.com/t/about-the-langgraph-category/37
+- LangChain Community Slack guidelines:
+  https://www.langchain.com/join-community
+- Show HN guidelines:
+  https://news.ycombinator.com/showhn.html
+- Product Hunt getting started:
+  https://help.producthunt.com/en/articles/2305333-getting-started
+- V2EX about/rules:
+  https://us.v2ex.com/about
 
 ## Early-User Feedback Questions
 
