@@ -78,6 +78,19 @@ Open `http://127.0.0.1:8765/`. `--build-ui` installs web dependencies if needed,
 builds `web/dist`, and then serves the Inspector UI and API from the same local
 server.
 
+## Three-Minute Proof
+
+After `uv run lgmi demo --build-ui` opens the app:
+
+1. Click the `conflicting_residence_memory` diagnostic.
+2. Confirm the timeline jumps to the checkpoint where the bad state is visible.
+3. Open **Writes** and look for the highlighted `state.memory_events` channel.
+4. Keep **Redact private fields** enabled and click **Export redacted**.
+
+That is the core workflow: start from a wrong final answer, follow the
+diagnostic to the checkpoint/write that made the stale state visible, then share
+a redacted evidence bundle without uploading private traces.
+
 Optional API health check:
 
 ```bash

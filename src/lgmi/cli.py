@@ -321,14 +321,23 @@ def _build_doctor_report(args: argparse.Namespace) -> dict[str, object]:
         if has_error:
             next_commands.clear()
 
+    ready = not has_error
+    result = _doctor_result_message(
+        ready=ready,
+        has_sqlite_db=sqlite_db_summary is not None,
+        has_postgres=postgres_summary is not None,
+    )
+
     return {
         "tool": "langgraph-memory-inspector",
         "command": "lgmi doctor",
-        "ready": not has_error,
-        "result": (
-            "ready for the local demo path"
-            if not has_error
-            else "action required before the full demo is ready"
+        "ready": ready,
+        "result": result,
+        "readiness": _doctor_readiness_summary(
+            ready=ready,
+            sqlite_db_summary=sqlite_db_summary,
+            postgres_summary=postgres_summary,
+            checks=checks,
         ),
         "platform": {
             "system": platform.system(),
@@ -342,6 +351,56 @@ def _build_doctor_report(args: argparse.Namespace) -> dict[str, object]:
     }
 
 
+def _doctor_result_message(
+    *,
+    ready: bool,
+    has_sqlite_db: bool,
+    has_postgres: bool,
+) -> str:
+    if not ready:
+        return "action required before the inspector is ready"
+    if has_postgres:
+        return "ready for local Postgres checkpoint inspection"
+    if has_sqlite_db:
+        return "ready for local SQLite checkpoint inspection"
+    return "ready for the local demo path"
+
+
+def _doctor_readiness_summary(
+    *,
+    ready: bool,
+    sqlite_db_summary: dict[str, object] | None,
+    postgres_summary: dict[str, object] | None,
+    checks: list[dict[str, str]],
+) -> str:
+    if not ready:
+        return "ERROR: fix listed ERROR checks before opening the inspector."
+
+    if postgres_summary is not None:
+        return (
+            "READY: read-only Postgres inspection; "
+            f"{postgres_summary['checkpoint_count']} checkpoints; "
+            f"{postgres_summary['write_count']} writes; "
+            "report excludes checkpoint state, thread ids, messages, prompts, tokens, and raw rows."
+        )
+
+    if sqlite_db_summary is not None:
+        return (
+            "READY: read-only SQLite inspection; "
+            f"{sqlite_db_summary['checkpoint_count']} checkpoints; "
+            f"{sqlite_db_summary['write_count']} writes; "
+            "report excludes checkpoint state, messages, prompts, tokens, and raw rows."
+        )
+
+    demo_detail = next(
+        (check["detail"] for check in checks if check["name"] == "Demo checkpoint"),
+        "demo checkpoint checks passed",
+    )
+    if demo_detail.startswith("skipped by "):
+        return "READY: requested doctor checks passed; demo checkpoint generation was skipped."
+    return f"READY: local stale-memory demo path; {demo_detail}."
+
+
 def _print_doctor_text(report: dict[str, object]) -> None:
     checks = list(report["checks"])  # type: ignore[index]
     next_commands = list(report["next_commands"])  # type: ignore[index]
@@ -351,12 +410,13 @@ def _print_doctor_text(report: dict[str, object]) -> None:
         print(f"[{check['status']}] {check['name']}: {check['detail']}", flush=True)
 
     print(flush=True)
+    print(str(report["readiness"]), flush=True)
     if not report["ready"]:
-        print("Result: action required before the full demo is ready.", flush=True)
+        print(f"Result: {report['result']}.", flush=True)
         print("Fix the ERROR item(s), then run `uv run lgmi doctor` again.", flush=True)
         return
 
-    print("Result: ready for the local demo path.", flush=True)
+    print(f"Result: {report['result']}.", flush=True)
     if len(next_commands) == 1:
         print("Next command:", flush=True)
         print(next_commands[0], flush=True)

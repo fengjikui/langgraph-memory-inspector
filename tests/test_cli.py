@@ -47,6 +47,7 @@ def test_doctor_skip_modes_report_ready(capsys: Any) -> None:
     assert "LangGraph Memory Inspector doctor" in output
     assert "[SKIP] Demo checkpoint" in output
     assert "[SKIP] Web UI" in output
+    assert "READY: requested doctor checks passed" in output
     assert "Result: ready for the local demo path." in output
 
 
@@ -68,6 +69,7 @@ def test_doctor_json_report_is_machine_readable(capsys: Any) -> None:
     assert result == 0
     assert report["tool"] == "langgraph-memory-inspector"
     assert report["ready"] is True
+    assert report["readiness"].startswith("READY: requested doctor checks passed")
     assert report["checks"][0]["name"] == "Python"
     assert report["checks"][0]["status"] == "OK"
     assert "checkpoint state" in report["privacy"]
@@ -119,6 +121,11 @@ def test_doctor_validates_sqlite_checkpoint_db(tmp_path: Path, capsys: Any) -> N
     assert result == 0
     assert report["sqlite_db"]["path"] == str(db_path)
     assert report["sqlite_db"]["checkpoint_count"] == 0
+    assert report["result"] == "ready for local SQLite checkpoint inspection"
+    assert report["readiness"] == (
+        "READY: read-only SQLite inspection; 0 checkpoints; 0 writes; "
+        "report excludes checkpoint state, messages, prompts, tokens, and raw rows."
+    )
     assert report["next_commands"][0] == f"uv run lgmi inspect {db_path} --build-ui --no-browser"
     assert any(
         check["name"] == "SQLite checkpoint DB" and check["status"] == "OK"
@@ -187,6 +194,11 @@ def test_doctor_validates_postgres_checkpoint_store(monkeypatch: Any, capsys: An
     assert result == 0
     assert report["postgres"]["conninfo"] == "postgresql://***@localhost:5432/app"
     assert report["postgres"]["checkpoint_count"] == 7
+    assert report["result"] == "ready for local Postgres checkpoint inspection"
+    assert report["readiness"] == (
+        "READY: read-only Postgres inspection; 7 checkpoints; 11 writes; "
+        "report excludes checkpoint state, thread ids, messages, prompts, tokens, and raw rows."
+    )
     assert report["postgres"]["sample_threads"] == [{"checkpoint_count": 4}]
     assert "private-user-id" not in json.dumps(report)
     assert "secret" not in json.dumps(report)
