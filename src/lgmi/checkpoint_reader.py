@@ -108,10 +108,37 @@ class SQLiteCheckpointReader:
             return threads
 
     def list_checkpoints(
-        self, thread_id: str, checkpoint_ns: str | None = None
+        self,
+        thread_id: str,
+        checkpoint_ns: str | None = None,
+        *,
+        limit: int | None = None,
+        offset: int = 0,
+        diagnostic: bool | None = None,
+        changed_path: str | None = None,
     ) -> list[dict[str, Any]]:
+        if offset < 0:
+            raise ValueError("offset must be >= 0")
+        if limit is not None and limit < 1:
+            raise ValueError("limit must be >= 1")
         with self._connect() as conn:
+            if diagnostic is not None or changed_path:
+                rows = self._filtered_checkpoint_rows(
+                    conn,
+                    thread_id,
+                    checkpoint_ns,
+                    diagnostic=diagnostic,
+                    changed_path=changed_path,
+                )
+                selected_rows = rows[offset : offset + limit if limit is not None else None]
+                return [
+                    self._checkpoint_row_to_dict(row, include_checkpoint=False)
+                    for row in selected_rows
+                ]
+
             namespace_sql, params = self._namespace_filter(checkpoint_ns)
+            limit_sql = "" if limit is None else "limit ? offset ?"
+            limit_params: tuple[int, ...] = () if limit is None else (limit, offset)
             rows = conn.execute(
                 f"""
                 select rowid, thread_id, checkpoint_ns, checkpoint_id,
@@ -120,13 +147,47 @@ class SQLiteCheckpointReader:
                 where thread_id = ?
                 {namespace_sql}
                 order by rowid
+                {limit_sql}
                 """,
-                (thread_id, *params),
+                (thread_id, *params, *limit_params),
             ).fetchall()
             return [
                 self._checkpoint_row_to_dict(row, include_checkpoint=False)
                 for row in rows
             ]
+
+    def count_checkpoints(
+        self,
+        thread_id: str,
+        checkpoint_ns: str | None = None,
+        *,
+        diagnostic: bool | None = None,
+        changed_path: str | None = None,
+    ) -> int:
+        with self._connect() as conn:
+            if diagnostic is not None or changed_path:
+                return len(
+                    self._filtered_checkpoint_rows(
+                        conn,
+                        thread_id,
+                        checkpoint_ns,
+                        diagnostic=diagnostic,
+                        changed_path=changed_path,
+                    )
+                )
+
+            namespace_sql, params = self._namespace_filter(checkpoint_ns)
+            return int(
+                conn.execute(
+                    f"""
+                    select count(*)
+                    from checkpoints
+                    where thread_id = ?
+                    {namespace_sql}
+                    """,
+                    (thread_id, *params),
+                ).fetchone()[0]
+            )
 
     def get_checkpoint(
         self,
@@ -228,6 +289,61 @@ class SQLiteCheckpointReader:
             (thread_id,),
         ).fetchall()
         return [dict(row) for row in rows]
+
+    def _filtered_checkpoint_rows(
+        self,
+        conn: sqlite3.Connection,
+        thread_id: str,
+        checkpoint_ns: str | None,
+        *,
+        diagnostic: bool | None,
+        changed_path: str | None,
+    ) -> list[sqlite3.Row]:
+        namespace_sql, params = self._namespace_filter(checkpoint_ns)
+        rows = conn.execute(
+            f"""
+            select rowid, thread_id, checkpoint_ns, checkpoint_id,
+                   parent_checkpoint_id, type, checkpoint, metadata
+            from checkpoints
+            where thread_id = ?
+            {namespace_sql}
+            order by rowid
+            """,
+            (thread_id, *params),
+        ).fetchall()
+        channel = _channel_from_state_path(changed_path)
+        return [
+            row
+            for row in rows
+            if self._checkpoint_row_matches(row, diagnostic=diagnostic, changed_channel=channel)
+        ]
+
+    def _checkpoint_row_matches(
+        self,
+        row: sqlite3.Row,
+        *,
+        diagnostic: bool | None,
+        changed_channel: str | None,
+    ) -> bool:
+        checkpoint = self._decode_blob(row["type"], row["checkpoint"])
+        value = checkpoint.get("value") if checkpoint.get("decoded") else None
+        if not isinstance(value, Mapping):
+            return diagnostic is not True and changed_channel is None
+        channel_values = value.get("channel_values")
+        diagnostics = []
+        if isinstance(channel_values, Mapping):
+            raw_diagnostics = channel_values.get("diagnostics")
+            diagnostics = raw_diagnostics if isinstance(raw_diagnostics, list) else []
+
+        if diagnostic is True and not diagnostics:
+            return False
+        if diagnostic is False and diagnostics:
+            return False
+        if changed_channel:
+            updated_channels = value.get("updated_channels")
+            if not isinstance(updated_channels, list) or changed_channel not in updated_channels:
+                return False
+        return True
 
     def _namespace_filter(self, checkpoint_ns: str | None) -> tuple[str, tuple[str, ...]]:
         if checkpoint_ns is None:
@@ -411,6 +527,17 @@ def _preview_value(value: Any) -> str:
     if len(rendered) > PREVIEW_CHARS:
         return f"{rendered[:PREVIEW_CHARS]}..."
     return rendered
+
+
+def _channel_from_state_path(path: str | None) -> str | None:
+    if not path:
+        return None
+    cleaned = path.strip().strip(".")
+    if not cleaned:
+        return None
+    if cleaned.startswith("state."):
+        cleaned = cleaned.removeprefix("state.")
+    return cleaned.split(".", 1)[0].split("[", 1)[0] or None
 
 
 def _to_jsonable(

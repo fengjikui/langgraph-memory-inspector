@@ -1,11 +1,16 @@
 import { AlertTriangle, CheckCircle2, CircleDot, DatabaseZap } from "lucide-react";
-import { useEffect, useRef } from "react";
-import type { Checkpoint } from "../types";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import type { Checkpoint, TimelineFilters, TimelinePagination } from "../types";
 
 type TimelineProps = {
   checkpoints: Checkpoint[];
+  pagination?: TimelinePagination;
+  filters: TimelineFilters;
+  loading: boolean;
   selectedCheckpointId?: string;
   onSelectCheckpoint: (checkpointId: string) => void;
+  onLoadPrevious: () => void;
+  onFiltersChange: (filters: TimelineFilters) => void;
 };
 
 function StatusIcon({ checkpoint, selected }: { checkpoint: Checkpoint; selected: boolean }) {
@@ -14,20 +19,81 @@ function StatusIcon({ checkpoint, selected }: { checkpoint: Checkpoint; selected
   return <CheckCircle2 size={17} />;
 }
 
-export function Timeline({ checkpoints, selectedCheckpointId, onSelectCheckpoint }: TimelineProps) {
+export function Timeline({
+  checkpoints,
+  pagination,
+  filters,
+  loading,
+  selectedCheckpointId,
+  onSelectCheckpoint,
+  onLoadPrevious,
+  onFiltersChange
+}: TimelineProps) {
   const selectedItemRef = useRef<HTMLButtonElement | null>(null);
+  const [changedPathDraft, setChangedPathDraft] = useState(filters.changedPath ?? "");
+
+  useEffect(() => {
+    setChangedPathDraft(filters.changedPath ?? "");
+  }, [filters.changedPath]);
 
   useEffect(() => {
     selectedItemRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [selectedCheckpointId]);
 
+  function applyPathFilter(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    onFiltersChange({ ...filters, changedPath: changedPathDraft.trim() || undefined });
+  }
+
+  const rangeStart = pagination && pagination.totalCount > 0 ? pagination.offset + 1 : 0;
+  const rangeEnd = pagination ? pagination.offset + checkpoints.length : checkpoints.length;
+
   return (
     <section className="timeline-panel">
       <div className="panel-heading">
         <span>Checkpoint Timeline</span>
-        <strong>{checkpoints.length} snapshots</strong>
+        <strong>
+          {pagination ? `${rangeStart}-${rangeEnd} of ${pagination.totalCount}` : `${checkpoints.length} snapshots`}
+        </strong>
+      </div>
+      <div className="timeline-controls">
+        <label>
+          <input
+            checked={Boolean(filters.diagnostic)}
+            onChange={(event) => onFiltersChange({ ...filters, diagnostic: event.currentTarget.checked || undefined })}
+            type="checkbox"
+          />
+          Diagnostics only
+        </label>
+        <form onSubmit={applyPathFilter}>
+          <input
+            aria-label="State path filter"
+            onChange={(event) => setChangedPathDraft(event.currentTarget.value)}
+            placeholder="state.memory_events"
+            value={changedPathDraft}
+          />
+          <button type="submit">Apply</button>
+          {filters.changedPath ? (
+            <button
+              onClick={() => onFiltersChange({ ...filters, changedPath: undefined })}
+              type="button"
+            >
+              Clear
+            </button>
+          ) : null}
+        </form>
       </div>
       <div className="timeline-list">
+        {pagination?.hasPrevious ? (
+          <button
+            className="timeline-load-more"
+            disabled={loading}
+            onClick={onLoadPrevious}
+            type="button"
+          >
+            {loading ? "Loading earlier checkpoints" : "Load earlier checkpoints"}
+          </button>
+        ) : null}
         {checkpoints.map((checkpoint) => {
           const selected = checkpoint.id === selectedCheckpointId;
           return (
@@ -65,6 +131,9 @@ export function Timeline({ checkpoints, selectedCheckpointId, onSelectCheckpoint
             </button>
           );
         })}
+        {checkpoints.length === 0 ? (
+          <div className="timeline-empty">No checkpoints match the current filters.</div>
+        ) : null}
       </div>
     </section>
   );

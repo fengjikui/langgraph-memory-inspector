@@ -1,12 +1,14 @@
 import { mockCheckpoints, mockDiff, mockSummary, mockThreads } from "./mockData";
 import type {
   Checkpoint,
+  CheckpointPage,
   DebugBundleExportResult,
   Diagnostic,
   Message,
   NodeWrite,
   Summary,
   Thread,
+  TimelineFilters,
   TimelineDiff
 } from "../types";
 
@@ -63,14 +65,25 @@ export const inspectorApi = {
     return raw ? raw.map(normalizeThread) : mockThreads;
   },
 
-  async getCheckpoints(threadId: string, checkpointNs?: string): Promise<Checkpoint[]> {
-    const raw = await requestJson<Array<Record<string, unknown>>>(
-      `/api/threads/${threadId}/checkpoints${namespaceQuery(checkpointNs)}`
+  async getCheckpoints(
+    threadId: string,
+    checkpointNs?: string,
+    options: {
+      limit?: number;
+      offset?: number;
+      fromEnd?: boolean;
+      filters?: TimelineFilters;
+    } = {}
+  ): Promise<CheckpointPage> {
+    const query = checkpointPageQuery(checkpointNs, options);
+    const raw = await requestJson<Record<string, unknown>>(
+      `/api/threads/${threadId}/checkpoints${query}`
     );
-    if (!raw) return mockCheckpoints[mockCheckpointKey(threadId, checkpointNs)] ?? mockCheckpoints[threadId] ?? [];
+    if (!raw) return mockCheckpointPage(threadId, checkpointNs, options);
 
+    const rawItems = asArray(raw.items).map(asRecord).filter(Boolean) as Array<Record<string, unknown>>;
     const details = await Promise.all(
-      raw.map(async (checkpoint) => {
+      rawItems.map(async (checkpoint) => {
         const checkpointId = String(checkpoint.checkpoint_id ?? "");
         return (
           (await requestJson<Record<string, unknown>>(
@@ -80,7 +93,11 @@ export const inspectorApi = {
       })
     );
 
-    return details.map((checkpoint, index) => normalizeCheckpoint(checkpoint, index));
+    const pagination = normalizePagination(asRecord(raw.pagination), details.length);
+    return {
+      items: details.map((checkpoint, index) => normalizeCheckpoint(checkpoint, pagination.offset + index)),
+      pagination
+    };
   },
 
   async getCheckpoint(threadId: string, checkpointId: string, checkpointNs?: string): Promise<Checkpoint | undefined> {
@@ -144,12 +161,24 @@ function normalizeSummary(raw: Record<string, unknown>): Summary {
 
 function normalizeThread(raw: Record<string, unknown>): Thread {
   const latest = asRecord(raw.latest_checkpoint);
-  const namespaces = normalizeNamespaces(raw.checkpoint_namespaces, latest?.checkpoint_ns);
+  const namespaceRows = asArray(raw.checkpoint_namespaces).map(asRecord).filter(Boolean) as Array<Record<string, unknown>>;
+  const namespaces = normalizeNamespaces(namespaceRows, latest?.checkpoint_ns);
+  const namespaceCounts = Object.fromEntries(
+    namespaceRows.map((item) => [
+      String(item.checkpoint_ns ?? ""),
+      Number(item.checkpoint_count ?? 0)
+    ])
+  );
+  const fallbackNamespace = namespaces[0] ?? "";
+  if (namespaceCounts[fallbackNamespace] === undefined) {
+    namespaceCounts[fallbackNamespace] = Number(raw.checkpoint_count ?? 0);
+  }
   return {
     id: String(raw.thread_id ?? ""),
     title: String(raw.thread_id ?? "").includes("relocation") ? "Relocation Policy Agent" : String(raw.thread_id ?? "Thread"),
     namespace: namespaces[0] ?? "",
     namespaces,
+    namespaceCounts,
     lastNode: inferNodeFromChannels(asStringArray(latest?.updated_channels)),
     checkpointCount: Number(raw.checkpoint_count ?? 0),
     updatedAt: String(latest?.ts ?? new Date().toISOString()),
@@ -263,6 +292,63 @@ function normalizeExportResult(raw: Record<string, unknown>): DebugBundleExportR
   };
 }
 
+function normalizePagination(raw: Record<string, unknown> | undefined, fallbackCount: number) {
+  return {
+    limit: Number(raw?.limit ?? fallbackCount),
+    offset: Number(raw?.offset ?? 0),
+    returnedCount: Number(raw?.returned_count ?? fallbackCount),
+    totalCount: Number(raw?.total_count ?? fallbackCount),
+    hasPrevious: Boolean(raw?.has_previous),
+    hasNext: Boolean(raw?.has_next),
+    previousOffset: raw?.previous_offset === null || raw?.previous_offset === undefined
+      ? undefined
+      : Number(raw.previous_offset),
+    nextOffset: raw?.next_offset === null || raw?.next_offset === undefined
+      ? undefined
+      : Number(raw.next_offset)
+  };
+}
+
+function mockCheckpointPage(
+  threadId: string,
+  checkpointNs: string | undefined,
+  options: {
+    limit?: number;
+    offset?: number;
+    fromEnd?: boolean;
+    filters?: TimelineFilters;
+  }
+): CheckpointPage {
+  let rows = mockCheckpoints[mockCheckpointKey(threadId, checkpointNs)] ?? mockCheckpoints[threadId] ?? [];
+  if (options.filters?.diagnostic) {
+    rows = rows.filter((checkpoint) => checkpoint.diagnostics.length > 0);
+  }
+  const changedPath = options.filters?.changedPath?.trim();
+  if (changedPath) {
+    rows = rows.filter((checkpoint) =>
+      checkpoint.writes.some((write) => write.path === changedPath || write.path.startsWith(`${changedPath}.`))
+    );
+  }
+  const limit = options.limit ?? 50;
+  const requestedOffset = options.fromEnd ? Math.max(rows.length - limit, 0) : options.offset ?? 0;
+  const offset = Math.min(requestedOffset, rows.length);
+  const items = rows.slice(offset, offset + limit);
+  const nextOffset = offset + items.length;
+  return {
+    items,
+    pagination: {
+      limit,
+      offset,
+      returnedCount: items.length,
+      totalCount: rows.length,
+      hasPrevious: offset > 0,
+      hasNext: nextOffset < rows.length,
+      previousOffset: offset > 0 ? Math.max(offset - limit, 0) : undefined,
+      nextOffset: nextOffset < rows.length ? nextOffset : undefined
+    }
+  };
+}
+
 function mockExportResult(
   threadId: string,
   checkpointId: string,
@@ -285,10 +371,9 @@ function mockExportResult(
   };
 }
 
-function normalizeNamespaces(raw: unknown, fallback: unknown): string[] {
-  const namespaces = asArray(raw)
-    .map(asRecord)
-    .map((item) => String(item?.checkpoint_ns ?? ""))
+function normalizeNamespaces(raw: Array<Record<string, unknown>>, fallback: unknown): string[] {
+  const namespaces = raw
+    .map((item) => String(item.checkpoint_ns ?? ""))
     .filter((namespace, index, items) => items.indexOf(namespace) === index);
   const fallbackNamespace = String(fallback ?? "");
   if (!namespaces.includes(fallbackNamespace)) {
@@ -298,6 +383,28 @@ function normalizeNamespaces(raw: unknown, fallback: unknown): string[] {
     fallbackNamespace,
     ...namespaces.filter((namespace) => namespace !== fallbackNamespace)
   ];
+}
+
+function checkpointPageQuery(
+  checkpointNs: string | undefined,
+  options: {
+    limit?: number;
+    offset?: number;
+    fromEnd?: boolean;
+    filters?: TimelineFilters;
+  }
+): string {
+  const params = new URLSearchParams();
+  if (checkpointNs !== undefined) params.set("checkpoint_ns", checkpointNs);
+  params.set("limit", String(options.limit ?? 50));
+  if (options.offset !== undefined) params.set("offset", String(options.offset));
+  if (options.fromEnd) params.set("from_end", "true");
+  if (options.filters?.diagnostic !== undefined) {
+    params.set("diagnostic", String(options.filters.diagnostic));
+  }
+  const changedPath = options.filters?.changedPath?.trim();
+  if (changedPath) params.set("changed_path", changedPath);
+  return `?${params.toString()}`;
 }
 
 function namespaceQuery(checkpointNs: string | undefined): string {

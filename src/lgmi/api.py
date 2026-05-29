@@ -57,8 +57,24 @@ def create_app(source: str | Path | CheckpointReader) -> FastAPI:
     def checkpoints(
         thread_id: str,
         checkpoint_ns: str | None = Query(default=None),
-    ) -> list[dict[str, Any]]:
-        return _read_or_404(lambda: reader.list_checkpoints(thread_id, checkpoint_ns))
+        limit: int = Query(default=50, ge=1, le=200),
+        offset: int = Query(default=0, ge=0),
+        from_end: bool = Query(default=False),
+        diagnostic: bool | None = Query(default=None),
+        changed_path: str | None = Query(default=None),
+    ) -> dict[str, Any]:
+        return _read_or_404(
+            lambda: _checkpoint_page(
+                reader,
+                thread_id=thread_id,
+                checkpoint_ns=checkpoint_ns,
+                limit=limit,
+                offset=offset,
+                from_end=from_end,
+                diagnostic=diagnostic,
+                changed_path=changed_path,
+            )
+        )
 
     @app.get("/api/threads/{thread_id}/checkpoints/{checkpoint_id}")
     def checkpoint(
@@ -130,6 +146,55 @@ def _read_or_404(func: Callable[[], Any]) -> Any:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+def _checkpoint_page(
+    reader: CheckpointReader,
+    *,
+    thread_id: str,
+    checkpoint_ns: str | None,
+    limit: int,
+    offset: int,
+    from_end: bool,
+    diagnostic: bool | None,
+    changed_path: str | None,
+) -> dict[str, Any]:
+    total_count = reader.count_checkpoints(
+        thread_id,
+        checkpoint_ns,
+        diagnostic=diagnostic,
+        changed_path=changed_path,
+    )
+    resolved_offset = max(total_count - limit, 0) if from_end else offset
+    resolved_offset = min(resolved_offset, total_count)
+    items = reader.list_checkpoints(
+        thread_id,
+        checkpoint_ns,
+        limit=limit,
+        offset=resolved_offset,
+        diagnostic=diagnostic,
+        changed_path=changed_path,
+    )
+    returned_count = len(items)
+    next_offset = resolved_offset + returned_count
+    return {
+        "items": items,
+        "pagination": {
+            "limit": limit,
+            "offset": resolved_offset,
+            "returned_count": returned_count,
+            "total_count": total_count,
+            "has_previous": resolved_offset > 0,
+            "has_next": next_offset < total_count,
+            "previous_offset": max(resolved_offset - limit, 0) if resolved_offset > 0 else None,
+            "next_offset": next_offset if next_offset < total_count else None,
+        },
+        "filters": {
+            "checkpoint_ns": checkpoint_ns,
+            "diagnostic": diagnostic,
+            "changed_path": changed_path,
+        },
+    }
 
 
 def _state_from_checkpoint(checkpoint: dict[str, Any]) -> dict[str, Any]:

@@ -28,6 +28,8 @@ Use this before making the repository public or announcing a release candidate.
   message/evidence fields without modifying the checkpoint store.
 - [ ] Namespace selector is visible for multi-namespace threads and switching
   namespaces changes the timeline without changing thread context.
+- [ ] Timeline API returns a paginated contract and the UI can load earlier
+  checkpoints without losing the selected thread or namespace.
 
 ## Adapter Confidence
 

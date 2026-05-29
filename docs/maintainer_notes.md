@@ -236,3 +236,23 @@
 - redacted export 不修改原 SQLite checkpoint DB。
 - CLI、API、UI mock path 都能请求 redacted export。
 - 完整测试和 CI 在提交前执行。
+
+### Timeline pagination and filters
+
+用户价值改进：
+
+- `/api/threads/{thread_id}/checkpoints` 从数组响应升级为 `{ items, pagination, filters }`，支持 `limit`、`offset`、`from_end`、`diagnostic`、`changed_path`。
+- SQLite 和 Postgres readers 增加 `count_checkpoints()`，无筛选时走数据库 limit/offset，避免生产大库首屏全量加载。
+- UI 首次打开当前 thread/namespace 时请求最新一页；用户可以点击 `Load earlier checkpoints` 逐页加载更早历史，选中的 checkpoint 不会丢。
+- Timeline 增加 `Diagnostics only` 和 state path filter，开发者可以从“有诊断”或“某个 state channel 变化”切入调试。
+
+为什么重要：
+
+- 真实 LangGraph checkpoint store 可能远大于 demo。首屏如果一次性读完所有 checkpoint，会让用户在真正需要工具的时候先等一个不透明加载。
+- 最新页优先符合调试直觉：开发者通常先看到最终错误回答，再向前追溯状态在哪里写坏。
+
+已验证：
+
+- API 分页边界、`from_end` 和筛选测试通过。
+- SQLite reader 分页和筛选测试通过。
+- 前端 build/e2e 和本地浏览器截图检查在提交前执行。

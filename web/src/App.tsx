@@ -7,6 +7,8 @@ import { ThreadSelector } from "./components/ThreadSelector";
 import { Timeline } from "./components/Timeline";
 import type {
   Checkpoint,
+  TimelineFilters,
+  TimelinePagination,
   DebugBundleExportResult,
   Diagnostic,
   NodeWrite,
@@ -22,10 +24,18 @@ type ExportStatus =
   | { state: "success"; result: DebugBundleExportResult }
   | { state: "error"; message: string };
 
+const configuredTimelinePageSize = Number(import.meta.env.VITE_LGMI_TIMELINE_PAGE_SIZE ?? 50);
+const TIMELINE_PAGE_SIZE = Number.isFinite(configuredTimelinePageSize)
+  ? Math.max(1, configuredTimelinePageSize)
+  : 50;
+
 function App() {
   const [summary, setSummary] = useState<Summary>();
   const [threads, setThreads] = useState<Thread[]>([]);
   const [checkpoints, setCheckpoints] = useState<Checkpoint[]>([]);
+  const [timelinePagination, setTimelinePagination] = useState<TimelinePagination>();
+  const [timelineLoading, setTimelineLoading] = useState(false);
+  const [timelineFilters, setTimelineFilters] = useState<TimelineFilters>({});
   const [selectedThreadId, setSelectedThreadId] = useState<string>();
   const [selectedNamespace, setSelectedNamespace] = useState<string>();
   const [selectedCheckpointId, setSelectedCheckpointId] = useState<string>();
@@ -58,13 +68,23 @@ function App() {
     const checkpointNs = selectedNamespace;
 
     async function loadTimeline() {
-      const nextCheckpoints = await inspectorApi.getCheckpoints(threadId, checkpointNs);
-      setCheckpoints(nextCheckpoints);
-      setSelectedCheckpointId(nextCheckpoints[nextCheckpoints.length - 1]?.id);
+      setTimelineLoading(true);
+      try {
+        const page = await inspectorApi.getCheckpoints(threadId, checkpointNs, {
+          limit: TIMELINE_PAGE_SIZE,
+          fromEnd: true,
+          filters: timelineFilters
+        });
+        setCheckpoints(page.items);
+        setTimelinePagination(page.pagination);
+        setSelectedCheckpointId(page.items[page.items.length - 1]?.id);
+      } finally {
+        setTimelineLoading(false);
+      }
     }
 
     void loadTimeline();
-  }, [selectedNamespace, selectedThreadId]);
+  }, [selectedNamespace, selectedThreadId, timelineFilters]);
 
   useEffect(() => {
     if (!selectedThreadId || !selectedCheckpointId) return;
@@ -95,6 +115,31 @@ function App() {
     () => checkpoints.find((checkpoint) => checkpoint.id === selectedCheckpointId),
     [checkpoints, selectedCheckpointId]
   );
+
+  async function loadPreviousTimelinePage() {
+    if (!selectedThreadId || timelinePagination?.previousOffset === undefined) return;
+    const currentOffset = timelinePagination.previousOffset;
+    setTimelineLoading(true);
+    try {
+      const page = await inspectorApi.getCheckpoints(selectedThreadId, selectedNamespace, {
+        limit: TIMELINE_PAGE_SIZE,
+        offset: currentOffset,
+        filters: timelineFilters
+      });
+      setCheckpoints((current) => mergeCheckpointPages(page.items, current));
+      setTimelinePagination((current) => {
+        if (!current) return page.pagination;
+        return {
+          ...page.pagination,
+          returnedCount: page.items.length + current.returnedCount,
+          hasNext: current.hasNext,
+          nextOffset: current.nextOffset
+        };
+      });
+    } finally {
+      setTimelineLoading(false);
+    }
+  }
 
   function selectDiagnostic(diagnostic: Diagnostic) {
     setSelectedDiagnostic(diagnostic);
@@ -148,7 +193,17 @@ function App() {
         <div className="center-stack">
           <Timeline
             checkpoints={checkpoints}
+            pagination={timelinePagination}
+            loading={timelineLoading}
+            filters={timelineFilters}
             selectedCheckpointId={selectedCheckpointId}
+            onLoadPrevious={loadPreviousTimelinePage}
+            onFiltersChange={(filters) => {
+              setTimelineFilters(filters);
+              setActiveTab("state");
+              setSelectedDiagnostic(undefined);
+              setExportStatus({ state: "idle" });
+            }}
             onSelectCheckpoint={(checkpointId) => {
               setSelectedCheckpointId(checkpointId);
               setActiveTab("state");
@@ -183,3 +238,15 @@ function App() {
 }
 
 export default App;
+
+function mergeCheckpointPages(previous: Checkpoint[], current: Checkpoint[]): Checkpoint[] {
+  const existing = new Set(previous.map((checkpoint) => checkpoint.id));
+  return [
+    ...previous,
+    ...current.filter((checkpoint) => {
+      if (existing.has(checkpoint.id)) return false;
+      existing.add(checkpoint.id);
+      return true;
+    })
+  ];
+}

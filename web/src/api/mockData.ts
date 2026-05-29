@@ -6,6 +6,10 @@ export const mockThreads: Thread[] = [
     title: "Relocation Policy Agent",
     namespace: "relocation_policy_agent",
     namespaces: ["relocation_policy_agent", "shadow_replay"],
+    namespaceCounts: {
+      relocation_policy_agent: 5,
+      shadow_replay: 2
+    },
     lastNode: "answer_benefits",
     checkpointCount: 7,
     updatedAt: "2026-05-29T10:42:00+08:00",
@@ -16,6 +20,9 @@ export const mockThreads: Thread[] = [
     title: "Clean baseline run",
     namespace: "relocation_policy_agent",
     namespaces: ["relocation_policy_agent"],
+    namespaceCounts: {
+      relocation_policy_agent: 4
+    },
     lastNode: "answer_benefits",
     checkpointCount: 4,
     updatedAt: "2026-05-29T09:18:00+08:00",

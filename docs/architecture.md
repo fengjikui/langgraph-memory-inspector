@@ -129,7 +129,7 @@ Current API surface:
 
 - `GET /api/summary`
 - `GET /api/threads`
-- `GET /api/threads/{thread_id}/checkpoints?checkpoint_ns=...`
+- `GET /api/threads/{thread_id}/checkpoints?checkpoint_ns=...&limit=50&offset=0`
 - `GET /api/threads/{thread_id}/checkpoints/{checkpoint_id}?checkpoint_ns=...`
 - `GET /api/threads/{thread_id}/checkpoints/{checkpoint_id}/writes?checkpoint_ns=...`
 - `GET /api/threads/{thread_id}/diff?from=...&to=...&checkpoint_ns=...`
@@ -137,8 +137,11 @@ Current API surface:
 
 `GET /api/threads` includes `checkpoint_namespaces` per thread. When
 `checkpoint_ns` is provided, timeline, checkpoint, writes, diff, and debug
-bundle export are scoped to that namespace. When omitted, the default demo path
-remains simple and keeps the previous all-checkpoints behavior.
+bundle export are scoped to that namespace. Timeline responses use a paginated
+contract: `{ items, pagination, filters }`. The API supports `limit`, `offset`,
+`from_end`, `diagnostic`, and `changed_path`; the UI uses `from_end=true` for
+the first page so large production threads open on the most recent evidence
+without loading the full history.
 
 `POST /api/exports/debug-bundle` is an explicit user action. It writes a JSON
 artifact under `exports/` with database summary, thread/checkpoint metadata,

@@ -30,6 +30,7 @@ The included demo agent intentionally reproduces a stale-memory bug:
 The inspector turns that failure into a navigable evidence trail:
 
 - timeline of saved checkpoints
+- paginated timeline loading for large thread histories
 - decoded state snapshots
 - checkpoint-to-checkpoint diffs
 - actionable diagnostics
@@ -182,7 +183,7 @@ This is an MVP focused on local checkpoint inspection:
 
 - read LangGraph SQLite checkpoint databases
 - optionally inspect LangGraph PostgresSaver stores in read-only mode
-- list threads and checkpoint timelines
+- list threads and paginated checkpoint timelines
 - show and switch checkpoint namespaces per thread
 - decode common state channels
 - show diffs and writes
@@ -200,8 +201,9 @@ Planned next steps:
 
 - Namespace switching is per thread. Cross-namespace diffing is not supported
   because checkpoint ids can overlap across namespaces.
-- Large production checkpoint stores are not paginated yet. Start with a copied
-  or filtered store when a thread has very large history.
+- Timeline pagination loads the latest page first and can load earlier
+  checkpoints on demand. Very large production stores still need deeper
+  indexing, virtualized rendering, and richer server-side search.
 - Diagnostics are deterministic rules for known memory/debugging patterns, not
   a general correctness proof for every LangGraph application.
 - Postgres support targets the full historical `PostgresSaver` schema. It does

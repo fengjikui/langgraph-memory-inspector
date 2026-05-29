@@ -14,6 +14,7 @@ export type Thread = {
   title: string;
   namespace: string;
   namespaces: string[];
+  namespaceCounts: Record<string, number>;
   lastNode: string;
   checkpointCount: number;
   updatedAt: string;
@@ -52,6 +53,27 @@ export type Checkpoint = {
   writes: NodeWrite[];
   diagnostics: Diagnostic[];
   sizeBytes: number;
+};
+
+export type TimelineFilters = {
+  diagnostic?: boolean;
+  changedPath?: string;
+};
+
+export type TimelinePagination = {
+  limit: number;
+  offset: number;
+  returnedCount: number;
+  totalCount: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+  previousOffset?: number;
+  nextOffset?: number;
+};
+
+export type CheckpointPage = {
+  items: Checkpoint[];
+  pagination: TimelinePagination;
 };
 
 export type NodeWrite = {

@@ -7,7 +7,7 @@ export default defineConfig({
     viewport: { width: 1440, height: 1000 }
   },
   webServer: {
-    command: "VITE_LGMI_API_MODE=mock npm run dev -- --host 127.0.0.1 --port 5173",
+    command: "VITE_LGMI_API_MODE=mock VITE_LGMI_TIMELINE_PAGE_SIZE=3 npm run dev -- --host 127.0.0.1 --port 5173",
     url: "http://127.0.0.1:5173",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000

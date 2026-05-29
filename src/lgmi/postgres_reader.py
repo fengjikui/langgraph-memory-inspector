@@ -8,7 +8,7 @@ from typing import Any
 
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 
-from lgmi.checkpoint_reader import _preview_bytes, _preview_value, _to_jsonable
+from lgmi.checkpoint_reader import _channel_from_state_path, _preview_bytes, _preview_value, _to_jsonable
 
 
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
@@ -115,11 +115,38 @@ class PostgresCheckpointReader:
                 return threads
 
     def list_checkpoints(
-        self, thread_id: str, checkpoint_ns: str | None = None
+        self,
+        thread_id: str,
+        checkpoint_ns: str | None = None,
+        *,
+        limit: int | None = None,
+        offset: int = 0,
+        diagnostic: bool | None = None,
+        changed_path: str | None = None,
     ) -> list[dict[str, Any]]:
+        if offset < 0:
+            raise ValueError("offset must be >= 0")
+        if limit is not None and limit < 1:
+            raise ValueError("limit must be >= 1")
         with self._connect() as conn:
             with conn.cursor() as cur:
+                if diagnostic is not None or changed_path:
+                    rows = self._filtered_checkpoint_rows(
+                        cur,
+                        thread_id,
+                        checkpoint_ns,
+                        diagnostic=diagnostic,
+                        changed_path=changed_path,
+                    )
+                    selected_rows = rows[offset : offset + limit if limit is not None else None]
+                    return [
+                        self._checkpoint_row_to_dict(cur, row, include_checkpoint=False)
+                        for row in selected_rows
+                    ]
+
                 namespace_sql, params = self._namespace_filter(checkpoint_ns)
+                limit_sql = "" if limit is None else "limit %s offset %s"
+                limit_params: tuple[int, ...] = () if limit is None else (limit, offset)
                 cur.execute(
                     self._sql(
                         f"""
@@ -129,14 +156,50 @@ class PostgresCheckpointReader:
                         where thread_id = %s
                         {namespace_sql}
                         order by checkpoint_id
+                        {limit_sql}
                         """
                     ),
-                    (thread_id, *params),
+                    (thread_id, *params, *limit_params),
                 )
                 return [
                     self._checkpoint_row_to_dict(cur, row, include_checkpoint=False)
                     for row in cur.fetchall()
                 ]
+
+    def count_checkpoints(
+        self,
+        thread_id: str,
+        checkpoint_ns: str | None = None,
+        *,
+        diagnostic: bool | None = None,
+        changed_path: str | None = None,
+    ) -> int:
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                if diagnostic is not None or changed_path:
+                    return len(
+                        self._filtered_checkpoint_rows(
+                            cur,
+                            thread_id,
+                            checkpoint_ns,
+                            diagnostic=diagnostic,
+                            changed_path=changed_path,
+                        )
+                    )
+
+                namespace_sql, params = self._namespace_filter(checkpoint_ns)
+                cur.execute(
+                    self._sql(
+                        f"""
+                        select count(*) as count
+                        from {{checkpoints}}
+                        where thread_id = %s
+                        {namespace_sql}
+                        """
+                    ),
+                    (thread_id, *params),
+                )
+                return int(cur.fetchone()["count"])
 
     def get_checkpoint(
         self,
@@ -317,6 +380,65 @@ class PostgresCheckpointReader:
             (thread_id, parent_checkpoint_id, *params),
         )
         return parent_checkpoint_id if int(cur.fetchone()["count"]) else checkpoint_id
+
+    def _filtered_checkpoint_rows(
+        self,
+        cur: Any,
+        thread_id: str,
+        checkpoint_ns: str | None,
+        *,
+        diagnostic: bool | None,
+        changed_path: str | None,
+    ) -> list[dict[str, Any]]:
+        namespace_sql, params = self._namespace_filter(checkpoint_ns)
+        cur.execute(
+            self._sql(
+                f"""
+                select thread_id, checkpoint_ns, checkpoint_id,
+                       parent_checkpoint_id, type, checkpoint, metadata
+                from {{checkpoints}}
+                where thread_id = %s
+                {namespace_sql}
+                order by checkpoint_id
+                """
+            ),
+            (thread_id, *params),
+        )
+        changed_channel = _channel_from_state_path(changed_path)
+        rows = cur.fetchall()
+        return [
+            row
+            for row in rows
+            if self._checkpoint_row_matches(cur, row, diagnostic=diagnostic, changed_channel=changed_channel)
+        ]
+
+    def _checkpoint_row_matches(
+        self,
+        cur: Any,
+        row: dict[str, Any],
+        *,
+        diagnostic: bool | None,
+        changed_channel: str | None,
+    ) -> bool:
+        item = self._checkpoint_row_to_dict(cur, row, include_checkpoint=True)
+        value = item.get("checkpoint", {}).get("value")
+        if not isinstance(value, Mapping):
+            return diagnostic is not True and changed_channel is None
+        channel_values = value.get("channel_values")
+        diagnostics = []
+        if isinstance(channel_values, Mapping):
+            raw_diagnostics = channel_values.get("diagnostics")
+            diagnostics = raw_diagnostics if isinstance(raw_diagnostics, list) else []
+
+        if diagnostic is True and not diagnostics:
+            return False
+        if diagnostic is False and diagnostics:
+            return False
+        if changed_channel:
+            updated_channels = value.get("updated_channels")
+            if not isinstance(updated_channels, list) or changed_channel not in updated_channels:
+                return False
+        return True
 
     def _thread_namespaces(self, cur: Any, thread_id: str) -> list[dict[str, Any]]:
         cur.execute(
