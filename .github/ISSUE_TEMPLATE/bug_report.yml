@@ -19,6 +19,10 @@ body:
         If the bug appears only with your own SQLite checkpoint copy, run
         `uv run lgmi doctor --sqlite-db ./checkpoints.sqlite --issue` instead.
         It reports file health and counts without including checkpoint state.
+
+        If the bug appears only with a PostgresSaver store, run
+        `uv run --extra postgres lgmi doctor --postgres-conninfo "$DATABASE_URL" --postgres-schema public --issue`.
+        It reports store shape and counts while redacting credentials.
   - type: dropdown
     id: surface
     attributes:
@@ -55,7 +59,7 @@ body:
     id: doctor
     attributes:
       label: Doctor report
-      description: Paste `uv run lgmi doctor --issue` output for quickstart/demo issues, or `uv run lgmi doctor --sqlite-db ./checkpoints.sqlite --issue` for SQLite DB issues.
+      description: Paste `uv run lgmi doctor --issue` output for quickstart/demo issues, the SQLite doctor report for SQLite DB issues, or the Postgres doctor report for PostgresSaver issues.
   - type: textarea
     id: expected
     attributes:

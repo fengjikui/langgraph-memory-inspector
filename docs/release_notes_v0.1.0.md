@@ -53,6 +53,14 @@ uv run lgmi doctor --sqlite-db ./checkpoints.sqlite
 uv run lgmi inspect ./checkpoints.sqlite --build-ui
 ```
 
+Inspect your own PostgresSaver store:
+
+```bash
+uv sync --extra postgres
+uv run --extra postgres lgmi doctor --postgres-conninfo "$DATABASE_URL" --postgres-schema public
+uv run --extra postgres lgmi inspect-postgres "$DATABASE_URL" --schema public --build-ui
+```
+
 ## Highlights
 
 - Local SQLite checkpoint inspection.

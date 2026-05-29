@@ -6,7 +6,10 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from lgmi import cli
+import lgmi.postgres_reader as postgres_reader
 
 
 def test_demo_prepare_only_generates_checkpoint_data(monkeypatch: Any, capsys: Any) -> None:
@@ -137,6 +140,130 @@ def test_doctor_reports_missing_sqlite_checkpoint_db(tmp_path: Path, capsys: Any
         check["name"] == "SQLite checkpoint DB" and check["status"] == "ERROR"
         for check in report["checks"]
     )
+
+
+def test_doctor_validates_postgres_checkpoint_store(monkeypatch: Any, capsys: Any) -> None:
+    class FakePostgresReader:
+        def __init__(self, conninfo: str, *, schema: str = "public") -> None:
+            assert conninfo == "postgresql://user:secret@localhost:5432/app"
+            assert schema == "agent"
+
+        def summary(self) -> dict[str, Any]:
+            return {
+                "adapter": "LangGraph Postgres Checkpointer",
+                "checkpoint_count": 7,
+                "write_count": 11,
+                "blob_count": 13,
+                "thread_count": 2,
+                "diagnostics_count": 0,
+                "diagnostics_count_mode": "not_scanned_for_postgres",
+                "checkpoint_namespaces": ["", "research"],
+                "checkpoint_migration_version": 5,
+                "threads": [
+                    {
+                        "thread_id": "private-user-id",
+                        "checkpoint_count": 4,
+                        "latest_checkpoint_id": "private-checkpoint-id",
+                    }
+                ],
+            }
+
+    monkeypatch.setattr(postgres_reader, "PostgresCheckpointReader", FakePostgresReader)
+
+    result = cli.main(
+        [
+            "doctor",
+            "--skip-demo",
+            "--skip-web",
+            "--postgres-conninfo",
+            "postgresql://user:secret@localhost:5432/app",
+            "--postgres-schema",
+            "agent",
+            "--json",
+        ]
+    )
+
+    report = json.loads(capsys.readouterr().out)
+    assert result == 0
+    assert report["postgres"]["conninfo"] == "postgresql://***@localhost:5432/app"
+    assert report["postgres"]["checkpoint_count"] == 7
+    assert report["postgres"]["sample_threads"] == [{"checkpoint_count": 4}]
+    assert "private-user-id" not in json.dumps(report)
+    assert "secret" not in json.dumps(report)
+    assert report["next_commands"][0] == (
+        "uv run --extra postgres lgmi inspect-postgres '<postgres-conninfo>' "
+        "--schema agent --build-ui --no-browser"
+    )
+
+
+def test_doctor_reports_postgres_error_without_leaking_conninfo(
+    monkeypatch: Any, capsys: Any
+) -> None:
+    class FailingPostgresReader:
+        def __init__(self, conninfo: str, *, schema: str = "public") -> None:
+            raise RuntimeError(f"could not connect to {conninfo}")
+
+    monkeypatch.setattr(postgres_reader, "PostgresCheckpointReader", FailingPostgresReader)
+
+    result = cli.main(
+        [
+            "doctor",
+            "--skip-demo",
+            "--skip-web",
+            "--postgres-conninfo",
+            "postgresql://user:secret@localhost:5432/app",
+            "--json",
+        ]
+    )
+
+    report = json.loads(capsys.readouterr().out)
+    assert result == 1
+    assert report["ready"] is False
+    assert report["next_commands"] == []
+    assert "secret" not in json.dumps(report)
+    assert "postgresql://***@localhost:5432/app" in json.dumps(report)
+
+
+def test_doctor_redacts_keyword_postgres_password(
+    monkeypatch: Any, capsys: Any
+) -> None:
+    class FailingPostgresReader:
+        def __init__(self, conninfo: str, *, schema: str = "public") -> None:
+            raise RuntimeError("could not connect with password=topsecret")
+
+    monkeypatch.setattr(postgres_reader, "PostgresCheckpointReader", FailingPostgresReader)
+
+    result = cli.main(
+        [
+            "doctor",
+            "--skip-demo",
+            "--skip-web",
+            "--postgres-conninfo",
+            "host=localhost user=agent password=topsecret dbname=app",
+            "--json",
+        ]
+    )
+
+    report = json.loads(capsys.readouterr().out)
+    assert result == 1
+    assert "topsecret" not in json.dumps(report)
+    assert "password=***" in json.dumps(report)
+    assert report["postgres"]["conninfo"] == "<postgres conninfo>"
+
+
+def test_doctor_rejects_multiple_checkpoint_store_inputs(capsys: Any) -> None:
+    with pytest.raises(SystemExit):
+        cli.main(
+            [
+                "doctor",
+                "--sqlite-db",
+                "checkpoints.sqlite",
+                "--postgres-conninfo",
+                "postgresql://unused",
+            ]
+        )
+
+    assert "not allowed with argument" in capsys.readouterr().err
 
 
 def test_demo_serves_generated_database(monkeypatch: Any) -> None:
@@ -270,6 +397,55 @@ def test_inspect_builds_ui_before_serving(monkeypatch: Any, tmp_path: Path) -> N
     assert served["source"] == db_path.resolve()
     assert served["ui_dir"] == ui_dir
     assert served["port"] == 8766
+
+
+def test_inspect_postgres_builds_ui_before_serving(monkeypatch: Any, tmp_path: Path) -> None:
+    ui_dir = tmp_path / "dist"
+    ui_dir.mkdir()
+    (ui_dir / "index.html").write_text("<div id='root'></div>", encoding="utf-8")
+    served: dict[str, Any] = {}
+
+    class FakePostgresReader:
+        def __init__(self, conninfo: str, *, schema: str = "public") -> None:
+            served["conninfo"] = conninfo
+            served["schema"] = schema
+
+    monkeypatch.setattr(cli, "_build_web_ui", lambda: ui_dir)
+    monkeypatch.setattr(cli, "_resolve_ui_dir", lambda ui_dir_arg: ui_dir)
+    monkeypatch.setattr(postgres_reader, "PostgresCheckpointReader", FakePostgresReader)
+
+    def fake_create_app(source: object, *, ui_dir: Path | None = None) -> object:
+        served["source"] = source
+        served["ui_dir"] = ui_dir
+        return object()
+
+    def fake_serve_app(app: object, args: argparse.Namespace, source_label: str) -> int:
+        served["port"] = args.port
+        served["source_label"] = source_label
+        return 0
+
+    monkeypatch.setattr(cli, "create_app", fake_create_app)
+    monkeypatch.setattr(cli, "_serve_app", fake_serve_app)
+
+    result = cli.main(
+        [
+            "inspect-postgres",
+            "postgresql://user:secret@localhost:5432/app",
+            "--schema",
+            "agent",
+            "--build-ui",
+            "--no-browser",
+            "--port",
+            "8766",
+        ]
+    )
+
+    assert result == 0
+    assert served["conninfo"] == "postgresql://user:secret@localhost:5432/app"
+    assert served["schema"] == "agent"
+    assert served["ui_dir"] == ui_dir
+    assert served["port"] == 8766
+    assert "postgresql://***@localhost:5432/app" in served["source_label"]
 
 
 def _write_empty_checkpoint_db(path: Path) -> None:

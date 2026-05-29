@@ -6,6 +6,8 @@ import importlib.util
 import io
 import json
 import platform
+import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -55,10 +57,21 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="store_true",
         help="Skip Node.js, npm, and web UI dependency checks.",
     )
-    doctor_parser.add_argument(
+    doctor_store_group = doctor_parser.add_mutually_exclusive_group()
+    doctor_store_group.add_argument(
         "--sqlite-db",
         default=None,
         help="Validate a LangGraph SQLite checkpoint database and include a safe summary.",
+    )
+    doctor_store_group.add_argument(
+        "--postgres-conninfo",
+        default=None,
+        help="Validate a LangGraph Postgres checkpoint store and include a safe summary.",
+    )
+    doctor_parser.add_argument(
+        "--postgres-schema",
+        default="public",
+        help="Postgres schema for --postgres-conninfo.",
     )
     output_group = doctor_parser.add_mutually_exclusive_group()
     output_group.add_argument(
@@ -296,6 +309,17 @@ def _build_doctor_report(args: argparse.Namespace) -> dict[str, object]:
         has_error = any(check["status"] == "ERROR" for check in checks)
         if has_error:
             next_commands.clear()
+    postgres_summary: dict[str, object] | None = None
+    if args.postgres_conninfo:
+        postgres_summary = _add_postgres_checks(
+            checks,
+            next_commands,
+            args.postgres_conninfo,
+            args.postgres_schema,
+        )
+        has_error = any(check["status"] == "ERROR" for check in checks)
+        if has_error:
+            next_commands.clear()
 
     return {
         "tool": "langgraph-memory-inspector",
@@ -313,7 +337,8 @@ def _build_doctor_report(args: argparse.Namespace) -> dict[str, object]:
         "checks": checks,
         "next_commands": next_commands,
         "sqlite_db": sqlite_db_summary,
-        "privacy": "This report does not include checkpoint state, message content, prompts, tokens, or production database rows. It may include local file paths when --sqlite-db is used.",
+        "postgres": postgres_summary,
+        "privacy": "This report does not include checkpoint state, message content, prompts, tokens, or production database rows. It may include local file paths when --sqlite-db is used and redacted host/schema details when --postgres-conninfo is used.",
     }
 
 
@@ -465,6 +490,88 @@ def _add_sqlite_db_checks(
     )
     next_commands.insert(0, f"uv run lgmi inspect {path} --build-ui --no-browser")
     return summary
+
+
+def _add_postgres_checks(
+    checks: list[dict[str, str]],
+    next_commands: list[str],
+    conninfo: str,
+    schema: str,
+) -> dict[str, object]:
+    from lgmi.postgres_reader import PostgresCheckpointReader
+
+    redacted_conninfo = _redact_conninfo(conninfo)
+    summary: dict[str, object] = {
+        "conninfo": redacted_conninfo,
+        "schema": schema,
+    }
+    try:
+        reader = PostgresCheckpointReader(conninfo, schema=schema)
+        store_summary = reader.summary()
+    except Exception as exc:  # noqa: BLE001 - doctor should turn any connection/schema issue into a report.
+        message = _sanitize_sensitive(str(exc), conninfo)
+        checks.append(
+            {
+                "status": "ERROR",
+                "name": "Postgres checkpoint store",
+                "detail": message,
+            }
+        )
+        summary["error"] = message
+        return summary
+
+    summary.update(
+        {
+            "adapter": store_summary.get("adapter"),
+            "checkpoint_count": store_summary["checkpoint_count"],
+            "write_count": store_summary["write_count"],
+            "blob_count": store_summary["blob_count"],
+            "thread_count": store_summary["thread_count"],
+            "diagnostics_count": store_summary["diagnostics_count"],
+            "diagnostics_count_mode": store_summary["diagnostics_count_mode"],
+            "checkpoint_namespaces": store_summary["checkpoint_namespaces"],
+            "checkpoint_migration_version": store_summary["checkpoint_migration_version"],
+            "sample_threads": [
+                {
+                    "checkpoint_count": item["checkpoint_count"],
+                }
+                for item in store_summary["threads"][:5]
+            ],
+        }
+    )
+    checks.append(
+        {
+            "status": "OK",
+            "name": "Postgres checkpoint store",
+            "detail": (
+                f"{store_summary['thread_count']} threads, "
+                f"{store_summary['checkpoint_count']} checkpoints, "
+                f"{store_summary['write_count']} writes"
+            ),
+        }
+    )
+    next_commands.insert(
+        0,
+        "uv run --extra postgres lgmi inspect-postgres '<postgres-conninfo>' "
+        f"--schema {shlex.quote(schema)} --build-ui --no-browser",
+    )
+    return summary
+
+
+def _sanitize_sensitive(message: str, secret: str) -> str:
+    sanitized = re.sub(
+        r"(?i)(password\s*=\s*)(?:'[^']*'|\"[^\"]*\"|\S+)",
+        r"\1***",
+        message,
+    )
+    sanitized = re.sub(
+        r"([a-z][a-z0-9+.-]*://)([^@\s]+@)",
+        r"\1***@",
+        sanitized,
+    )
+    if secret and secret in message:
+        sanitized = sanitized.replace(secret, _redact_conninfo(secret))
+    return sanitized
 
 
 def _run_demo(args: argparse.Namespace) -> int:

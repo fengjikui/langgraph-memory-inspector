@@ -132,6 +132,25 @@ The SQLite doctor report includes counts, namespaces, and file health only. It
 does not include checkpoint state, message content, prompts, tokens, or raw
 database rows.
 
+## Inspect Your Own Postgres Checkpoint Store
+
+Install the optional Postgres dependencies and validate the store shape:
+
+```bash
+uv sync --extra postgres
+uv run --extra postgres lgmi doctor --postgres-conninfo "$DATABASE_URL" --postgres-schema public
+```
+
+If the report is ready, start the inspector:
+
+```bash
+uv run --extra postgres lgmi inspect-postgres "$DATABASE_URL" --schema public --build-ui
+```
+
+The Postgres doctor report includes structural counts, checkpoint namespaces,
+and migration version only. It redacts credentials and does not include
+checkpoint state, thread ids, message content, prompts, tokens, or raw rows.
+
 ## Verify The Product Value
 
 Run the real use-case smoke test:

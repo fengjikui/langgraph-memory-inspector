@@ -111,6 +111,14 @@ uv run lgmi doctor --sqlite-db ./checkpoints.sqlite
 uv run lgmi inspect ./checkpoints.sqlite --build-ui
 ```
 
+For a PostgresSaver store:
+
+```bash
+uv sync --extra postgres
+uv run --extra postgres lgmi doctor --postgres-conninfo "$DATABASE_URL" --postgres-schema public
+uv run --extra postgres lgmi inspect-postgres "$DATABASE_URL" --schema public --build-ui
+```
+
 Repo:
 https://github.com/fengjikui/langgraph-memory-inspector
 
@@ -243,6 +251,14 @@ uv run lgmi doctor --sqlite-db ./checkpoints.sqlite
 uv run lgmi inspect ./checkpoints.sqlite --build-ui
 ```
 
+如果使用 PostgresSaver：
+
+```bash
+uv sync --extra postgres
+uv run --extra postgres lgmi doctor --postgres-conninfo "$DATABASE_URL" --postgres-schema public
+uv run --extra postgres lgmi inspect-postgres "$DATABASE_URL" --schema public --build-ui
+```
+
 现在支持：
 
 - SQLite checkpoint DB
@@ -336,6 +352,12 @@ Own SQLite DB issue:
 
 ```text
 Thanks for the report. Could you run `uv run lgmi doctor --sqlite-db ./checkpoints.sqlite --issue` against your local copy and paste the generated Markdown? It includes file health, counts, and namespaces, but not checkpoint state or message content.
+```
+
+PostgresSaver issue:
+
+```text
+Thanks for the report. Could you run `uv run --extra postgres lgmi doctor --postgres-conninfo "$DATABASE_URL" --postgres-schema public --issue` against a local/safe connection and paste the generated Markdown? It redacts credentials and reports store shape/counts without checkpoint state, thread ids, or message content.
 ```
 
 LangSmith / Studio comparison:

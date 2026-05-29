@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import uuid
 from typing import Any
@@ -8,6 +9,7 @@ import pytest
 from langchain_core.messages import AIMessage, HumanMessage
 
 from examples.relocation_policy_agent.run_demo import THREAD_ID, build_graph
+from lgmi import cli
 from lgmi.postgres_reader import PostgresCheckpointReader
 
 
@@ -103,7 +105,7 @@ def test_postgres_reader_decodes_checkpoint_write_blob() -> None:
     not os.environ.get("LGMI_POSTGRES_TEST_DSN"),
     reason="Set LGMI_POSTGRES_TEST_DSN to run the real PostgresSaver integration test.",
 )
-def test_postgres_reader_integrates_with_real_postgres_saver() -> None:
+def test_postgres_reader_integrates_with_real_postgres_saver(capsys: Any) -> None:
     psycopg = pytest.importorskip("psycopg")
     pytest.importorskip("langgraph.checkpoint.postgres")
     from psycopg import sql
@@ -149,6 +151,23 @@ def test_postgres_reader_integrates_with_real_postgres_saver() -> None:
 
         reader = PostgresCheckpointReader(dsn, schema=schema)
         assert reader.summary()["checkpoint_count"] > 0
+        doctor_result = cli.main(
+            [
+                "doctor",
+                "--skip-demo",
+                "--skip-web",
+                "--postgres-conninfo",
+                dsn,
+                "--postgres-schema",
+                schema,
+                "--json",
+            ]
+        )
+        doctor_report = json.loads(capsys.readouterr().out)
+        assert doctor_result == 0
+        assert doctor_report["postgres"]["checkpoint_count"] > 0
+        assert doctor_report["postgres"]["schema"] == schema
+        assert "postgres:postgres" not in json.dumps(doctor_report)
         checkpoints = reader.list_checkpoints(THREAD_ID)
         assert checkpoints
 

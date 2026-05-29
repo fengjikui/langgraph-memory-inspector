@@ -427,3 +427,29 @@
 
 - `uv run lgmi doctor --skip-demo --skip-web --sqlite-db examples/relocation_policy_agent/data/checkpoints.sqlite --json`
 - `uv run pytest tests/test_cli.py -q`
+
+### PostgresSaver doctor path
+
+用户价值改进：
+
+- `lgmi doctor --postgres-conninfo "$DATABASE_URL" --postgres-schema public` 会用现有 read-only Postgres reader 检查 PostgresSaver store shape。
+- 报告包含 checkpoint/write/blob/thread 计数、namespace、migration version 和 adapter，不包含 checkpoint state、thread id、message content、prompts、tokens 或 raw rows。
+- Postgres URI 和 libpq `password=...` 连接串在报告里会脱敏；下一步命令使用 `<postgres-conninfo>` 占位符，避免用户直接把密码贴到 issue。
+- `lgmi inspect-postgres "$DATABASE_URL" --schema public --build-ui` 现在也支持自动构建并服务 UI。
+
+为什么重要：
+
+- 真实团队更可能把 LangGraph checkpoint 放在 PostgresSaver 里。Postgres doctor 让他们能先验证 store 是否是完整历史表、是否能被 reader 读取，再决定是否启动 UI 或提交反馈。
+- 这把“支持 Postgres”从文档声明推进成可诊断的接入路径，也降低维护者远程排查连接/表结构问题的成本。
+
+已验证：
+
+- `uv run pytest tests/test_cli.py -q`
+- `uv run lgmi doctor --skip-demo --skip-web --postgres-conninfo postgresql://user:secret@localhost:1/db --json`
+- `uv run pytest tests/test_cli.py tests/test_postgres_reader.py -q`
+- `uv run pytest -q`
+- `cd web && npm run build`
+- `cd web && npm run test:e2e`
+- `uv build`
+- `uv run python scripts/use_case_smoke.py --reset-demo`
+- `ruby -e 'require "yaml"; Dir[".github/ISSUE_TEMPLATE/*.yml"].each { |path| YAML.load_file(path); puts "OK #{path}" }'`
