@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import Sequence
 
-from scripts.launch_status import collect_launch_status
+from scripts.launch_status import LaunchStatusError, collect_launch_status
 
 
 def test_launch_status_marks_manual_social_preview_gate() -> None:
@@ -17,6 +17,17 @@ def test_launch_status_marks_manual_social_preview_gate() -> None:
     assert by_name["#20 feedback issue"].status == "pass"
     assert by_name["#23 social preview upload"].status == "manual"
     assert by_name["repository OpenGraph image"].status == "manual"
+
+
+def test_launch_status_reports_probe_failures_without_aborting() -> None:
+    checks = collect_launch_status(_flaky_runner)
+    by_name = {check.name: check for check in checks}
+
+    assert by_name["local git status"].status == "pass"
+    assert by_name["repository visibility"].status == "fail"
+    assert "temporary gh failure" in by_name["repository visibility"].detail
+    assert by_name["latest main CI"].status == "pass"
+    assert by_name["#23 social preview upload"].status == "manual"
 
 
 def _fake_runner(command: Sequence[str]) -> str:
@@ -45,3 +56,10 @@ def _fake_runner(command: Sequence[str]) -> str:
     if command_text.startswith("gh issue view 23"):
         return json.dumps({"state": "OPEN", "title": "Set a custom GitHub social preview image", "url": "https://github.com/fengjikui/langgraph-memory-inspector/issues/23"})
     raise AssertionError(f"Unexpected command: {command_text}")
+
+
+def _flaky_runner(command: Sequence[str]) -> str:
+    command_text = " ".join(command)
+    if command_text.startswith("gh repo view") and "visibility,url" in command_text:
+        raise LaunchStatusError("temporary gh failure")
+    return _fake_runner(command)

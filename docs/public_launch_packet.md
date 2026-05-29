@@ -416,7 +416,7 @@ Thanks for the report. Could you run `uv run lgmi doctor --sqlite-db ./checkpoin
 Checkpoint pattern with safe evidence:
 
 ```text
-This sounds like the kind of pattern the inspector should learn from. If you can share a local SQLite checkpoint copy safely, please run `uv run lgmi export-debug-bundle ./checkpoints.sqlite --thread-id <thread-id> --checkpoint-id <checkpoint-id> --issue --output-dir exports`, review the generated JSON locally, and paste the Markdown summary. Please attach only the redacted bundle; no raw production checkpoint stores.
+This sounds like the kind of pattern the inspector should learn from. If you can share a local SQLite checkpoint copy safely, please run `uv run lgmi export-debug-bundle ./checkpoints.sqlite --thread-id <thread-id> --checkpoint-id <checkpoint-id> --issue --output-dir exports`, then `uv run lgmi audit-debug-bundle exports/<bundle>.json`. Please review the generated JSON locally, paste the Markdown summary, and attach only the redacted bundle; no raw production checkpoint stores.
 ```
 
 PostgresSaver issue:

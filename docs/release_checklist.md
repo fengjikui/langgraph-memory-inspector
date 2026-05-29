@@ -38,6 +38,8 @@ Draft release notes: `docs/release_notes_v0.1.0.md`.
   message/evidence fields without modifying the checkpoint store.
 - [x] `export-debug-bundle --issue` defaults to a redacted bundle, rejects raw
   issue reports, and prints a pasteable Markdown summary for GitHub feedback.
+- [x] `audit-debug-bundle` checks generated debug bundles for redaction mode,
+  required structure, and obvious token/email/phone-like values before sharing.
 - [x] Namespace selector is visible for multi-namespace threads and switching
   namespaces changes the timeline without changing thread context.
 - [x] Timeline API returns a paginated contract and the UI can load earlier

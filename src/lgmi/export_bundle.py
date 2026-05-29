@@ -34,7 +34,7 @@ DEFAULT_REDACT_KEYS = {
     "user_text",
 }
 EMAIL_PATTERN = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
-PHONE_PATTERN = re.compile(r"(?<![A-Za-z0-9])(?:\+?\d[\d .().-]{7,}\d)(?![A-Za-z0-9])")
+PHONE_PATTERN = re.compile(r"(?<![A-Za-z0-9-])(?:\+?\d[\d .().-]{7,}\d)(?![A-Za-z0-9-])")
 TOKEN_PATTERN = re.compile(r"\b(?:sk|sk-proj|ghp|github_pat)_[A-Za-z0-9_=-]{12,}\b")
 
 

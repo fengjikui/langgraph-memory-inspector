@@ -17,22 +17,33 @@ class Check:
     detail: str
 
 
+class LaunchStatusError(RuntimeError):
+    """A launch status probe failed but should not abort the full report."""
+
+
 Runner = Callable[[Sequence[str]], str]
 
 
 def collect_launch_status(runner: Runner | None = None) -> list[Check]:
     """Collect local and GitHub launch gates for the first public posting."""
     run = runner or _run
-    checks = [
-        _git_status_check(run),
-        _repo_visibility_check(run),
-        _latest_ci_check(run),
-        _release_check(run),
-        _feedback_issue_check(run),
-        _social_preview_issue_check(run),
-        _open_graph_check(run),
+    probes = [
+        ("local git status", _git_status_check),
+        ("repository visibility", _repo_visibility_check),
+        ("latest main CI", _latest_ci_check),
+        ("v0.1.0 release", _release_check),
+        ("#20 feedback issue", _feedback_issue_check),
+        ("#23 social preview upload", _social_preview_issue_check),
+        ("repository OpenGraph image", _open_graph_check),
     ]
-    return checks
+    return [_safe_check(name, probe, run) for name, probe in probes]
+
+
+def _safe_check(name: str, probe: Callable[[Runner], Check], run: Runner) -> Check:
+    try:
+        return probe(run)
+    except (LaunchStatusError, json.JSONDecodeError, KeyError, IndexError) as exc:
+        return Check(name=name, status="fail", detail=str(exc))
 
 
 def _git_status_check(run: Runner) -> Check:
@@ -113,16 +124,26 @@ def _open_graph_check(run: Runner) -> Check:
 
 
 def _json(text: str) -> object:
-    return json.loads(text)
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise LaunchStatusError(f"invalid JSON from command: {exc}") from exc
 
 
 def _run(command: Sequence[str]) -> str:
-    completed = subprocess.run(
-        command,
-        check=True,
-        text=True,
-        capture_output=True,
-    )
+    try:
+        completed = subprocess.run(
+            command,
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        detail = (exc.stderr or exc.stdout or "").strip()
+        command_text = " ".join(command)
+        if detail:
+            raise LaunchStatusError(f"`{command_text}` failed: {detail}") from exc
+        raise LaunchStatusError(f"`{command_text}` failed with exit code {exc.returncode}") from exc
     return completed.stdout
 
 

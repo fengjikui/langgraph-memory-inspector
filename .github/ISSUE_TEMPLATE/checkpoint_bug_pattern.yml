@@ -18,7 +18,8 @@ body:
         unredacted user state.
 
         For SQLite checkpoint copies, `uv run lgmi export-debug-bundle ... --issue`
-        creates a redacted bundle and prints a pasteable Markdown summary.
+        creates a redacted bundle and prints a pasteable Markdown summary. Run
+        `uv run lgmi audit-debug-bundle exports/<bundle>.json` before attaching it.
   - type: dropdown
     id: pattern_type
     attributes:

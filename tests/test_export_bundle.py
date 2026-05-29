@@ -12,6 +12,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from examples.relocation_policy_agent.run_demo import THREAD_ID, build_graph
 from lgmi.checkpoint_reader import SQLiteCheckpointReader
 from lgmi.cli import main
+from lgmi.bundle_audit import audit_debug_bundle
 from lgmi.export_bundle import (
     REDACTION_PLACEHOLDER,
     _redact_string_patterns,
@@ -243,6 +244,97 @@ def test_cli_export_debug_bundle_issue_report_rejects_raw_mode(tmp_path: Path, c
     captured = capsys.readouterr()
     assert exit_code == 2
     assert "`--issue` is for public reports" in captured.err
+
+
+def test_cli_export_debug_bundle_reports_missing_checkpoint_without_traceback(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    db_path = _write_demo_db(tmp_path)
+
+    exit_code = main(
+        [
+            "export-debug-bundle",
+            str(db_path),
+            "--thread-id",
+            THREAD_ID,
+            "--checkpoint-id",
+            "missing-checkpoint",
+            "--issue",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 2
+    assert "Could not export debug bundle: Checkpoint not found: missing-checkpoint" in captured.err
+    assert "Traceback" not in captured.err
+
+
+def test_audit_debug_bundle_accepts_redacted_issue_bundle(tmp_path: Path, capsys) -> None:
+    db_path = _write_demo_db(tmp_path)
+    reader = SQLiteCheckpointReader(db_path)
+    checkpoint_id = _checkpoint_with_second_memory_write(reader)
+    result = export_debug_bundle(
+        reader,
+        thread_id=THREAD_ID,
+        checkpoint_id=checkpoint_id,
+        output_dir=tmp_path / "exports",
+        redaction_mode="redacted",
+    )
+
+    report = audit_debug_bundle(result["path"])
+    assert report["safe_to_share"] is True
+    assert {check["status"] for check in report["checks"]} <= {"OK", "WARN"}
+
+    exit_code = main(["audit-debug-bundle", result["path"]])
+    output = capsys.readouterr().out
+    assert exit_code == 0
+    assert "debug bundle audit" in output
+    assert "no automatic blocker found" in output
+
+
+def test_audit_debug_bundle_rejects_raw_bundle(tmp_path: Path) -> None:
+    db_path = _write_demo_db(tmp_path)
+    reader = SQLiteCheckpointReader(db_path)
+    checkpoint_id = _checkpoint_with_second_memory_write(reader)
+    result = export_debug_bundle(
+        reader,
+        thread_id=THREAD_ID,
+        checkpoint_id=checkpoint_id,
+        output_dir=tmp_path / "exports",
+        redaction_mode="raw",
+    )
+
+    report = audit_debug_bundle(result["path"])
+    assert report["safe_to_share"] is False
+    assert any(
+        check["name"] == "Redaction mode" and check["status"] == "ERROR"
+        for check in report["checks"]
+    )
+
+
+def test_audit_debug_bundle_rejects_obvious_private_values(tmp_path: Path) -> None:
+    path = tmp_path / "bundle.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "privacy": {"redaction_mode": "redacted", "redaction_count": 1},
+                "thread": {},
+                "selected_checkpoint": {},
+                "diagnostics": [],
+                "leak": "contact me at private@example.com",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = audit_debug_bundle(path)
+    assert report["safe_to_share"] is False
+    assert any(
+        check["name"] == "Suspicious private values" and check["status"] == "ERROR"
+        for check in report["checks"]
+    )
 
 
 def _write_demo_db(tmp_path: Path) -> Path:

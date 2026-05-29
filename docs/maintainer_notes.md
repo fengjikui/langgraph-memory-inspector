@@ -794,3 +794,29 @@
 
 - `uv run pytest tests/test_export_bundle.py -q`
 - `uv run lgmi export-debug-bundle examples/relocation_policy_agent/data/checkpoints.sqlite --thread-id relocation-demo-user-001 --checkpoint-id 1f15b739-6741-66e0-8007-516937504e51 --issue --output-dir /tmp/lgmi-issue-export`
+
+### Debug bundle audit command
+
+用户价值改进：
+
+- 新增 `lgmi audit-debug-bundle <bundle.json>`，让用户在把 redacted bundle 贴到 public issue
+  前先做一次本地自动检查。
+- audit 会检查 bundle JSON 是否可读、schema version、关键结构字段、privacy metadata、
+  redaction mode 是否为 `redacted`，以及是否残留明显 token/email/phone-like 字符串。
+- `export-debug-bundle` 现在会把缺失 checkpoint id 等常见错误转成清晰 stderr 和 exit 2，
+  避免用户复制错 id 时看到 traceback。
+- `launch_status.py` 改成每个 probe 独立失败，GitHub CLI/API 短暂抖动会显示对应 gate
+  `FAIL`，不会中断整份 launch report。
+- README、fixture policy、checkpoint bug pattern template、public launch packet 和 release
+  checklist 都记录了 audit path。
+
+为什么重要：
+
+- 真实用户愿意反馈时，最大的阻力不是“不会描述”，而是不确定什么可以安全公开。audit 命令把
+  这一步变成一个可复制的本地动作。
+- launch status 是维护者发布前的仪表盘，不能因为一个远端请求抖动就失去全部可见性。
+
+已验证：
+
+- `uv run pytest tests/test_export_bundle.py tests/test_launch_status.py -q`
+- `uv run lgmi audit-debug-bundle /tmp/lgmi-audit-export/<bundle>.json`

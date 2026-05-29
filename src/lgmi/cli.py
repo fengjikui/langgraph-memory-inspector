@@ -36,6 +36,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_prove_demo(args)
     if args.command == "export-debug-bundle":
         return _run_export_debug_bundle(args)
+    if args.command == "audit-debug-bundle":
+        return _run_audit_debug_bundle(args)
     raise SystemExit(f"Unknown command: {args.command}")
 
 
@@ -234,6 +236,12 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="store_true",
         help="Print a privacy-safe Markdown summary for a GitHub issue. Defaults to redacted export.",
     )
+    audit_parser = subparsers.add_parser(
+        "audit-debug-bundle",
+        help="Check whether an exported debug bundle is safe to attach to a public issue.",
+    )
+    audit_parser.add_argument("bundle_path", help="Path to a generated debug bundle JSON file.")
+    audit_parser.add_argument("--json", action="store_true", help="Print a machine-readable audit report.")
     return parser.parse_args(argv)
 
 
@@ -761,17 +769,21 @@ def _run_export_debug_bundle(args: argparse.Namespace) -> int:
         return 2
 
     redaction_mode = args.redaction_mode or ("redacted" if args.redact or args.issue else "raw")
-    result = export_debug_bundle(
-        SQLiteCheckpointReader(db_path),
-        thread_id=args.thread_id,
-        checkpoint_id=args.checkpoint_id,
-        checkpoint_ns=args.checkpoint_ns,
-        output_dir=args.output_dir,
-        context=args.context,
-        redaction_mode=redaction_mode,
-        redact_paths=args.redact_path,
-        keep_paths=args.keep_path,
-    )
+    try:
+        result = export_debug_bundle(
+            SQLiteCheckpointReader(db_path),
+            thread_id=args.thread_id,
+            checkpoint_id=args.checkpoint_id,
+            checkpoint_ns=args.checkpoint_ns,
+            output_dir=args.output_dir,
+            context=args.context,
+            redaction_mode=redaction_mode,
+            redact_paths=args.redact_path,
+            keep_paths=args.keep_path,
+        )
+    except (FileNotFoundError, ValueError, OSError) as exc:
+        print(f"Could not export debug bundle: {exc}", file=sys.stderr)
+        return 2
     if args.issue:
         _print_debug_bundle_issue(result)
         return 0
@@ -820,6 +832,27 @@ def _print_debug_bundle_issue(result: dict[str, Any]) -> None:
         "or proprietary tool outputs.",
         flush=True,
     )
+
+
+def _run_audit_debug_bundle(args: argparse.Namespace) -> int:
+    from lgmi.bundle_audit import audit_debug_bundle
+
+    report = audit_debug_bundle(args.bundle_path)
+    checks = list(report["checks"])
+    if args.json:
+        print(json.dumps(report, indent=2), flush=True)
+    else:
+        print("LangGraph Memory Inspector debug bundle audit", flush=True)
+        print("=" * 50, flush=True)
+        for check in checks:
+            print(f"[{check['status']}] {check['name']}: {check['detail']}", flush=True)
+        print(flush=True)
+        if report["safe_to_share"]:
+            print("Result: no automatic blocker found. Review the JSON before attaching it.", flush=True)
+        else:
+            print("Result: do not attach this bundle publicly until ERROR items are fixed.", flush=True)
+
+    return 1 if any(check["status"] == "ERROR" for check in checks) else 0
 
 
 def _serve_app(app: object, args: argparse.Namespace, source_label: str) -> int:

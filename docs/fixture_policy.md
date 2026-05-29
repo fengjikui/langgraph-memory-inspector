@@ -69,8 +69,14 @@ uv run lgmi export-debug-bundle path/to/checkpoints.sqlite \
   --output-dir exports
 ```
 
-Before posting, open the JSON and confirm it contains no private values. Attach
-only the generated redacted bundle. If the default redaction misses a
+Before posting, run the bundle audit and open the JSON to confirm it contains
+no private values:
+
+```bash
+uv run lgmi audit-debug-bundle exports/<bundle>.json
+```
+
+Attach only the generated redacted bundle. If the default redaction misses a
 project-specific field, rerun the export with `--redact-path`:
 
 ```bash

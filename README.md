@@ -284,6 +284,12 @@ uv run lgmi export-debug-bundle examples/relocation_policy_agent/data/checkpoint
   --output-dir exports
 ```
 
+Then audit the generated JSON before attaching it:
+
+```bash
+uv run lgmi audit-debug-bundle exports/<bundle>.json
+```
+
 The bundle includes:
 
 - database summary
