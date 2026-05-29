@@ -12,6 +12,46 @@ LangGraph Memory Inspector 的长期原则是：
 2. 这个改动是否缩短了他的调试路径？
 3. 这个能力是否能被截图、GIF、测试或 demo 明确证明？
 
+## 给未来维护者的提醒
+
+这个项目最容易跑偏的地方，是把“能展示 checkpoint”误认为“能帮助用户调试”。未来每次继续维护前，先用下面这句话校准：
+
+> 不要为了展示技术而做工具，要为了让真实开发者少痛一次而做工具；每个功能都必须回答“用户遇到什么具体麻烦，它怎么帮用户更快定位问题”。
+
+判断一个改动是否值得做，优先看它能不能让用户更快完成一条真实调试链：
+
+1. 发现 Agent 行为异常。
+2. 找到最相关的 thread、namespace 或 checkpoint。
+3. 看见坏状态第一次出现的位置。
+4. 追到导致它的 state path、write channel、node/task 或 retrieved context。
+5. 把证据导出给同事、issue、PR 或事故复盘。
+
+如果一个功能不能进入这条链，就先降级为 backlog。漂亮图表、更多筛选项、AI 总结、社区推广文案，都必须服务这条链，而不是替代它。
+
+## 经验教训
+
+- 演示故事比功能列表重要。“可视化 checkpoint”不够强，“定位为什么搬到杭州后 Agent 还在用上海记忆”才是用户能立刻理解的痛点。
+- 诊断要给证据，不只给判断。每个 diagnostic 最好能带到 checkpoint、state path、write channel 或 retrieved context，否则用户仍然要自己重新排查。
+- 支持新 backend 要先定义安全边界。生产数据必须 read-only、local-first、默认不上传；遇到 latest-only 或不可还原 schema，应明确报告 unsupported，而不是假装能读懂。
+- 推广不是拉 star，而是寻找真实 bug pattern。首发内容应该邀请 LangGraph 用户提供他们最痛的 checkpoint / memory 调试场景。
+- 每轮维护都要留下可验证痕迹：测试、CI、截图、GIF、release notes、issue 链接或 demo script。没有证据的“完成”不算完成。
+
+## 下一轮行动准则
+
+每次重新开始工作时，按这个顺序选择任务：
+
+1. 先看现有 open issue 是否包含真实用户反馈或能带来真实 bug pattern。
+2. 再看 README / quickstart / demo 是否仍然能让新用户在 5 分钟内获得价值。
+3. 然后补诊断能力、fixture、测试和 UI 跳转，让调试链更短。
+4. 最后再做推广材料、社区帖子和视觉资产。
+
+停手前必须回答：
+
+- 用户现在比上一轮少走了哪一步弯路？
+- 这个变化有没有被测试、CI、截图或文档证明？
+- 有没有引入隐私、生产数据读取、磁盘增长或误导性诊断风险？
+- 下一位维护者打开项目时，是否知道接下来最该做什么？
+
 ## 产品定位
 
 一句话：
@@ -34,30 +74,26 @@ LangGraph Memory Inspector 的长期原则是：
 
 ## 近期产品路线
 
-### P0：把当前 MVP 打磨成可信 demo
+### P0：完成公开首发闭环
 
-- Diagnostic 点击后跳转到对应 checkpoint。
-- Writes tab 改成 node attribution 视图。
-- Diff viewer 支持选择任意两个 checkpoint，而不是只看当前与前一个。
-- README 首屏加入截图和 3 步 quickstart。
-- 增加 `docs/screenshots/` 或远端 assets 的展示图，但不要提交临时大文件。
+- 上传 GitHub social preview，避免公开链接在社区里显得像未完成仓库。
+- 发布第一篇 LangChain Forum / Slack 帖子，主诉求是收集真实 checkpoint bug pattern。
+- 持续维护 #20，把真实反馈拆成 fixture、diagnostic、UI 跳转或 backend 支持 issue。
+- 用当前 stale memory / stale retrieved context demo 作为所有推广内容的主线，不临时换故事。
 
-### P1：变成开发者真正可试用的工具
+### P1：围绕真实反馈加深调试能力
 
-- 支持用户传入任意 SQLite checkpoint DB。
-- 支持 checkpoint namespace 选择。
-- 支持按 thread 搜索、按 diagnostic 过滤。
-- 支持导出 debug bundle，包含 timeline、diff、diagnostics、复现说明。
-- 增加更真实的 example apps：RAG stale context、tool call failure、human-in-the-loop resume。
+- 根据用户反馈增加下一批高价值 diagnostics，例如 reducer append mistake、wrong resume point、message bloat 或 namespace confusion。
+- 做 large-store 导航能力时，先从真实生产痛点出发，再决定 metadata search、timeline virtualization 或 server-side index。
+- 继续扩展 saver 兼容性，但保持 read-only 和 schema doctor 优先；读不懂的 schema 要诚实报告。
+- 把每个新增诊断都绑定一个 fixture、一个测试和一个可演示用户故事。
 
-### P2：GitHub 发布准备
+### P2：提高外部贡献和复用质量
 
-- 加 LICENSE。
-- 加 issue templates。
-- 加 CONTRIBUTING。
-- 加 release checklist。
-- 加 demo GIF。
-- README 顶部讲清楚：谁需要它、它解决什么痛点、如何 3 分钟跑起来。
+- 把常见反馈沉淀进 issue templates、diagnostic matrix 和 release checklist。
+- 为第一个外部贡献者准备更小的 good first issue，而不是只留下大而模糊的路线图。
+- 保持 README、release notes、demo GIF 和 quickstart 一致，任何一个入口都不能讲旧能力。
+- 如果推广带来真实用户，再考虑更正式的网站、视频和多语言文档。
 
 ## 推广策略
 
