@@ -47,10 +47,20 @@ Prerequisites:
 - `uv`
 - Node.js and npm
 
-Prepare the demo checkpoint data and start the Inspector API:
+Check your local setup:
 
 ```bash
 uv sync
+uv run lgmi doctor
+```
+
+If the doctor reports a `WARN` or `ERROR`, follow the printed next command and
+run it again. This is the quickest way to verify the demo checkpoint, API reader,
+Node.js/npm, and web UI dependencies before opening the app.
+
+Prepare the demo checkpoint data and start the Inspector API:
+
+```bash
 uv run lgmi demo
 ```
 

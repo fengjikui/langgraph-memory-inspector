@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import importlib.util
+import io
+import platform
+import shutil
+import subprocess
 import sys
 import webbrowser
 from pathlib import Path
@@ -15,6 +20,8 @@ from lgmi.api import create_app
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
+    if args.command == "doctor":
+        return _run_doctor(args)
     if args.command == "demo":
         return _run_demo(args)
     if args.command == "inspect":
@@ -32,6 +39,21 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         description="LangGraph Memory Inspector backend tools.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    doctor_parser = subparsers.add_parser(
+        "doctor",
+        help="Check whether the local checkout is ready to run the demo and web UI.",
+    )
+    doctor_parser.add_argument(
+        "--skip-demo",
+        action="store_true",
+        help="Do not generate or inspect the demo checkpoint database.",
+    )
+    doctor_parser.add_argument(
+        "--skip-web",
+        action="store_true",
+        help="Skip Node.js, npm, and web UI dependency checks.",
+    )
 
     demo_parser = subparsers.add_parser(
         "demo",
@@ -123,6 +145,118 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         help="Dot path to keep even in redacted mode. Can be passed multiple times.",
     )
     return parser.parse_args(argv)
+
+
+def _run_doctor(args: argparse.Namespace) -> int:
+    from lgmi.checkpoint_reader import SQLiteCheckpointReader
+
+    repo_root = Path(__file__).resolve().parents[2]
+    checks: list[tuple[str, str, str]] = []
+
+    def add(status: str, name: str, detail: str) -> None:
+        checks.append((status, name, detail))
+
+    add("OK", "Python", platform.python_version())
+    add("OK", "CLI", "lgmi command imports successfully")
+
+    demo = None
+    if args.skip_demo:
+        add("SKIP", "Demo checkpoint", "skipped by --skip-demo")
+    else:
+        demo = _load_relocation_demo()
+        if demo is None:
+            add(
+                "ERROR",
+                "Demo source",
+                "examples/relocation_policy_agent/run_demo.py was not found; run from a source checkout",
+            )
+        else:
+            try:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    demo.run_demo(reset=False, use_llm=False)
+                summary = SQLiteCheckpointReader(demo.DB_PATH).summary()
+                add(
+                    "OK",
+                    "Demo checkpoint",
+                    (
+                        f"{summary['checkpoint_count']} checkpoints, "
+                        f"{summary['write_count']} writes, "
+                        f"{summary['diagnostics_count']} diagnostics"
+                    ),
+                )
+            except Exception as exc:  # pragma: no cover - defensive CLI boundary
+                add("ERROR", "Demo checkpoint", f"{type(exc).__name__}: {exc}")
+
+    if args.skip_web:
+        add("SKIP", "Web UI", "skipped by --skip-web")
+    else:
+        web_dir = repo_root / "web"
+        package_json = web_dir / "package.json"
+        if package_json.exists():
+            add("OK", "Web source", str(package_json))
+        else:
+            add("ERROR", "Web source", "web/package.json was not found")
+
+        _add_command_check(checks, "Node.js", "node")
+        _add_command_check(checks, "npm", "npm")
+
+        node_modules = web_dir / "node_modules"
+        if node_modules.exists():
+            add("OK", "Web dependencies", "web/node_modules exists")
+        else:
+            add("WARN", "Web dependencies", "run `cd web && npm install` before `npm run dev`")
+
+    print("LangGraph Memory Inspector doctor", flush=True)
+    print("=" * 38, flush=True)
+    for status, name, detail in checks:
+        print(f"[{status}] {name}: {detail}", flush=True)
+
+    print(flush=True)
+    if any(status == "ERROR" for status, _, _ in checks):
+        print("Result: action required before the full demo is ready.", flush=True)
+        print("Fix the ERROR item(s), then run `uv run lgmi doctor` again.", flush=True)
+        return 1
+
+    print("Result: ready for the local demo path.", flush=True)
+    if demo is not None:
+        print("Next API command:", flush=True)
+        print("uv run lgmi demo --no-browser", flush=True)
+    if not args.skip_web:
+        print("Next UI command:", flush=True)
+        print("cd web && npm run dev", flush=True)
+    return 0
+
+
+def _add_command_check(
+    checks: list[tuple[str, str, str]],
+    label: str,
+    command: str,
+) -> None:
+    executable = shutil.which(command)
+    if executable is None:
+        checks.append(("ERROR", label, f"`{command}` was not found on PATH"))
+        return
+
+    try:
+        result = subprocess.run(
+            [executable, "--version"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        checks.append(("ERROR", label, f"could not run `{command} --version`: {exc}"))
+        return
+
+    output_lines = (result.stdout or result.stderr).strip().splitlines()
+    version = output_lines[0] if output_lines else ""
+    if result.returncode == 0 and version:
+        checks.append(("OK", label, version))
+    elif result.returncode == 0:
+        checks.append(("OK", label, executable))
+    else:
+        checks.append(("ERROR", label, f"`{command} --version` exited {result.returncode}"))
 
 
 def _run_demo(args: argparse.Namespace) -> int:
