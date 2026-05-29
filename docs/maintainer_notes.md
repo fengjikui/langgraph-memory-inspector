@@ -453,3 +453,26 @@
 - `uv build`
 - `uv run python scripts/use_case_smoke.py --reset-demo`
 - `ruby -e 'require "yaml"; Dir[".github/ISSUE_TEMPLATE/*.yml"].each { |path| YAML.load_file(path); puts "OK #{path}" }'`
+
+### Postgres confidence mini-pack
+
+用户价值改进：
+
+- 新增 `scripts/postgres_confidence.py`，用于在本地/安全 Postgres 实例中创建一个临时 `lgmi_confidence_*` schema，写入真实 LangGraph `PostgresSaver` demo checkpoints，并用 `PostgresCheckpointReader` + `lgmi doctor` 验证。
+- 默认会清理生成 schema，避免长期堆积测试数据；传 `--keep-schema` 时才保留，并打印 `inspect-postgres` 命令和 cleanup SQL。
+- README 现在给出已有 `DATABASE_URL` 和 Docker `postgres:16` 两种 confidence path。
+
+为什么重要：
+
+- 真实团队在连接私有 checkpoint store 前，需要先确认“这个工具确实能读 PostgresSaver 的完整历史表”。这个脚本把 CI 内部能力变成用户可复制的本地验证路径。
+- 默认清理减少本地数据库脏数据和长期磁盘增长；`--keep-schema` 又保留了可交互演示路径。
+
+已验证：
+
+- `uv run python scripts/postgres_confidence.py --help`
+- `env -u DATABASE_URL -u LGMI_POSTGRES_TEST_DSN uv run python scripts/postgres_confidence.py`
+- `uv run pytest tests/test_postgres_confidence.py -q`
+
+本机限制：
+
+- 当前本机没有 Docker CLI，因此 Docker 端到端命令依赖 GitHub Actions 的真实 Postgres service 和有 Docker 的用户机器继续验证。

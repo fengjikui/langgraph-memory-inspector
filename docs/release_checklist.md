@@ -79,4 +79,5 @@ Optional local Postgres gate:
 
 ```bash
 LGMI_POSTGRES_TEST_DSN="$DATABASE_URL" uv run --extra postgres pytest tests/test_postgres_reader.py -m integration
+uv run --extra postgres python scripts/postgres_confidence.py --dsn "$DATABASE_URL"
 ```

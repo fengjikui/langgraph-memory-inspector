@@ -149,7 +149,7 @@ database rows.
 
 ## Inspect Your Own Postgres Checkpoint Store
 
-Install the optional Postgres dependencies and validate the store shape:
+Install the optional Postgres dependencies and validate your store shape:
 
 ```bash
 uv sync --extra postgres
@@ -165,6 +165,34 @@ uv run --extra postgres lgmi inspect-postgres "$DATABASE_URL" --schema public --
 The Postgres doctor report includes structural counts, checkpoint namespaces,
 and migration version only. It redacts credentials and does not include
 checkpoint state, thread ids, message content, prompts, tokens, or raw rows.
+
+To prove the Postgres path locally before connecting a private store, generate
+a tiny PostgresSaver demo schema and validate it end-to-end:
+
+```bash
+uv run --extra postgres python scripts/postgres_confidence.py --dsn "$DATABASE_URL" --keep-schema
+```
+
+The script writes the relocation demo into a temporary `lgmi_confidence_*`
+schema, runs the read-only Postgres reader and doctor check, prints an
+`inspect-postgres` command, and prints the cleanup SQL. Omit `--keep-schema` to
+drop the generated schema automatically after validation.
+
+If you do not already have a local Postgres server, one Docker option is:
+
+```bash
+docker run --rm -d --name lgmi-postgres-confidence \
+  -e POSTGRES_DB=lgmi \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 127.0.0.1:55432:5432 \
+  postgres:16
+until docker exec lgmi-postgres-confidence pg_isready -U postgres -d lgmi; do sleep 1; done
+
+export DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:55432/lgmi"
+uv run --extra postgres python scripts/postgres_confidence.py --dsn "$DATABASE_URL" --keep-schema
+docker stop lgmi-postgres-confidence
+```
 
 ## Verify The Product Value
 
@@ -299,20 +327,6 @@ Planned next steps:
 - The inspector is local-first and read-only for checkpoint stores, but exported
   raw debug bundles can contain private state. Use redacted exports before
   sharing publicly.
-
-## Optional Postgres Inspection
-
-Install the optional Postgres dependencies:
-
-```bash
-uv sync --extra postgres
-```
-
-Start the inspector against a full LangGraph `PostgresSaver` schema:
-
-```bash
-lgmi inspect-postgres "$DATABASE_URL" --schema public --no-browser --port 8765
-```
 
 The Postgres reader is read-only. It does not call `setup()`, `put()`,
 `put_writes()`, or `delete_thread()`. It targets the full historical
