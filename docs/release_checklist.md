@@ -8,6 +8,8 @@ Draft release notes: `docs/release_notes_v0.1.0.md`.
 ## Repository Readiness
 
 - [x] Repository visibility is intentionally set for public launch.
+- [x] Repository description and discoverability topics are set for LangGraph,
+  LangChain, agent-memory, debugging, RAG, SQLite, and Postgres search paths.
 - [x] `LICENSE` is present and linked from `README.md`.
 - [x] `CONTRIBUTING.md` is present and linked from `README.md`.
 - [x] README includes clear known limitations.
@@ -88,6 +90,9 @@ Remote launch status:
 ```bash
 uv run python scripts/launch_status.py
 ```
+
+This command also verifies the repository description and required
+discoverability topics.
 
 Default local smoke:
 

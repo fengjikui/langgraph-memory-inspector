@@ -34,6 +34,7 @@ the prepared LangChain Forum thread.
 | Gate | Status | Evidence |
 | --- | --- | --- |
 | Repository visibility intentionally set | Pass | `gh repo view fengjikui/langgraph-memory-inspector --json visibility` reports `PUBLIC`. |
+| Repository discoverability | Pass | Description is set and topics include LangGraph, LangChain, agent memory, debugging, RAG, SQLite, and Postgres discovery paths. |
 | License and contribution docs | Pass | `LICENSE`, `CONTRIBUTING.md`, and README links exist. |
 | Known limitations | Pass | README documents namespace, pagination, diagnostic, Postgres, and privacy boundaries. |
 | Issue templates | Pass | Bug, checkpoint bug pattern, and feature/diagnostic request forms exist. |
@@ -52,7 +53,7 @@ the prepared LangChain Forum thread.
 | Diagnostic matrix coverage | Pass | Every current diagnostic is protected by the deterministic demo or a committed safe fixture; no row is unit-only. |
 | Postgres confidence | Pass | CI includes a real PostgresSaver integration job, and README documents `scripts/postgres_confidence.py`. |
 | Launch assets | Pass | Community launch playbook, public launch packet, and Forum draft are present. |
-| Launch status automation | Pass | `scripts/launch_status.py` checks local git status, repository visibility, latest main CI, v0.1.0 release, #20, #23, and the repository OpenGraph image. |
+| Launch status automation | Pass | `scripts/launch_status.py` checks local git status, repository visibility, repository discoverability, latest main CI, v0.1.0 release, #20, #23, and the repository OpenGraph image. |
 
 ## Current Launch Gates
 
@@ -62,7 +63,8 @@ the prepared LangChain Forum thread.
 - [x] GitHub feedback issue #20 is open.
 - [x] LangChain Forum launch draft is ready.
 - [x] `uv run python scripts/launch_status.py` reports PASS for local git
-  status, repository visibility, latest main CI, v0.1.0 release, and #20.
+  status, repository visibility, repository discoverability, latest main CI,
+  v0.1.0 release, and #20.
 - [ ] GitHub social preview asset still needs manual upload in repository
   Settings; tracked in #23. The verified upload guide is
   `docs/social_preview_upload_guide.md`.

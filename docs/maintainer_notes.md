@@ -843,3 +843,32 @@
 
 - `uv run python scripts/issue_bundle_smoke.py`
 - `uv run pytest tests/test_issue_bundle_smoke.py tests/test_release_smoke.py -q`
+
+### Repository discoverability gate
+
+用户价值改进：
+
+- GitHub repository topics 增加 `langchain`、`rag`、`sqlite`、`postgres`，让项目覆盖更真实的
+  LangGraph 用户搜索入口。
+- `scripts/launch_status.py` 新增 repository discoverability 检查，验证仓库 description
+  以及 agent-memory、ai-agents、checkpoints、debugging、developer-tools、langchain、
+  langgraph、llmops、observability、postgres、python、rag、react、sqlite 等 topics。
+- Release checklist、launch plan 和 release candidate audit 都记录了这个 gate。
+
+为什么重要：
+
+- README 和 demo 解决“点进来以后懂不懂”，GitHub topics 解决“目标用户能不能找到”。
+- 这些元信息是 GitHub Settings 里的外部状态，不在代码 diff 中；把它们纳入 launch status
+  可以避免未来维护时无声漂移。
+
+已验证：
+
+- `gh repo view fengjikui/langgraph-memory-inspector --json repositoryTopics,description,url,visibility`
+- `uv run python scripts/launch_status.py`
+
+维护注意：
+
+- `uv run python scripts/release_smoke.py` 会重置 demo SQLite checkpoint DB。不要和另一个
+  `pytest` / `prove-demo` / `issue_bundle_smoke` 进程并行跑，否则两个进程可能同时操作
+  `examples/relocation_policy_agent/data/checkpoints.sqlite`，导致 SQLite WAL/disk I/O
+  类错误。发布 gate 应串行运行。

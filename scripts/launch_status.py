@@ -8,6 +8,23 @@ from typing import Callable, Sequence
 
 
 REPO = "fengjikui/langgraph-memory-inspector"
+EXPECTED_DESCRIPTION = "Local-first DevTools for debugging LangGraph checkpoints and agent memory."
+REQUIRED_TOPICS = {
+    "agent-memory",
+    "ai-agents",
+    "checkpoints",
+    "debugging",
+    "developer-tools",
+    "langchain",
+    "langgraph",
+    "llmops",
+    "observability",
+    "postgres",
+    "python",
+    "rag",
+    "react",
+    "sqlite",
+}
 
 
 @dataclass(frozen=True)
@@ -30,6 +47,7 @@ def collect_launch_status(runner: Runner | None = None) -> list[Check]:
     probes = [
         ("local git status", _git_status_check),
         ("repository visibility", _repo_visibility_check),
+        ("repository discoverability", _repo_discoverability_check),
         ("latest main CI", _latest_ci_check),
         ("v0.1.0 release", _release_check),
         ("#20 feedback issue", _feedback_issue_check),
@@ -63,6 +81,29 @@ def _repo_visibility_check(run: Runner) -> Check:
         name="repository visibility",
         status="pass" if visibility == "PUBLIC" else "fail",
         detail=f"{visibility} {data.get('url', '')}".strip(),
+    )
+
+
+def _repo_discoverability_check(run: Runner) -> Check:
+    data = _json(run(("gh", "repo", "view", REPO, "--json", "description,repositoryTopics")))
+    description = str(data.get("description", ""))
+    topics = {
+        str(item.get("name", ""))
+        for item in data.get("repositoryTopics", [])
+        if isinstance(item, dict)
+    }
+    missing_topics = sorted(REQUIRED_TOPICS - topics)
+    issues = []
+    if description != EXPECTED_DESCRIPTION:
+        issues.append("description mismatch")
+    if missing_topics:
+        issues.append(f"missing topics: {', '.join(missing_topics)}")
+
+    detail = f"description={description!r}; topics={', '.join(sorted(topics))}"
+    return Check(
+        name="repository discoverability",
+        status="pass" if not issues else "fail",
+        detail=detail if not issues else f"{'; '.join(issues)}; {detail}",
     )
 
 

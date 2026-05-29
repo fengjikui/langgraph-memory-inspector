@@ -16,8 +16,8 @@ demo locally.
 - `lgmi prove-demo` product proof command for the stale-memory evidence chain.
 - Explicit debug bundle export for teammate, issue, and PR handoff.
 - `scripts/launch_status.py` for one-command launch gate checks across local
-  git state, GitHub visibility, latest CI, release, feedback issue, and social
-  preview gates.
+  git state, GitHub visibility, repository description/topics, latest CI,
+  release, feedback issue, and social preview gates.
 - Community launch playbook with channel-specific drafts and feedback prompts
   in `docs/community_launch_playbook.md`.
 - Public launch packet with copy-paste-ready posts, reply templates, and
@@ -90,6 +90,8 @@ The first public release candidate is ready when:
 - CI is green on main.
 - `uv run python scripts/launch_status.py` shows only expected manual gates
   before broad posting.
+- Repository description and topics match the intended discovery paths:
+  LangGraph, LangChain, agent memory, debugging, RAG, SQLite, and Postgres.
 - README quickstart works from a fresh clone.
 - SQLite demo and Postgres integration are both documented.
 - The next user-centered product issue is explicit, even if only one or two
