@@ -4,6 +4,7 @@ Use this before making the repository public or announcing a release candidate.
 
 Current audit: `docs/release_candidate_audit_2026-05-29.md`.
 Current external-user dry run: `docs/launch_dry_run_2026-05-30.md`.
+Feedback intake playbook: `docs/feedback_intake_playbook.md`.
 Draft release notes: `docs/release_notes_v0.1.0.md`.
 
 ## Repository Readiness
@@ -73,6 +74,8 @@ Draft release notes: `docs/release_notes_v0.1.0.md`.
 - [x] Pinned GitHub feedback issue draft exists.
 - [x] Feedback drafts point users to the fixture policy before asking for
   checkpoint data.
+- [x] Feedback intake playbook and `scripts/feedback_intake.py` turn GitHub
+  feedback into a privacy-first fixture/diagnostic checklist.
 - [x] `uv run python scripts/validate_launch_copy.py` verifies the launch copy
   keeps the repo link, #20 feedback issue, fixture policy, redacted evidence
   wording, `audit-debug-bundle` safety check, raw-production warning, and

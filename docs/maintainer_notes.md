@@ -940,3 +940,25 @@
 
 - `uv run python scripts/launch_status.py`
 - GitHub CI `26647844240` 为 success
+
+### Feedback intake loop
+
+用户价值改进：
+
+- 新增 `scripts/feedback_intake.py`，可以把 GitHub feedback issue 转成维护者 triage checklist：
+  识别可能的 bug pattern、checkpoint backend、安全证据类型和明显隐私风险词。
+- 新增 `docs/feedback_intake_playbook.md`，把真实用户反馈如何进入 fixture/diagnostic/test
+  的流程固定下来。
+- Community launch rhythm 现在要求 Day 2-3 对 GitHub 反馈先跑 feedback intake，再要求更多证据。
+
+为什么重要：
+
+- 公开发布后，产品真正变强靠的是真实 bug pattern，而不是一次性帖子。intake 脚本让每个反馈
+  都先经过隐私边界、证据类型和 diagnostic matrix 的统一检查。
+- 这也能保护用户：维护者默认要求 redacted bundle、synthetic fixture 或 schema-only snapshot，
+  不会在公开 issue 里诱导别人上传 raw checkpoint。
+
+已验证：
+
+- `uv run pytest tests/test_feedback_intake.py -q`
+- `uv run python scripts/feedback_intake.py 20`

@@ -436,6 +436,8 @@ Day 2-3:
 
 - Reply to every useful comment with a concrete follow-up issue or diagnostic
   idea.
+- Run `uv run python scripts/feedback_intake.py <issue-number>` for GitHub
+  feedback before asking for more evidence.
 - Update README if repeated questions show the quickstart is unclear.
 
 Day 4-7:
