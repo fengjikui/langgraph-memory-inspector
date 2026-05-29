@@ -120,6 +120,7 @@ Before accepting a fixture:
 - Confirm the file is small enough to review in a pull request.
 - Add or update a test that loads the fixture and asserts the expected
   diagnostic.
+- Add the fixture and diagnostic to `docs/diagnostic_matrix.md`.
 - Update `docs/maintainer_notes.md` with the product decision that changed
   because of the fixture.
 

@@ -298,3 +298,21 @@
 已验证：
 
 - fixture metadata 与 expected diagnostics 由单测覆盖。
+
+### Fixture-driven diagnostic matrix
+
+用户价值改进：
+
+- 新增 `docs/diagnostic_matrix.md`，把 diagnostic id、fixture id、backend shape、source safety、state channels 和 validation command 放在同一张表里。
+- 矩阵明确区分 deterministic demo、committed safe fixture 和 unit-only coverage，让维护者知道哪些诊断已经有产品级证据，哪些还需要真实用户模式补强。
+- fixture 测试现在会解析矩阵，要求每个 JSON fixture 的 expected diagnostics 都在矩阵中出现，并且 backend、source safety、state channels 和验证命令保持一致。
+- README 和 fixture policy 都链接到 diagnostic matrix。
+
+为什么重要：
+
+- 这个项目要靠真实调试模式持续变强，而不是靠零散规则堆叠。矩阵让用户反馈、fixture、diagnostic、测试命令之间的关系一眼可见。
+- 对面试展示来说，它也能证明项目有“维护者视角”：我们不只是做了一个 demo，而是在建立一套把用户问题转成可回归能力的机制。
+
+已验证：
+
+- `tests/test_fixtures.py` 覆盖 matrix 与 fixture metadata 的一致性。

@@ -184,7 +184,8 @@ Real LangGraph bugs are the best source of new diagnostics. If you can share a
 pattern, follow the [fixture intake policy](docs/fixture_policy.md): prefer a
 redacted debug bundle, a minimal synthetic fixture, or a schema-only backend
 snapshot. Do not post raw production checkpoint stores or unredacted user state
-in public issues.
+in public issues. The [diagnostic matrix](docs/diagnostic_matrix.md) shows
+which bug patterns are already protected by a demo, fixture, or test.
 
 ## Current Scope
 
