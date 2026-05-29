@@ -29,6 +29,7 @@ def test_postgres_reader_rejects_unsafe_schema_identifier() -> None:
 
 
 def test_postgres_reader_hydrates_checkpoint_blob_channel() -> None:
+    pytest.importorskip("psycopg")
     reader = PostgresCheckpointReader("postgresql://unused")
     blob_type, blob = reader._serde.dumps_typed(
         [{"type": "residence_city", "value": "Hangzhou"}]
@@ -72,6 +73,7 @@ def test_postgres_reader_hydrates_checkpoint_blob_channel() -> None:
 
 
 def test_postgres_reader_decodes_checkpoint_write_blob() -> None:
+    pytest.importorskip("psycopg")
     reader = PostgresCheckpointReader("postgresql://unused")
     blob_type, blob = reader._serde.dumps_typed({"selected_city": "Shanghai"})
 

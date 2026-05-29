@@ -1,5 +1,8 @@
 name: CI
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches: [main]
@@ -81,6 +84,10 @@ jobs:
       - name: Build web app
         working-directory: web
         run: npm run build
+
+      - name: Install Playwright browser
+        working-directory: web
+        run: npx playwright install --with-deps chromium
 
       - name: Run Playwright e2e
         working-directory: web
