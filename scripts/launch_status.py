@@ -26,6 +26,20 @@ REQUIRED_TOPICS = {
     "react",
     "sqlite",
 }
+REQUIRED_ROADMAP_ISSUES = {
+    27: {
+        "title": "Add large-store metadata search for checkpoint timelines",
+        "labels": {"enhancement", "help wanted", "user-research"},
+    },
+    28: {
+        "title": "Collect schema-only evidence for more LangGraph checkpointer variants",
+        "labels": {"enhancement", "help wanted", "user-research"},
+    },
+    29: {
+        "title": "Create a small contributor fixture from a safe checkpoint pattern",
+        "labels": {"good first issue", "diagnostic", "user-research"},
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -52,6 +66,7 @@ def collect_launch_status(runner: Runner | None = None) -> list[Check]:
         ("latest main CI", _latest_ci_check),
         ("v0.1.0 release", _release_check),
         ("#20 feedback issue", _feedback_issue_check),
+        ("public roadmap issues", _roadmap_issues_check),
         ("#23 social preview upload", _social_preview_issue_check),
         ("repository OpenGraph image", _open_graph_check),
     ]
@@ -138,6 +153,56 @@ def _feedback_issue_check(run: Runner) -> Check:
         name="#20 feedback issue",
         status="pass" if state == "OPEN" else "fail",
         detail=f"{state} {data.get('title', '')} {data.get('url', '')}".strip(),
+    )
+
+
+def _roadmap_issues_check(run: Runner) -> Check:
+    data = _json(
+        run(
+            (
+                "gh",
+                "issue",
+                "list",
+                "--repo",
+                REPO,
+                "--state",
+                "open",
+                "--limit",
+                "30",
+                "--json",
+                "number,title,labels,url",
+            )
+        )
+    )
+    by_number = {
+        int(issue.get("number", 0)): issue
+        for issue in data
+        if isinstance(issue, dict)
+    }
+    problems: list[str] = []
+    urls: list[str] = []
+    for number, expected in REQUIRED_ROADMAP_ISSUES.items():
+        issue = by_number.get(number)
+        if not issue:
+            problems.append(f"missing #{number}")
+            continue
+        title = str(issue.get("title", ""))
+        labels = {
+            str(label.get("name", ""))
+            for label in issue.get("labels", [])
+            if isinstance(label, dict)
+        }
+        missing_labels = sorted(expected["labels"] - labels)
+        if title != expected["title"]:
+            problems.append(f"#{number} title mismatch")
+        if missing_labels:
+            problems.append(f"#{number} missing labels: {', '.join(missing_labels)}")
+        urls.append(str(issue.get("url", f"#{number}")))
+
+    return Check(
+        name="public roadmap issues",
+        status="pass" if not problems else "fail",
+        detail=", ".join(urls) if not problems else "; ".join(problems),
     )
 
 

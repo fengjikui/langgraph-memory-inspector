@@ -984,3 +984,22 @@
 已验证：
 
 - `gh issue list --repo fengjikui/langgraph-memory-inspector --state open --limit 20 --json number,title,labels,url`
+
+### Roadmap launch status gate
+
+用户价值改进：
+
+- `scripts/launch_status.py` 新增 `public roadmap issues` gate，验证 #27、#28、#29 都是 open，
+  标题符合当前 roadmap，并且包含预期的 `help wanted`、`user-research`、`diagnostic` 或
+  `good first issue` 标签。
+- Release checklist 说明 launch status 现在也覆盖 public roadmap issues。
+
+为什么重要：
+
+- README/CONTRIBUTING 里的 roadmap 链接属于外部承诺。把这些 issue 纳入 launch status，
+  可以避免未来 issue 被误关、改标题或丢标签后，主页仍然指向一个不可信的参与入口。
+
+已验证：
+
+- `uv run pytest tests/test_launch_status.py -q`
+- `uv run python scripts/launch_status.py`

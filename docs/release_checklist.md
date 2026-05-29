@@ -102,7 +102,8 @@ uv run python scripts/launch_status.py
 ```
 
 This command also verifies the repository description and required
-discoverability topics.
+discoverability topics, #20 feedback issue, public roadmap issues, latest CI,
+release, and the remaining social preview gates.
 
 Default local smoke:
 
