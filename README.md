@@ -1,18 +1,47 @@
 # LangGraph Memory Inspector
 
-Local-first developer tools for inspecting LangGraph memory and checkpoints.
+Local-first checkpoint forensics for LangGraph apps.
 
-This repository is being built in two layers:
+LangGraph agents can fail long after the bad state was written. A user updates
+their profile, a retriever still reads the old value, and the final answer looks
+wrong even though the root cause is several checkpoints earlier.
 
-1. A demo LangGraph application that intentionally produces useful checkpoint
-   history, including a memory-conflict bug.
-2. The inspector itself, which will read those checkpoints and explain how an
-   agent's state changed over time.
+LangGraph Memory Inspector helps developers answer:
 
-## Current Milestone
+- Which checkpoint first made the bad state visible?
+- Which state channel changed?
+- Which node/write should I inspect next?
+- Can I debug this locally without uploading private traces?
 
-The current MVP has a runnable sample agent, a SQLite checkpoint API, and a
-React inspector UI.
+## Demo Story
+
+The included demo agent intentionally reproduces a stale-memory bug:
+
+1. The user says they live in Shanghai.
+2. The user later says they moved to Hangzhou.
+3. The graph appends the Hangzhou memory.
+4. Retrieval still selects Shanghai.
+5. The final answer is grounded in the stale city.
+
+The inspector turns that failure into a navigable evidence trail:
+
+- timeline of saved checkpoints
+- decoded state snapshots
+- checkpoint-to-checkpoint diffs
+- actionable diagnostics
+- write-channel highlighting for the diagnostic source
+
+![Stale-memory debugging demo placeholder](docs/assets/stale-memory-demo-placeholder.svg)
+
+Recording checklist for the future GIF:
+
+- start from the final wrong answer
+- click `conflicting_residence_memory`
+- show the selected checkpoint in the timeline
+- open Writes and show `state.memory_events` highlighted
+- close by showing `selected_city=Shanghai` while the latest residence memory is Hangzhou
+
+## Quickstart
 
 Generate demo checkpoint data:
 
@@ -20,15 +49,6 @@ Generate demo checkpoint data:
 uv sync
 uv run python examples/relocation_policy_agent/run_demo.py
 ```
-
-The demo writes checkpoint data to:
-
-```text
-examples/relocation_policy_agent/data/checkpoints.sqlite
-```
-
-That file is intentionally disposable. Re-run the demo with `--reset` to start
-from a clean database.
 
 Start the Inspector API:
 
@@ -54,26 +74,58 @@ The Vite dev server proxies `/api` to `http://127.0.0.1:8765`, so the UI reads
 the live checkpoint database by default. If the API is not running, it falls
 back to mock relocation-demo data.
 
+## Verify The Product Value
+
 Run the real use-case smoke test:
 
 ```bash
 uv run python scripts/use_case_smoke.py --reset-demo
 ```
 
-This test exercises the product's core value proposition: it proves from
-checkpoint evidence that the user moved to Hangzhou while the final retrieval
-still used Shanghai.
+Expected result:
 
-Run the browser interaction test:
+```text
+PASS 检查器证据链已经证明 stale memory 故障路径。
+```
+
+This test proves from checkpoint evidence that the user moved to Hangzhou while
+the final retrieval still used Shanghai.
+
+Run backend tests:
+
+```bash
+uv run pytest -q
+```
+
+Run frontend build and browser interaction tests:
 
 ```bash
 cd web
+npm run build
 npm run test:e2e
 ```
 
 The e2e test uses `VITE_LGMI_API_MODE=mock`, opens the inspector, clicks the
 `conflicting_residence_memory` diagnostic, and verifies that the related
 `state.memory_events` write is highlighted.
+
+## Current Scope
+
+This is an MVP focused on local SQLite checkpoint inspection:
+
+- read LangGraph SQLite checkpoint databases
+- list threads and checkpoint timelines
+- decode common state channels
+- show diffs and writes
+- detect stale/conflicting memory patterns
+- provide a React UI for local debugging
+
+Planned next steps:
+
+- record a short stale-memory debugging GIF
+- research a read-only Postgres checkpoint adapter
+- add richer node-level write attribution across multiple checkpoints
+- export a shareable debug bundle for issues and code review
 
 ## Optional LLM Mode
 
