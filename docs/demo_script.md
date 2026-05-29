@@ -107,11 +107,7 @@ sqlite3 examples/relocation_policy_agent/data/checkpoints.sqlite \
 Build the UI once and start the single-server demo:
 
 ```bash
-cd web
-npm install
-npm run build
-cd ..
-uv run lgmi demo
+uv run lgmi demo --build-ui
 ```
 
 Open `http://127.0.0.1:8765/`.

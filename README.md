@@ -68,18 +68,15 @@ Paste the generated Markdown into the GitHub issue. It includes environment and
 demo health checks, but not checkpoint state, message content, prompts, tokens,
 or production database rows.
 
-Build the web UI once, then start the demo:
+Build the web UI and start the demo:
 
 ```bash
-cd web
-npm install
-npm run build
-cd ..
-uv run lgmi demo
+uv run lgmi demo --build-ui
 ```
 
-Open `http://127.0.0.1:8765/`. When `web/dist` exists, `lgmi demo` serves the
-Inspector UI and API from the same local server.
+Open `http://127.0.0.1:8765/`. `--build-ui` installs web dependencies if needed,
+builds `web/dist`, and then serves the Inspector UI and API from the same local
+server.
 
 Optional API health check:
 

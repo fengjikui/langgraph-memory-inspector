@@ -69,6 +69,20 @@ def test_doctor_json_report_is_machine_readable(capsys: Any) -> None:
     assert "checkpoint state" in report["privacy"]
 
 
+def test_doctor_prefers_build_ui_when_dist_is_missing(monkeypatch: Any, capsys: Any) -> None:
+    monkeypatch.setattr(cli, "_resolve_ui_dir", lambda ui_dir: None)
+
+    result = cli.main(["doctor", "--json"])
+
+    report = json.loads(capsys.readouterr().out)
+    assert result == 0
+    assert report["next_commands"][0] == "uv run lgmi demo --build-ui --no-browser"
+    assert any(
+        check["name"] == "Built web UI" and check["status"] == "WARN"
+        for check in report["checks"]
+    )
+
+
 def test_doctor_json_report_preserves_error_exit(monkeypatch: Any, capsys: Any) -> None:
     monkeypatch.setattr(cli, "_load_relocation_demo", lambda: None)
 
@@ -145,3 +159,48 @@ def test_demo_serves_built_ui_when_available(monkeypatch: Any, tmp_path: Path) -
     assert served["source"].name == "checkpoints.sqlite"
     assert served["ui_dir"] == ui_dir
     assert served["port"] == 8766
+
+
+def test_demo_builds_ui_before_serving(monkeypatch: Any, tmp_path: Path) -> None:
+    served: dict[str, Any] = {}
+    ui_dir = tmp_path / "dist"
+    ui_dir.mkdir()
+    (ui_dir / "index.html").write_text("<div id='root'></div>", encoding="utf-8")
+
+    def fake_build_web_ui() -> Path:
+        served["built"] = True
+        return ui_dir
+
+    def fake_create_app(source: Path, *, ui_dir: Path | None = None) -> object:
+        served["source"] = source
+        served["ui_dir"] = ui_dir
+        return object()
+
+    def fake_serve_app(app: object, args: argparse.Namespace, source_label: str) -> int:
+        served["port"] = args.port
+        return 0
+
+    monkeypatch.setattr(cli, "_build_web_ui", fake_build_web_ui)
+    monkeypatch.setattr(cli, "_resolve_ui_dir", lambda ui_dir_arg: ui_dir)
+    monkeypatch.setattr(cli, "create_app", fake_create_app)
+    monkeypatch.setattr(cli, "_serve_app", fake_serve_app)
+
+    result = cli.main(["demo", "--build-ui", "--no-browser", "--port", "8766"])
+
+    assert result == 0
+    assert served["built"] is True
+    assert served["source"].name == "checkpoints.sqlite"
+    assert served["ui_dir"] == ui_dir
+    assert served["port"] == 8766
+
+
+def test_demo_build_ui_failure_exits_before_serving(monkeypatch: Any) -> None:
+    served: dict[str, Any] = {}
+
+    monkeypatch.setattr(cli, "_build_web_ui", lambda: None)
+    monkeypatch.setattr(cli, "_serve_app", lambda *args: served.setdefault("served", True))
+
+    result = cli.main(["demo", "--build-ui", "--no-browser"])
+
+    assert result == 2
+    assert "served" not in served

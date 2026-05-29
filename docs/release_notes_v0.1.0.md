@@ -40,17 +40,11 @@ Run it locally:
 
 ```bash
 uv sync
-uv run python examples/relocation_policy_agent/run_demo.py
-uv run lgmi inspect examples/relocation_policy_agent/data/checkpoints.sqlite --no-browser --port 8765
+uv run lgmi doctor
+uv run lgmi demo --build-ui
 ```
 
-Then start the UI:
-
-```bash
-cd web
-npm install
-npm run dev
-```
+Open `http://127.0.0.1:8765/`.
 
 ## Highlights
 

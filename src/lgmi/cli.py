@@ -93,10 +93,16 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="store_true",
         help="Generate demo checkpoint data and print startup steps without serving the API.",
     )
-    demo_parser.add_argument(
+    demo_ui_group = demo_parser.add_mutually_exclusive_group()
+    demo_ui_group.add_argument(
         "--ui-dir",
         default=None,
         help="Directory containing a built web UI, such as web/dist. Defaults to web/dist when it exists.",
+    )
+    demo_ui_group.add_argument(
+        "--build-ui",
+        action="store_true",
+        help="Install web dependencies if needed, build web/dist, and serve it with the demo API.",
     )
 
     inspect_parser = subparsers.add_parser(
@@ -252,7 +258,7 @@ def _build_doctor_report(args: argparse.Namespace) -> dict[str, object]:
         if web_dist:
             add("OK", "Built web UI", "web/dist exists")
         else:
-            add("WARN", "Built web UI", "run `cd web && npm run build` for single-server demo mode")
+            add("WARN", "Built web UI", "run `uv run lgmi demo --build-ui` for single-server demo mode")
 
     has_error = any(check["status"] == "ERROR" for check in checks)
     if not has_error:
@@ -260,12 +266,10 @@ def _build_doctor_report(args: argparse.Namespace) -> dict[str, object]:
             if _resolve_ui_dir(None):
                 next_commands.append("uv run lgmi demo --no-browser")
             else:
+                next_commands.append("uv run lgmi demo --build-ui --no-browser")
                 if demo is not None:
                     next_commands.append("uv run lgmi demo --no-browser")
                 next_commands.append("cd web && npm install && npm run dev")
-                next_commands.append(
-                    "cd web && npm run build && cd .. && uv run lgmi demo --no-browser"
-                )
         elif demo is not None:
             next_commands.append("uv run lgmi demo --no-browser")
 
@@ -382,6 +386,9 @@ def _run_demo(args: argparse.Namespace) -> int:
 
     DB_PATH = demo.DB_PATH
     run_demo = demo.run_demo
+
+    if args.build_ui and not _build_web_ui():
+        return 2
 
     run_demo(reset=not args.no_reset, use_llm=args.use_llm)
     ui_dir = _resolve_ui_dir(args.ui_dir)
@@ -508,7 +515,7 @@ def _print_demo_next_steps(
         print("Open: http://127.0.0.1:5173/", flush=True)
         print(flush=True)
         print("Optional single-server mode:", flush=True)
-        print("cd web && npm run build && cd .. && uv run lgmi demo", flush=True)
+        print("uv run lgmi demo --build-ui", flush=True)
 
 
 def _resolve_ui_dir(ui_dir: str | None) -> Path | None:
@@ -519,6 +526,34 @@ def _resolve_ui_dir(ui_dir: str | None) -> Path | None:
     repo_root = Path(__file__).resolve().parents[2]
     candidate = repo_root / "web" / "dist"
     return candidate.resolve() if (candidate / "index.html").exists() else None
+
+
+def _build_web_ui() -> Path | None:
+    repo_root = Path(__file__).resolve().parents[2]
+    web_dir = repo_root / "web"
+    package_json = web_dir / "package.json"
+    if not package_json.exists():
+        print("Cannot build web UI: web/package.json was not found.", file=sys.stderr)
+        return None
+
+    if shutil.which("npm") is None:
+        print("Cannot build web UI: `npm` was not found on PATH.", file=sys.stderr)
+        return None
+
+    if not (web_dir / "node_modules").exists():
+        print("Installing web dependencies with `npm install`...", flush=True)
+        install = subprocess.run(["npm", "install"], cwd=web_dir, check=False)
+        if install.returncode != 0:
+            print("Web dependency install failed.", file=sys.stderr)
+            return None
+
+    print("Building web UI with `npm run build`...", flush=True)
+    build = subprocess.run(["npm", "run", "build"], cwd=web_dir, check=False)
+    if build.returncode != 0:
+        print("Web UI build failed.", file=sys.stderr)
+        return None
+
+    return _resolve_ui_dir(None)
 
 
 def _load_relocation_demo() -> ModuleType | None:

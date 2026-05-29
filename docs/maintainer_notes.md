@@ -358,7 +358,7 @@
 - `create_app(..., ui_dir=...)` 现在可以把 `web/dist` 挂到同一个 FastAPI 服务下，`/` 返回 Inspector UI，`/api/*` 继续返回 checkpoint API。
 - `lgmi demo`、`lgmi inspect` 和 `lgmi inspect-postgres` 会自动发现 `web/dist`，也支持显式传入 `--ui-dir`。
 - `lgmi doctor` 会检查 built UI 是否存在，并在可用时给出单条下一步命令：`uv run lgmi demo --no-browser`。
-- README、demo script 和 public launch packet 改成先 `npm run build`，再用一个本地服务打开 UI 的路径。
+- README、demo script 和 public launch packet 后续被 `lgmi demo --build-ui` 进一步简化为一条 demo 命令。
 
 为什么重要：
 
@@ -390,3 +390,21 @@
 - `uv run lgmi doctor --json`
 - `uv run lgmi doctor --issue`
 - `uv run pytest tests/test_cli.py -q`
+
+### One-command UI build for demo
+
+用户价值改进：
+
+- `lgmi demo --build-ui` 会在需要时运行 `npm install`，再运行 `npm run build`，随后把 `web/dist` 和 checkpoint API 放在同一个本地服务里。
+- README、demo script 和 public launch packet 的 quickstart 缩短为 `uv sync`、`uv run lgmi doctor`、`uv run lgmi demo --build-ui`。
+- `lgmi doctor` 在 built UI 不存在时优先提示 `uv run lgmi demo --build-ui --no-browser`，把首次试用从“理解前后端两个子项目”变成“跑一条产品命令”。
+
+为什么重要：
+
+- 社区用户第一次试用时，少一个目录切换和少三条 npm 命令就是少一次放弃机会。这个改动把 demo 从开发者拼装流程进一步收敛成产品入口。
+- `--build-ui` 是显式选项，不会让普通 `lgmi demo` 在用户不知情时安装或构建前端依赖。
+
+已验证：
+
+- `uv run pytest tests/test_cli.py -q`
+- `uv run lgmi demo --help`
