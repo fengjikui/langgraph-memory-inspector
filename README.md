@@ -325,7 +325,7 @@ This is an MVP focused on local checkpoint inspection:
 - show and switch checkpoint namespaces per thread
 - decode common state channels
 - show diffs and writes
-- detect stale/conflicting memory patterns
+- detect stale/conflicting memory and stale retrieved-context patterns
 - detect reducer append duplicates, namespace confusion hints, and unexpected
   parent checkpoint jumps
 - show compact diagnostic causal chains across checkpoint ranges
@@ -334,8 +334,6 @@ This is an MVP focused on local checkpoint inspection:
 
 Planned next steps:
 
-- [#24](https://github.com/fengjikui/langgraph-memory-inspector/issues/24):
-  add a RAG stale-context fixture and diagnostic.
 - [#25](https://github.com/fengjikui/langgraph-memory-inspector/issues/25):
   validate `ShallowPostgresSaver` and newer saver variants.
 - [#26](https://github.com/fengjikui/langgraph-memory-inspector/issues/26):

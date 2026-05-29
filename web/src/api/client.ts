@@ -210,7 +210,7 @@ function normalizeCheckpoint(raw: Record<string, unknown>, index: number): Check
   const retrievedDocs = asArray(state?.retrieved_docs).map(asRecord).filter(Boolean) as Array<Record<string, unknown>>;
   const selectedCity = String(state?.selected_city ?? "");
   const messages = normalizeMessages(asArray(state?.messages));
-  const diagnostics = diagnosticsForState(raw, state, memoryEvents, selectedCity, latestResidence);
+  const diagnostics = diagnosticsForState(raw, state, memoryEvents, retrievedDocs, selectedCity, latestResidence);
   const updatedChannels = asStringArray(raw.updated_channels);
 
   return {
@@ -504,6 +504,7 @@ function diagnosticsForState(
   raw: Record<string, unknown>,
   state: Record<string, unknown> | undefined,
   memoryEvents: Array<Record<string, unknown>>,
+  retrievedDocs: Array<Record<string, unknown>>,
   selectedCity: string,
   latestResidence: unknown
 ): Diagnostic[] {
@@ -537,6 +538,30 @@ function diagnosticsForState(
     });
   }
 
+  if (
+    latestResidence &&
+    retrievedDocs.some((doc) => doc.city && String(doc.city) !== String(latestResidence)) &&
+    !diagnostics.some((item) => item.code === "stale_retrieved_context")
+  ) {
+    const staleCities = retrievedDocs
+      .map((doc) => doc.city)
+      .filter((city) => city && String(city) !== String(latestResidence))
+      .map(String)
+      .filter((city, index, cities) => cities.indexOf(city) === index);
+    diagnostics.push({
+      id: `${String(raw.checkpoint_id ?? "checkpoint")}-stale-retrieved-context`,
+      code: "stale_retrieved_context",
+      severity: "critical",
+      checkpointId: String(raw.checkpoint_id ?? ""),
+      node: "retrieve_policy",
+      statePath: "retrieved_docs",
+      writeChannel: "retrieved_docs",
+      suggestedTab: "state",
+      title: "stale retrieved context",
+      message: `Latest residence is ${String(latestResidence)}, but retrieved_docs include ${staleCities.join(", ")} context.`
+    });
+  }
+
   const residenceValues = new Set(memoryEvents.filter((event) => event.type === "residence_city").map((event) => event.value));
   if (residenceValues.size > 1 && !diagnostics.some((item) => item.code === "conflicting_residence_memory")) {
     diagnostics.push({
@@ -559,6 +584,7 @@ function diagnosticsForState(
 function statePathForDiagnostic(code: string): string | undefined {
   if (code === "conflicting_residence_memory") return "memory_events[type=residence_city]";
   if (code === "stale_selected_city") return "selected_city";
+  if (code === "stale_retrieved_context") return "retrieved_docs";
   if (code === "reducer_append_duplicate_state") return "messages | memory_events";
   if (code === "unexpected_parent_checkpoint") return "checkpoint.parent_checkpoint_id";
   if (code === "oversized_message_history") return "messages";
@@ -569,6 +595,7 @@ function statePathForDiagnostic(code: string): string | undefined {
 function writeChannelForDiagnostic(code: string): string | undefined {
   if (code === "conflicting_residence_memory") return "memory_events";
   if (code === "stale_selected_city") return "selected_city";
+  if (code === "stale_retrieved_context") return "retrieved_docs";
   if (code === "reducer_append_duplicate_state") return "memory_events";
   if (code === "oversized_message_history") return "messages";
   return undefined;
@@ -577,6 +604,7 @@ function writeChannelForDiagnostic(code: string): string | undefined {
 function nodeForDiagnostic(code: string, updatedChannels: string[]): string {
   if (code === "conflicting_residence_memory") return "extract_profile";
   if (code === "stale_selected_city") return "retrieve_policy";
+  if (code === "stale_retrieved_context") return "retrieve_policy";
   if (code === "unexpected_parent_checkpoint") return "checkpoint lineage";
   return inferNodeFromChannels(updatedChannels);
 }

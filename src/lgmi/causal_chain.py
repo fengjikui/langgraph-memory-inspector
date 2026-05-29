@@ -31,6 +31,15 @@ DIAGNOSTIC_TARGETS: dict[str, dict[str, list[str]]] = {
         "state_paths": ["retrieved_docs"],
         "write_channels": ["retrieved_docs"],
     },
+    "stale_retrieved_context": {
+        "state_paths": [
+            "memory_events[type=residence_city]",
+            "query_context",
+            "active_context",
+            "retrieved_docs",
+        ],
+        "write_channels": ["memory_events", "query_context", "retrieved_docs"],
+    },
     "checkpoint_size_spike": {
         "state_paths": ["checkpoint.byte_size"],
         "write_channels": [],

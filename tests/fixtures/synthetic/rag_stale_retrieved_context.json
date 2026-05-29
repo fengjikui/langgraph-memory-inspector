@@ -1,0 +1,119 @@
+{
+  "fixture_id": "synthetic_rag_stale_retrieved_context_v1",
+  "source_safety": "synthetic",
+  "backend": "synthetic_json",
+  "langgraph_version": "synthetic",
+  "checkpointer": "synthetic",
+  "thread_id": "fixture-thread-rag-stale-context",
+  "checkpoint_ns": "",
+  "checkpoint_ns_shape": "single default namespace",
+  "bug_pattern_tags": [
+    "rag_stale_context",
+    "stale_retrieved_context",
+    "retrieval_after_state_change"
+  ],
+  "state_channels": [
+    "memory_events",
+    "query_context",
+    "retrieved_docs"
+  ],
+  "expected_diagnostics": [
+    "stale_retrieved_context"
+  ],
+  "state": {
+    "query_context": {
+      "city": "Hangzhou",
+      "task": "answer local benefits question"
+    },
+    "memory_events": [
+      {
+        "type": "residence_city",
+        "value": "Shanghai",
+        "source": "extract_profile",
+        "evidence": "synthetic earlier residence"
+      },
+      {
+        "type": "residence_city",
+        "value": "Hangzhou",
+        "source": "extract_profile",
+        "evidence": "synthetic move update"
+      }
+    ],
+    "retrieved_docs": [
+      {
+        "city": "Shanghai",
+        "source": "benefits/shanghai-legacy",
+        "content": "Shanghai local benefits require district-level application."
+      },
+      {
+        "city": "Hangzhou",
+        "source": "benefits/hangzhou-current",
+        "content": "Hangzhou benefits depend on Zhejiang registration."
+      }
+    ]
+  },
+  "writes": [
+    {
+      "task_id": "task-rag-stale-context",
+      "channel": "retrieved_docs",
+      "node": "retrieve_benefits",
+      "idx": 0,
+      "value": [
+        {
+          "city": "Shanghai",
+          "source": "benefits/shanghai-legacy",
+          "content": "Shanghai local benefits require district-level application."
+        },
+        {
+          "city": "Hangzhou",
+          "source": "benefits/hangzhou-current",
+          "content": "Hangzhou benefits depend on Zhejiang registration."
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "checkpoint_id": "fixture-cp-before-rag",
+      "checkpoint_ns": "",
+      "parent_checkpoint_id": null,
+      "state": {
+        "query_context": {
+          "city": "Hangzhou",
+          "task": "answer local benefits question"
+        },
+        "retrieved_docs": []
+      }
+    },
+    {
+      "checkpoint_id": "fixture-cp-after-rag",
+      "checkpoint_ns": "",
+      "parent_checkpoint_id": "fixture-cp-before-rag",
+      "state": {
+        "query_context": {
+          "city": "Hangzhou",
+          "task": "answer local benefits question"
+        },
+        "memory_events": [
+          {
+            "type": "residence_city",
+            "value": "Hangzhou",
+            "source": "extract_profile"
+          }
+        ],
+        "retrieved_docs": [
+          {
+            "city": "Shanghai",
+            "source": "benefits/shanghai-legacy",
+            "content": "Shanghai local benefits require district-level application."
+          },
+          {
+            "city": "Hangzhou",
+            "source": "benefits/hangzhou-current",
+            "content": "Hangzhou benefits depend on Zhejiang registration."
+          }
+        ]
+      }
+    }
+  ]
+}

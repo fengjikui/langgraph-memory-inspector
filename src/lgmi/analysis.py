@@ -124,6 +124,22 @@ def run_diagnostics(
             }
         )
 
+    stale_retrieved_context = _find_stale_retrieved_context(state)
+    if stale_retrieved_context:
+        diagnostics.append(
+            {
+                "id": "stale_retrieved_context",
+                "severity": "error",
+                "title": "Retrieved context is stale",
+                "description": "retrieved_docs contains city-scoped context that does not match the latest user residence memory or active query context.",
+                "evidence": {
+                    **stale_retrieved_context,
+                    "write_summary": summarize_writes(writes) if writes is not None else [],
+                    "checkpoint_context": _checkpoint_context_for_evidence(_as_list(checkpoints)),
+                },
+            }
+        )
+
     reducer_duplicates = _find_reducer_append_duplicates(state)
     if reducer_duplicates:
         diagnostics.append(
@@ -325,6 +341,109 @@ def _find_repeated_docs(docs: list[Any]) -> list[dict[str, Any]]:
                 }
             )
     return duplicates
+
+
+def _find_stale_retrieved_context(state: Mapping[str, Any]) -> dict[str, Any] | None:
+    docs = _as_list(state.get("retrieved_docs"))
+    if not docs:
+        return None
+
+    expected_city = _expected_retrieval_city(state)
+    if not expected_city:
+        return None
+
+    stale_docs: list[dict[str, Any]] = []
+    matching_docs = 0
+    for index, doc in enumerate(docs):
+        doc_city = _doc_city(doc)
+        if not doc_city:
+            continue
+        if doc_city == expected_city["city"]:
+            matching_docs += 1
+            continue
+        stale_docs.append(
+            {
+                "index": index,
+                "city": doc_city,
+                "source": _get(doc, "source", None),
+                "content_preview": _preview(_get(doc, "content", "")),
+            }
+        )
+
+    if not stale_docs:
+        return None
+
+    return {
+        "expected_city": expected_city["city"],
+        "expected_city_source": expected_city["source"],
+        "stale_docs": stale_docs,
+        "matching_doc_count": matching_docs,
+        "retrieved_doc_count": len(docs),
+        "state_path": "retrieved_docs",
+        "suggested_action": "Inspect the retrieval node writes and compare retrieved_docs city/source against the latest residence or active query context.",
+    }
+
+
+def _expected_retrieval_city(state: Mapping[str, Any]) -> dict[str, str] | None:
+    residence_values = _residence_values(_as_list(state.get("memory_events")))
+    if residence_values:
+        return {
+            "city": residence_values[-1],
+            "source": "memory_events[type=residence_city][-1]",
+        }
+
+    for field in ("query_context", "active_context", "current_context", "current_user_context"):
+        context = state.get(field)
+        if not isinstance(context, Mapping):
+            continue
+        city = context.get("city") or context.get("residence_city") or context.get("location")
+        if city:
+            return {
+                "city": str(city),
+                "source": field,
+            }
+
+    selected_city = state.get("selected_city")
+    if selected_city:
+        return {
+            "city": str(selected_city),
+            "source": "selected_city",
+        }
+
+    return None
+
+
+def _doc_city(doc: Any) -> str | None:
+    city = _get(doc, "city", None)
+    if city:
+        return str(city)
+    metadata = _get(doc, "metadata", None)
+    if isinstance(metadata, Mapping):
+        metadata_city = metadata.get("city") or metadata.get("residence_city") or metadata.get("location")
+        if metadata_city:
+            return str(metadata_city)
+    return None
+
+
+def _checkpoint_context_for_evidence(checkpoints: list[Any]) -> list[dict[str, Any]]:
+    context = []
+    for checkpoint in checkpoints[-3:]:
+        state = _state_from_checkpoint_like(checkpoint)
+        residence_values = _residence_values(_as_list(state.get("memory_events")))
+        context.append(
+            {
+                "checkpoint_id": _checkpoint_id(checkpoint),
+                "parent_checkpoint_id": _parent_checkpoint_id(checkpoint),
+                "checkpoint_ns": _get(checkpoint, "checkpoint_ns", None),
+                "retrieved_doc_cities": [
+                    city
+                    for city in (_doc_city(doc) for doc in _as_list(state.get("retrieved_docs")))
+                    if city
+                ],
+                "latest_residence_city": residence_values[-1] if residence_values else None,
+            }
+        )
+    return context
 
 
 def _find_checkpoint_size_spikes(checkpoints: list[Any]) -> list[dict[str, Any]]:

@@ -125,6 +125,7 @@ def test_run_diagnostics_detects_memory_staleness_growth_and_duplicates() -> Non
         "conflicting_residence_memory",
         "oversized_message_history",
         "repeated_retrieved_context",
+        "stale_retrieved_context",
         "stale_selected_city",
     }
     assert by_id["conflicting_residence_memory"]["severity"] == "error"
@@ -133,7 +134,75 @@ def test_run_diagnostics_detects_memory_staleness_growth_and_duplicates() -> Non
     assert by_id["stale_selected_city"]["evidence"]["latest_residence_city"] == "Hangzhou"
     assert by_id["oversized_message_history"]["evidence"]["message_count"] == 6
     assert by_id["repeated_retrieved_context"]["evidence"]["duplicates"][0]["count"] == 2
+    assert by_id["stale_retrieved_context"]["evidence"]["expected_city"] == "Hangzhou"
+    assert by_id["stale_retrieved_context"]["evidence"]["stale_docs"][0]["city"] == "Shanghai"
+    assert by_id["stale_retrieved_context"]["evidence"]["state_path"] == "retrieved_docs"
     assert by_id["checkpoint_size_spike"]["evidence"]["spikes"][0]["to_checkpoint_id"] == "cp-3"
+
+
+def test_run_diagnostics_detects_stale_rag_context_from_query_context() -> None:
+    state = {
+        "query_context": {
+            "city": "Hangzhou",
+            "task": "answer local benefits question",
+        },
+        "retrieved_docs": [
+            {
+                "city": "Shanghai",
+                "source": "benefits/shanghai-legacy",
+                "content": "Shanghai local benefits require district-level application.",
+            },
+            {
+                "city": "Hangzhou",
+                "source": "benefits/hangzhou-current",
+                "content": "Hangzhou benefits depend on Zhejiang registration.",
+            },
+        ],
+    }
+    writes = [
+        {
+            "task_id": "task-rag",
+            "channel": "retrieved_docs",
+            "node": "retrieve_benefits",
+            "value": state["retrieved_docs"],
+        }
+    ]
+    checkpoints = [
+        {
+            "checkpoint_id": "cp-before-rag",
+            "parent_checkpoint_id": None,
+            "state": {
+                "query_context": state["query_context"],
+                "retrieved_docs": [],
+            },
+        },
+        {
+            "checkpoint_id": "cp-after-rag",
+            "parent_checkpoint_id": "cp-before-rag",
+            "state": state,
+        },
+    ]
+
+    diagnostics = run_diagnostics(state, writes=writes, checkpoints=checkpoints)
+    by_id = {item["id"]: item for item in diagnostics}
+
+    assert "stale_retrieved_context" in by_id
+    evidence = by_id["stale_retrieved_context"]["evidence"]
+    assert evidence["expected_city"] == "Hangzhou"
+    assert evidence["expected_city_source"] == "query_context"
+    assert evidence["retrieved_doc_count"] == 2
+    assert evidence["matching_doc_count"] == 1
+    assert evidence["stale_docs"] == [
+        {
+            "index": 0,
+            "city": "Shanghai",
+            "source": "benefits/shanghai-legacy",
+            "content_preview": "Shanghai local benefits require district-level application.",
+        }
+    ]
+    assert evidence["write_summary"][0]["channel"] == "retrieved_docs"
+    assert evidence["checkpoint_context"][-1]["checkpoint_id"] == "cp-after-rag"
+    assert evidence["checkpoint_context"][-1]["retrieved_doc_cities"] == ["Shanghai", "Hangzhou"]
 
 
 def test_run_diagnostics_detects_reducer_append_duplicates() -> None:

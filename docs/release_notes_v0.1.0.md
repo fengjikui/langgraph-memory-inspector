@@ -33,8 +33,8 @@ The deterministic demo reproduces a stale-memory bug:
 - the user first says they live in Shanghai
 - the user later says they moved to Hangzhou
 - the agent still retrieves Shanghai policy context
-- the inspector surfaces conflicting residence memories and stale selected city
-  evidence from the checkpoint trail
+- the inspector surfaces conflicting residence memories, stale selected city,
+  and stale retrieved-context evidence from the checkpoint trail
 
 Run it locally:
 
@@ -71,9 +71,9 @@ uv run --extra postgres lgmi inspect-postgres "$DATABASE_URL" --schema public --
 - State snapshots, checkpoint diffs, writes, and deterministic diagnostics.
 - Compact causal chain view from a selected diagnostic back to related
   checkpoint writes.
-- Diagnostics for stale/conflicting memory, stale selected city, oversized
-  messages, repeated retrieval context, reducer append duplicates, checkpoint
-  size spikes, and unexpected parent checkpoint jumps.
+- Diagnostics for stale/conflicting memory, stale selected city, stale retrieved
+  context, oversized messages, repeated retrieval context, reducer append
+  duplicates, checkpoint size spikes, and unexpected parent checkpoint jumps.
 - Explicit debug bundle export from CLI, API, and UI.
 - Redacted export mode for private fields, message content, evidence, prompts,
   secrets, tokens, emails, and phone-like strings.
