@@ -655,3 +655,23 @@
 - `file docs/assets/github-social-preview.png`
 - `ls -lh docs/assets/github-social-preview.png`
 - GitHub 官方 social preview 文档
+
+### Social preview asset regression check
+
+用户价值改进：
+
+- 新增 `scripts/validate_social_preview.py`，使用标准库解析 PNG header，校验 social
+  preview 资产是否为 PNG、1280 x 640、低于 1 MB，且不是带 alpha 的透明图。
+- 新增 `tests/test_social_preview.py`，把这个发布资产要求纳入 pytest 回归。
+- `docs/social_preview_upload_guide.md` 和 `docs/release_checklist.md` 记录了上传前
+  可运行的验证命令。
+
+为什么重要：
+
+- social preview 是公开传播入口的一部分。如果以后替换图片，CI 应该立刻发现尺寸、大小
+  或透明背景不符合 GitHub 推荐，而不是等到发帖后才看到预览卡片异常。
+
+已验证：
+
+- `uv run python scripts/validate_social_preview.py`
+- `uv run pytest tests/test_social_preview.py -q`

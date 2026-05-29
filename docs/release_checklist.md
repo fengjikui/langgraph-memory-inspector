@@ -70,12 +70,15 @@ Draft release notes: `docs/release_notes_v0.1.0.md`.
 - [x] GitHub social preview upload guide exists at
   `docs/social_preview_upload_guide.md`, with verified asset dimensions and
   manual upload steps.
+- [x] `uv run python scripts/validate_social_preview.py` validates the social
+  preview asset size and dimensions.
 - [ ] GitHub social preview asset has been uploaded in repository Settings.
 
 ## Commands
 
 ```bash
 uv run pytest -q
+uv run python scripts/validate_social_preview.py
 uv run lgmi prove-demo --reset-demo
 cd web
 npm run build

@@ -19,6 +19,12 @@ Verified on 2026-05-29:
 - File size: 375 KB
 - Background: solid, non-transparent
 
+Re-run the local asset check before uploading:
+
+```bash
+uv run python scripts/validate_social_preview.py
+```
+
 GitHub's current docs say repository social preview images should be PNG, JPG,
 or GIF, under 1 MB. GitHub recommends at least 640 x 320 pixels, with 1280 x
 640 pixels for best display:
@@ -59,3 +65,10 @@ After upload, share or preview the repository URL in at least one platform that
 renders OpenGraph cards, such as Slack, X, LinkedIn, or a local social-card
 debugger. GitHub and external platforms may cache cards, so allow propagation
 time before treating a stale card as failure.
+
+The committed regression test also checks that the asset remains a 1280 x 640
+PNG under 1 MB:
+
+```bash
+uv run pytest tests/test_social_preview.py -q
+```
