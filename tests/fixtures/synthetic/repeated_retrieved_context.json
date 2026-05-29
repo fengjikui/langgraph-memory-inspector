@@ -1,0 +1,99 @@
+{
+  "fixture_id": "synthetic_repeated_retrieved_context_v1",
+  "source_safety": "synthetic",
+  "backend": "synthetic_json",
+  "langgraph_version": "synthetic",
+  "checkpointer": "synthetic",
+  "thread_id": "fixture-thread-repeated-retrieval",
+  "checkpoint_ns": "",
+  "checkpoint_ns_shape": "single default namespace",
+  "bug_pattern_tags": [
+    "repeated_retrieved_context",
+    "retrieval_dedup_missing",
+    "context_packing_waste"
+  ],
+  "state_channels": [
+    "retrieved_docs"
+  ],
+  "expected_diagnostics": [
+    "repeated_retrieved_context"
+  ],
+  "state": {
+    "retrieved_docs": [
+      {
+        "source": "synthetic-policy/refund-window",
+        "content": "Refund requests must be submitted within the synthetic 30 day window.",
+        "metadata": {
+          "section": "refunds"
+        }
+      },
+      {
+        "source": "synthetic-policy/refund-window",
+        "content": "Refund requests must be submitted within the synthetic 30 day window.",
+        "metadata": {
+          "section": "refunds"
+        }
+      },
+      {
+        "source": "synthetic-policy/support-hours",
+        "content": "Support is available during synthetic weekday business hours.",
+        "metadata": {
+          "section": "support"
+        }
+      }
+    ]
+  },
+  "writes": [
+    {
+      "task_id": "task-retrieval-repeat",
+      "channel": "retrieved_docs",
+      "node": "retrieve_policy_docs",
+      "idx": 0,
+      "value": [
+        {
+          "source": "synthetic-policy/refund-window",
+          "content": "Refund requests must be submitted within the synthetic 30 day window."
+        },
+        {
+          "source": "synthetic-policy/refund-window",
+          "content": "Refund requests must be submitted within the synthetic 30 day window."
+        },
+        {
+          "source": "synthetic-policy/support-hours",
+          "content": "Support is available during synthetic weekday business hours."
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "checkpoint_id": "fixture-cp-before-retrieval",
+      "checkpoint_ns": "",
+      "parent_checkpoint_id": null,
+      "state": {
+        "retrieved_docs": []
+      }
+    },
+    {
+      "checkpoint_id": "fixture-cp-after-retrieval",
+      "checkpoint_ns": "",
+      "parent_checkpoint_id": "fixture-cp-before-retrieval",
+      "state": {
+        "retrieved_docs": [
+          {
+            "source": "synthetic-policy/refund-window",
+            "content": "Refund requests must be submitted within the synthetic 30 day window."
+          },
+          {
+            "source": "synthetic-policy/refund-window",
+            "content": "Refund requests must be submitted within the synthetic 30 day window."
+          },
+          {
+            "source": "synthetic-policy/support-hours",
+            "content": "Support is available during synthetic weekday business hours."
+          }
+        ]
+      }
+    }
+  ]
+}

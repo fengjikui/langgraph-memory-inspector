@@ -116,6 +116,12 @@ def test_run_diagnostics_detects_memory_staleness_growth_and_duplicates() -> Non
             "node": "chat_model",
             "value": state["messages"][-1:],
         },
+        {
+            "task_id": "task-retrieval",
+            "channel": "retrieved_docs",
+            "node": "retrieve_policy_docs",
+            "value": state["retrieved_docs"],
+        },
     ]
     checkpoints = [
         {"checkpoint_id": "cp-1", "byte_size": 1000},
@@ -147,6 +153,11 @@ def test_run_diagnostics_detects_memory_staleness_growth_and_duplicates() -> Non
     assert by_id["oversized_message_history"]["evidence"]["write_summary"][0]["channel"] == "messages"
     assert "trimming" in by_id["oversized_message_history"]["evidence"]["suggested_action"]
     assert by_id["repeated_retrieved_context"]["evidence"]["duplicates"][0]["count"] == 2
+    assert by_id["repeated_retrieved_context"]["evidence"]["state_path"] == "retrieved_docs"
+    assert by_id["repeated_retrieved_context"]["evidence"]["duplicate_group_count"] == 1
+    assert by_id["repeated_retrieved_context"]["evidence"]["duplicate_doc_count"] == 2
+    assert by_id["repeated_retrieved_context"]["evidence"]["write_summary"][0]["channel"] == "retrieved_docs"
+    assert "deduplicate" in by_id["repeated_retrieved_context"]["evidence"]["suggested_action"]
     assert by_id["stale_retrieved_context"]["evidence"]["expected_city"] == "Hangzhou"
     assert by_id["stale_retrieved_context"]["evidence"]["stale_docs"][0]["city"] == "Shanghai"
     assert by_id["stale_retrieved_context"]["evidence"]["state_path"] == "retrieved_docs"

@@ -116,7 +116,11 @@ def run_diagnostics(
                 "severity": "warning",
                 "title": "Retrieved context repeats",
                 "description": "retrieved_docs contains repeated source/content combinations that can waste context and hide useful evidence.",
-                "evidence": {"duplicates": repeated_docs},
+                "evidence": _repeated_docs_evidence(
+                    docs=_as_list(state.get("retrieved_docs")),
+                    duplicates=repeated_docs,
+                    writes=writes,
+                ),
             }
         )
 
@@ -337,6 +341,37 @@ def _find_repeated_docs(docs: list[Any]) -> list[dict[str, Any]]:
                 }
             )
     return duplicates
+
+
+def _repeated_docs_evidence(
+    *,
+    docs: list[Any],
+    duplicates: list[dict[str, Any]],
+    writes: Iterable[Any] | None,
+) -> dict[str, Any]:
+    duplicated_indexes = {
+        index
+        for duplicate in duplicates
+        for index in duplicate.get("indexes", [])
+        if isinstance(index, int)
+    }
+    evidence: dict[str, Any] = {
+        "state_path": "retrieved_docs",
+        "retrieved_doc_count": len(docs),
+        "duplicate_group_count": len(duplicates),
+        "duplicate_doc_count": len(duplicated_indexes),
+        "duplicate_ratio": round(len(duplicated_indexes) / len(docs), 2) if docs else 0,
+        "duplicates": duplicates,
+        "suggested_action": "Inspect retrieval node writes and deduplicate by source/content before packing retrieved_docs into the model context.",
+    }
+    if writes is not None:
+        retrieval_writes = [
+            write
+            for write in writes
+            if str(_get(write, "channel", "")) == "retrieved_docs"
+        ]
+        evidence["write_summary"] = summarize_writes(retrieval_writes)
+    return evidence
 
 
 def _message_history_evidence(messages: list[Any], writes: Iterable[Any] | None) -> dict[str, Any]:

@@ -310,6 +310,8 @@ def _reproduction_notes(
         notes.append("stale_selected_city indicates selected_city does not match the latest residence memory.")
     if "stale_retrieved_context" in diagnostic_ids:
         notes.append("stale_retrieved_context indicates retrieved_docs contains context that does not match the latest user or query context.")
+    if "repeated_retrieved_context" in diagnostic_ids:
+        notes.append("repeated_retrieved_context indicates retrieval may need source/content deduplication before context packing.")
     if "reducer_append_duplicate_state" in diagnostic_ids:
         notes.append("reducer_append_duplicate_state indicates a reducer-backed channel may have appended duplicate semantic state.")
     if "oversized_message_history" in diagnostic_ids:

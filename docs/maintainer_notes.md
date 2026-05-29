@@ -561,3 +561,27 @@
 
 - `uv run pytest tests/test_analysis.py tests/test_fixtures.py -q`
 - `git diff --check`
+
+### Repeated retrieved context fixture and evidence
+
+用户价值改进：
+
+- 新增 `synthetic_repeated_retrieved_context_v1` 安全 fixture，保护
+  `repeated_retrieved_context` 诊断。
+- `repeated_retrieved_context` evidence 现在包含 `state_path`、retrieved doc
+  总数、重复组数量、重复文档数量、重复占比、重复 source/content 预览、retrieval
+  writes 摘要和 dedup 建议。
+- Debug bundle 复现备注会解释 repeated retrieved context 应优先检查 retrieval
+  节点并在 context packing 前按 source/content 去重。
+
+为什么重要：
+
+- RAG/Agent 调试时，重复检索结果会浪费上下文窗口，还会把真正有帮助的证据挤出去。
+  用户需要知道是哪个 retrieval write 把重复 docs 放进了 `state.retrieved_docs`。
+- 这个 fixture 让诊断矩阵不再有 unit-only 诊断；每个当前 diagnostic 都至少有 demo
+  或安全 fixture 支撑。
+
+已验证：
+
+- `uv run pytest tests/test_analysis.py tests/test_fixtures.py tests/test_export_bundle.py -q`
+- `git diff --check`
