@@ -57,9 +57,21 @@ uv run lgmi export-debug-bundle path/to/checkpoints.sqlite \
   --output-dir exports
 ```
 
-Before posting, open the JSON and confirm it contains no private values. If the
-default redaction misses a project-specific field, rerun the export with
-`--redact-path`:
+For a public GitHub issue, prefer `--issue`. It defaults to a redacted export
+and prints a pasteable Markdown summary without exposing the absolute local
+export path:
+
+```bash
+uv run lgmi export-debug-bundle path/to/checkpoints.sqlite \
+  --thread-id <thread-id> \
+  --checkpoint-id <checkpoint-id> \
+  --issue \
+  --output-dir exports
+```
+
+Before posting, open the JSON and confirm it contains no private values. Attach
+only the generated redacted bundle. If the default redaction misses a
+project-specific field, rerun the export with `--redact-path`:
 
 ```bash
 uv run lgmi export-debug-bundle path/to/checkpoints.sqlite \

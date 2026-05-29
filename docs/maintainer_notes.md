@@ -765,3 +765,32 @@
 - `uv run pytest tests/test_cli.py::test_doctor_prefers_build_ui_when_dist_is_missing -q`
 - `uv run pytest -q`
 - GitHub Actions main CI run `26645996221`
+
+### Issue-safe debug bundle handoff
+
+用户价值改进：
+
+- `lgmi export-debug-bundle` 新增 `--issue`，用于真实用户在 GitHub issue 中分享 checkpoint
+  bug 证据。
+- `--issue` 默认使用 redacted export，输出可粘贴的 Markdown 摘要，只展示 bundle 文件名、
+  schema version、thread/checkpoint/ns、文件大小、redaction 统计和 diagnostic ids。
+- `--issue` 的 redacted path 列表只展示少量 sample，完整列表保留在生成的 JSON bundle，
+  避免 issue 摘要变成几十行噪声。
+- 如果用户显式传 `--issue --redaction-mode raw`，CLI 会返回错误，避免把 public issue
+  路径变成 raw checkpoint 泄漏通道。
+- 修正 phone-like string redaction 的边界，避免 UUID checkpoint id 和 ISO timestamp 被误遮蔽；
+  redacted bundle 会继续保留结构字段，同时仍遮蔽 message/evidence 等敏感内容。
+- README、fixture policy、checkpoint bug pattern issue template 和 public launch packet
+  都增加了这条安全分享路径。
+
+为什么重要：
+
+- 推广后的第一批真实反馈很可能不是 PR，而是“我这里也有类似 bug”。如果他们不知道怎么安全
+  分享证据，反馈会变成模糊描述，或者更糟，贴出 raw production checkpoint。
+- 这个命令把“真实用户反馈 -> redacted bundle -> maintainer 复现 -> fixture/diagnostic”
+  这条路径缩短成一个明确动作。
+
+已验证：
+
+- `uv run pytest tests/test_export_bundle.py -q`
+- `uv run lgmi export-debug-bundle examples/relocation_policy_agent/data/checkpoints.sqlite --thread-id relocation-demo-user-001 --checkpoint-id 1f15b739-6741-66e0-8007-516937504e51 --issue --output-dir /tmp/lgmi-issue-export`

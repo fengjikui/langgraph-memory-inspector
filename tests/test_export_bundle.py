@@ -12,7 +12,12 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from examples.relocation_policy_agent.run_demo import THREAD_ID, build_graph
 from lgmi.checkpoint_reader import SQLiteCheckpointReader
 from lgmi.cli import main
-from lgmi.export_bundle import build_debug_bundle, export_debug_bundle
+from lgmi.export_bundle import (
+    REDACTION_PLACEHOLDER,
+    _redact_string_patterns,
+    build_debug_bundle,
+    export_debug_bundle,
+)
 
 
 def test_debug_bundle_exports_shareable_stale_memory_evidence(tmp_path: Path) -> None:
@@ -84,6 +89,10 @@ def test_redacted_debug_bundle_masks_private_fields_without_mutating_db(tmp_path
     serialized = json.dumps(bundle, ensure_ascii=False)
 
     assert bundle["privacy"]["redaction_mode"] == "redacted"
+    assert bundle["generated_at"] != "[REDACTED]"
+    assert bundle["checkpoint_id"] == checkpoint_id
+    assert bundle["thread"]["checkpoint_id"] == checkpoint_id
+    assert bundle["selected_checkpoint"]["checkpoint_id"] == checkpoint_id
     assert state["selected_city"] == "[REDACTED]"
     assert state["memory_events"][-1]["value"] == "Hangzhou"
     assert state["memory_events"][-1]["evidence"] == "[REDACTED]"
@@ -166,6 +175,74 @@ def test_cli_export_debug_bundle_can_redact(tmp_path: Path, capsys) -> None:
     assert exit_code == 0
     assert "Redaction: redacted" in output
     assert bundle["privacy"]["redaction_mode"] == "redacted"
+
+
+def test_string_redaction_preserves_structural_ids_and_timestamps() -> None:
+    checkpoint_id = "1f15b739-6741-66e0-8007-516937504e51"
+    timestamp = "2026-05-29T15:32:56Z"
+
+    assert _redact_string_patterns(checkpoint_id) == checkpoint_id
+    assert _redact_string_patterns(timestamp) == timestamp
+    assert _redact_string_patterns("Call +1 (555) 123-4567") == f"Call {REDACTION_PLACEHOLDER}"
+
+
+def test_cli_export_debug_bundle_issue_report_defaults_to_redacted(tmp_path: Path, capsys) -> None:
+    db_path = _write_demo_db(tmp_path)
+    reader = SQLiteCheckpointReader(db_path)
+    checkpoint_id = _checkpoint_with_second_memory_write(reader)
+    output_dir = tmp_path / "cli-issue-exports"
+
+    exit_code = main(
+        [
+            "export-debug-bundle",
+            str(db_path),
+            "--thread-id",
+            THREAD_ID,
+            "--checkpoint-id",
+            checkpoint_id,
+            "--output-dir",
+            str(output_dir),
+            "--issue",
+        ]
+    )
+
+    output = capsys.readouterr().out
+    bundle_path = next(output_dir.glob("lgmi-debug-*.json"))
+    bundle = json.loads(bundle_path.read_text(encoding="utf-8"))
+
+    assert exit_code == 0
+    assert "### LangGraph Memory Inspector debug bundle" in output
+    assert "- Redaction mode: `redacted`" in output
+    assert "<summary>Redacted path samples</summary>" in output
+    assert "more path(s) listed in the generated JSON bundle" in output
+    assert "Privacy note:" in output
+    assert str(output_dir) not in output
+    assert "I moved to Hangzhou last week" not in json.dumps(bundle)
+    assert bundle["privacy"]["redaction_mode"] == "redacted"
+
+
+def test_cli_export_debug_bundle_issue_report_rejects_raw_mode(tmp_path: Path, capsys) -> None:
+    db_path = _write_demo_db(tmp_path)
+    reader = SQLiteCheckpointReader(db_path)
+    checkpoint_id = _checkpoint_with_second_memory_write(reader)
+
+    exit_code = main(
+        [
+            "export-debug-bundle",
+            str(db_path),
+            "--thread-id",
+            THREAD_ID,
+            "--checkpoint-id",
+            checkpoint_id,
+            "--issue",
+            "--redaction-mode",
+            "raw",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 2
+    assert "`--issue` is for public reports" in captured.err
 
 
 def _write_demo_db(tmp_path: Path) -> Path:

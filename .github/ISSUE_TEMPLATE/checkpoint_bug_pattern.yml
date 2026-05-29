@@ -16,6 +16,9 @@ body:
         redacted debug bundle, a minimal synthetic fixture, or schema-only
         backend details. Do not attach raw production checkpoint stores or
         unredacted user state.
+
+        For SQLite checkpoint copies, `uv run lgmi export-debug-bundle ... --issue`
+        creates a redacted bundle and prints a pasteable Markdown summary.
   - type: dropdown
     id: pattern_type
     attributes:

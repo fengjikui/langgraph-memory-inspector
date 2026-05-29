@@ -272,6 +272,18 @@ uv run lgmi export-debug-bundle examples/relocation_policy_agent/data/checkpoint
   --output-dir exports
 ```
 
+For public GitHub issues, use `--issue`. It defaults to a redacted export and
+prints a short Markdown summary you can paste into the issue after reviewing the
+generated JSON locally:
+
+```bash
+uv run lgmi export-debug-bundle examples/relocation_policy_agent/data/checkpoints.sqlite \
+  --thread-id relocation-demo-user-001 \
+  --checkpoint-id <checkpoint-id> \
+  --issue \
+  --output-dir exports
+```
+
 The bundle includes:
 
 - database summary

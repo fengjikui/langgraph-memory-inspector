@@ -14,6 +14,7 @@ import sys
 import webbrowser
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 
 import uvicorn
@@ -227,6 +228,11 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="append",
         default=[],
         help="Dot path to keep even in redacted mode. Can be passed multiple times.",
+    )
+    export_parser.add_argument(
+        "--issue",
+        action="store_true",
+        help="Print a privacy-safe Markdown summary for a GitHub issue. Defaults to redacted export.",
     )
     return parser.parse_args(argv)
 
@@ -747,7 +753,14 @@ def _run_export_debug_bundle(args: argparse.Namespace) -> int:
         print(f"Checkpoint database not found: {db_path}", file=sys.stderr)
         return 2
 
-    redaction_mode = args.redaction_mode or ("redacted" if args.redact else "raw")
+    if args.issue and args.redaction_mode == "raw":
+        print(
+            "`--issue` is for public reports; use `--redact` or `--redaction-mode redacted`.",
+            file=sys.stderr,
+        )
+        return 2
+
+    redaction_mode = args.redaction_mode or ("redacted" if args.redact or args.issue else "raw")
     result = export_debug_bundle(
         SQLiteCheckpointReader(db_path),
         thread_id=args.thread_id,
@@ -759,6 +772,10 @@ def _run_export_debug_bundle(args: argparse.Namespace) -> int:
         redact_paths=args.redact_path,
         keep_paths=args.keep_path,
     )
+    if args.issue:
+        _print_debug_bundle_issue(result)
+        return 0
+
     print(f"Debug bundle: {result['path']}")
     print(f"File size: {result['file_size_bytes']} bytes")
     print(
@@ -767,6 +784,42 @@ def _run_export_debug_bundle(args: argparse.Namespace) -> int:
     )
     print(f"Diagnostics: {', '.join(str(item) for item in result['diagnostic_ids'])}")
     return 0
+
+
+def _print_debug_bundle_issue(result: dict[str, Any]) -> None:
+    bundle_name = Path(str(result["path"])).name
+    diagnostics = ", ".join(str(item) for item in result["diagnostic_ids"]) or "none"
+    redacted_paths = list(result["redacted_paths"])
+    print("### LangGraph Memory Inspector debug bundle", flush=True)
+    print(flush=True)
+    print(f"- Bundle file: `{bundle_name}`", flush=True)
+    print(f"- Schema version: `{result['schema_version']}`", flush=True)
+    print(f"- Thread ID: `{result['thread_id']}`", flush=True)
+    print(f"- Checkpoint namespace: `{result['checkpoint_ns']}`", flush=True)
+    print(f"- Checkpoint ID: `{result['checkpoint_id']}`", flush=True)
+    print(f"- File size: `{result['file_size_bytes']} bytes`", flush=True)
+    print(f"- Redaction mode: `{result['redaction_mode']}`", flush=True)
+    print(f"- Redacted paths: `{result['redaction_count']}`", flush=True)
+    print(f"- Diagnostics: `{diagnostics}`", flush=True)
+    if redacted_paths:
+        sample_size = 8
+        print(flush=True)
+        print("<details>", flush=True)
+        print("<summary>Redacted path samples</summary>", flush=True)
+        print(flush=True)
+        for path in redacted_paths[:sample_size]:
+            print(f"- `{path}`", flush=True)
+        remaining = len(redacted_paths) - sample_size
+        if remaining > 0:
+            print(f"- ... {remaining} more path(s) listed in the generated JSON bundle", flush=True)
+        print("</details>", flush=True)
+    print(flush=True)
+    print(
+        "Privacy note: attach only the generated redacted bundle after reviewing it locally. "
+        "Do not attach raw production checkpoint stores, unredacted messages, prompts, tokens, "
+        "or proprietary tool outputs.",
+        flush=True,
+    )
 
 
 def _serve_app(app: object, args: argparse.Namespace, source_label: str) -> int:

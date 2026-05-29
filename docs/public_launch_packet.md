@@ -413,6 +413,12 @@ Own SQLite DB issue:
 Thanks for the report. Could you run `uv run lgmi doctor --sqlite-db ./checkpoints.sqlite --issue` against your local copy and paste the generated Markdown? It includes file health, counts, and namespaces, but not checkpoint state or message content.
 ```
 
+Checkpoint pattern with safe evidence:
+
+```text
+This sounds like the kind of pattern the inspector should learn from. If you can share a local SQLite checkpoint copy safely, please run `uv run lgmi export-debug-bundle ./checkpoints.sqlite --thread-id <thread-id> --checkpoint-id <checkpoint-id> --issue --output-dir exports`, review the generated JSON locally, and paste the Markdown summary. Please attach only the redacted bundle; no raw production checkpoint stores.
+```
+
 PostgresSaver issue:
 
 ```text
