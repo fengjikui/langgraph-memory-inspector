@@ -328,7 +328,8 @@ This is an MVP focused on local checkpoint inspection:
 - decode common state channels
 - show diffs and writes
 - detect stale/conflicting memory and stale retrieved-context patterns
-- detect reducer append duplicates, namespace confusion hints, and unexpected
+- detect reducer append duplicates, repeated retrieved context, message history
+  growth, namespace confusion hints, checkpoint size spikes, and unexpected
   parent checkpoint jumps
 - show compact diagnostic causal chains across checkpoint ranges
 - export explicit debug bundles for issues and code review

@@ -13,9 +13,9 @@ repeatable validation command.
   schema-only evidence is acceptable for public work.
 - `Status` calls out whether the row is protected by a committed fixture, the
   deterministic relocation demo, or only a unit-level example.
-- Unit-only rows are useful, but they are product gaps: they still need a
-  fixture, redacted bundle, or schema-only backend snapshot from a real reported
-  pattern.
+- No current diagnostic is unit-only. If a future diagnostic starts with only a
+  unit test, keep it marked that way until it has a committed safe fixture,
+  redacted bundle, schema-only backend snapshot, or deterministic demo proof.
 
 ## Matrix
 
@@ -35,6 +35,9 @@ repeatable validation command.
 ## Next Evidence To Collect
 
 The highest-value next fixture candidates are:
+
+- A redacted or schema-only sample from a real production-scale checkpoint store
+  that validates large-store navigation and backend shape assumptions.
 
 - A redacted bundle from a real stale RAG/context reuse report, so
   `stale_retrieved_context` can be tuned against more than city-scoped

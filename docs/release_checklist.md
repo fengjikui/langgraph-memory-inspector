@@ -31,6 +31,8 @@ Draft release notes: `docs/release_notes_v0.1.0.md`.
 - [x] Diagnostic click opens Writes and highlights `state.memory_events`.
 - [x] Diagnostics include reducer append duplicate and unexpected parent
   checkpoint warning rules with documented false-positive boundaries.
+- [x] Every current diagnostic is protected by either the deterministic demo or
+  a committed safe fixture listed in `docs/diagnostic_matrix.md`.
 - [x] Debug bundle export shows path, file size, and diagnostic ids.
 - [x] Redacted debug bundle export records redaction mode and masks private
   message/evidence fields without modifying the checkpoint store.
@@ -38,8 +40,9 @@ Draft release notes: `docs/release_notes_v0.1.0.md`.
   namespaces changes the timeline without changing thread context.
 - [x] Timeline API returns a paginated contract and the UI can load earlier
   checkpoints without losing the selected thread or namespace.
-- [x] At least one safe fixture proves a real reported bug pattern through a
-  regression test.
+- [x] Safe fixtures cover reducer duplicate state, namespace confusion,
+  stale retrieved context, message history bloat, wrong-resume lineage jumps,
+  and repeated retrieval context.
 
 ## Adapter Confidence
 

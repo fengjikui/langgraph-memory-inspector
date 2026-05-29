@@ -1,7 +1,7 @@
 # v0.1.0 Release Candidate Audit
 
 Date: 2026-05-29
-Last refreshed: 2026-05-29 after repository was made public
+Last refreshed: 2026-05-29 after diagnostic matrix coverage was completed
 
 ## Summary
 
@@ -16,9 +16,9 @@ the prepared LangChain Forum thread.
 - Repository: `https://github.com/fengjikui/langgraph-memory-inspector`
 - Default branch: `main`
 - Current visibility: public (`gh repo view` reports `PUBLIC`)
-- Latest audited commit: `59f34a3`
+- Latest audited commit: `505db34`
 - Latest green CI:
-  `https://github.com/fengjikui/langgraph-memory-inspector/actions/runs/26640706354`
+  `https://github.com/fengjikui/langgraph-memory-inspector/actions/runs/26644150328`
 - Public fresh-clone audit:
   `docs/quickstart_audit_2026-05-29.md`
 - Fixture policy: `docs/fixture_policy.md`
@@ -47,6 +47,7 @@ the prepared LangChain Forum thread.
 | Namespace selector | Pass | README, API tests, reader tests, and UI/e2e code cover namespace switching. |
 | Timeline pagination | Pass | API and UI tests cover the paginated timeline contract. |
 | Safe fixture regression | Pass | `tests/test_fixtures.py` validates fixture metadata and matrix alignment. |
+| Diagnostic matrix coverage | Pass | Every current diagnostic is protected by the deterministic demo or a committed safe fixture; no row is unit-only. |
 | Postgres confidence | Pass | CI includes a real PostgresSaver integration job, and README documents `scripts/postgres_confidence.py`. |
 | Launch assets | Pass | Community launch playbook, public launch packet, and Forum draft are present. |
 

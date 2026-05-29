@@ -585,3 +585,27 @@
 
 - `uv run pytest tests/test_analysis.py tests/test_fixtures.py tests/test_export_bundle.py -q`
 - `git diff --check`
+
+### Launch docs reflect full diagnostic coverage
+
+用户价值改进：
+
+- README Current Scope 现在显式列出 repeated retrieved context、message history
+  growth 和 checkpoint size spike，不再低估当前诊断能力。
+- Release checklist 和 release candidate audit 记录：当前所有 diagnostic 都由
+  deterministic demo 或 committed safe fixture 支撑，诊断矩阵已经没有 unit-only 行。
+- Diagnostic matrix 的说明改成未来维护规则：如果后续新增 unit-only 诊断，必须继续补
+  fixture、redacted bundle、schema-only snapshot 或 deterministic demo proof。
+
+为什么重要：
+
+- 对外发布材料必须和实际能力一致。否则用户会低估工具，也会让维护者误以为还有已解决的
+  fixture 缺口。
+- 这轮把“当前诊断覆盖已闭环”的事实写进发布 gate，方便下一步聚焦 social preview、
+  Forum 首帖和真实用户反馈。
+
+已验证：
+
+- `uv run pytest tests/test_fixtures.py -q`
+- `uv run pytest -q`
+- `git diff --check`
