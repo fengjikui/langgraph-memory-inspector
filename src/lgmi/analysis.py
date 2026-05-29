@@ -6,6 +6,7 @@ from typing import Any, Iterable, Mapping
 
 MESSAGE_HISTORY_THRESHOLD = 6
 CHECKPOINT_SIZE_SPIKE_RATIO = 2.0
+TRACKED_REDUCER_CHANNELS = ("messages", "memory_events")
 
 SUMMARY_FIELDS = (
     "messages",
@@ -123,6 +124,21 @@ def run_diagnostics(
             }
         )
 
+    reducer_duplicates = _find_reducer_append_duplicates(state)
+    if reducer_duplicates:
+        diagnostics.append(
+            {
+                "id": "reducer_append_duplicate_state",
+                "severity": "warning",
+                "title": "Reducer append may be duplicating state",
+                "description": "One or more reducer-backed state channels contain duplicate semantic entries. This often happens when a reducer appends old state again instead of adding only new items.",
+                "evidence": {
+                    "duplicates": reducer_duplicates,
+                    "write_summary": summarize_writes(writes) if writes is not None else [],
+                },
+            }
+        )
+
     size_spikes = _find_checkpoint_size_spikes(_as_list(checkpoints))
     if size_spikes:
         diagnostics.append(
@@ -134,6 +150,21 @@ def run_diagnostics(
                 "evidence": {
                     "ratio_threshold": CHECKPOINT_SIZE_SPIKE_RATIO,
                     "spikes": size_spikes,
+                },
+            }
+        )
+
+    parent_anomalies = _find_unexpected_parent_checkpoints(_as_list(checkpoints))
+    if parent_anomalies:
+        diagnostics.append(
+            {
+                "id": "unexpected_parent_checkpoint",
+                "severity": "warning",
+                "title": "Checkpoint parent jumps in the timeline",
+                "description": "A checkpoint parent does not match the previous checkpoint in the current ordered timeline. This can be normal branching, but it is a useful signal when debugging wrong resume points.",
+                "evidence": {
+                    "anomalies": parent_anomalies,
+                    "false_positive_note": "LangGraph branches and namespaces can intentionally create non-linear parent links. Confirm the thread_id and checkpoint_ns before treating this as a bug.",
                 },
             }
         )
@@ -302,6 +333,59 @@ def _find_checkpoint_size_spikes(checkpoints: list[Any]) -> list[dict[str, Any]]
     return spikes
 
 
+def _find_reducer_append_duplicates(state: Mapping[str, Any]) -> list[dict[str, Any]]:
+    duplicates: list[dict[str, Any]] = []
+    for channel in TRACKED_REDUCER_CHANNELS:
+        values = _as_list(state.get(channel))
+        if len(values) < 2:
+            continue
+        signatures: defaultdict[str, list[int]] = defaultdict(list)
+        for index, item in enumerate(values):
+            signatures[_state_item_identity(channel, item)].append(index)
+        for signature, indexes in signatures.items():
+            if len(indexes) < 2:
+                continue
+            if channel == "messages" and not _has_adjacent_indexes(indexes):
+                continue
+            duplicates.append(
+                {
+                    "state_path": channel,
+                    "identity": signature,
+                    "indexes": indexes,
+                    "count": len(indexes),
+                    "first_value_preview": _preview(_jsonable(values[indexes[0]])),
+                }
+            )
+    return duplicates
+
+
+def _has_adjacent_indexes(indexes: list[int]) -> bool:
+    return any(right == left + 1 for left, right in zip(indexes, indexes[1:]))
+
+
+def _find_unexpected_parent_checkpoints(checkpoints: list[Any]) -> list[dict[str, Any]]:
+    anomalies: list[dict[str, Any]] = []
+    seen_ids = {_checkpoint_id(item) for item in checkpoints if _checkpoint_id(item)}
+    for previous, current in zip(checkpoints, checkpoints[1:]):
+        current_id = _checkpoint_id(current)
+        parent_id = _parent_checkpoint_id(current)
+        previous_id = _checkpoint_id(previous)
+        if not current_id or not parent_id:
+            continue
+        if parent_id == previous_id:
+            continue
+        anomalies.append(
+            {
+                "checkpoint_id": current_id,
+                "parent_checkpoint_id": parent_id,
+                "expected_previous_checkpoint_id": previous_id,
+                "parent_present_in_timeline": parent_id in seen_ids,
+                "checkpoint_ns": _get(current, "checkpoint_ns", None),
+            }
+        )
+    return anomalies
+
+
 def _write_summary(write: Any, index: int) -> dict[str, Any]:
     value = _get(write, "value", _get(write, "blob", _get(write, "data", None)))
     return {
@@ -401,6 +485,27 @@ def _diagnostic_identity(diagnostic: Any) -> str:
     if isinstance(diagnostic, Mapping):
         return str(diagnostic.get("id") or diagnostic.get("title") or diagnostic)
     return str(diagnostic)
+
+
+def _state_item_identity(channel: str, item: Any) -> str:
+    if channel == "messages":
+        summary = _message_summary(item)
+        return f"{summary.get('type', '')}:{summary.get('content_preview', '')}"
+    if channel == "memory_events":
+        return _memory_event_identity(_jsonable(item))
+    if channel == "retrieved_docs":
+        return _doc_identity(_doc_summary(item))
+    return _preview(_jsonable(item))
+
+
+def _checkpoint_id(checkpoint: Any) -> str | None:
+    value = _get(checkpoint, "checkpoint_id", _get(checkpoint, "id", None))
+    return str(value) if value else None
+
+
+def _parent_checkpoint_id(checkpoint: Any) -> str | None:
+    value = _get(checkpoint, "parent_checkpoint_id", _get(checkpoint, "parentId", None))
+    return str(value) if value else None
 
 
 def _residence_values(events: list[Any]) -> list[str]:

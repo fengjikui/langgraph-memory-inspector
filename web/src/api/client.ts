@@ -434,7 +434,7 @@ function diagnosticsForState(
     code,
     severity: code.includes("conflicting") ? "critical" as const : "warning" as const,
     checkpointId: String(raw.checkpoint_id ?? ""),
-    node: code === "conflicting_residence_memory" ? "extract_profile" : inferNodeFromChannels(asStringArray(raw.updated_channels)),
+    node: nodeForDiagnostic(code, asStringArray(raw.updated_channels)),
     statePath: statePathForDiagnostic(code),
     writeChannel: writeChannelForDiagnostic(code),
     suggestedTab: "state" as const,
@@ -481,6 +481,8 @@ function diagnosticsForState(
 function statePathForDiagnostic(code: string): string | undefined {
   if (code === "conflicting_residence_memory") return "memory_events[type=residence_city]";
   if (code === "stale_selected_city") return "selected_city";
+  if (code === "reducer_append_duplicate_state") return "messages | memory_events";
+  if (code === "unexpected_parent_checkpoint") return "checkpoint.parent_checkpoint_id";
   if (code === "oversized_message_history") return "messages";
   if (code === "checkpoint_size_spike") return "checkpoint.byte_size";
   return undefined;
@@ -489,8 +491,16 @@ function statePathForDiagnostic(code: string): string | undefined {
 function writeChannelForDiagnostic(code: string): string | undefined {
   if (code === "conflicting_residence_memory") return "memory_events";
   if (code === "stale_selected_city") return "selected_city";
+  if (code === "reducer_append_duplicate_state") return "memory_events";
   if (code === "oversized_message_history") return "messages";
   return undefined;
+}
+
+function nodeForDiagnostic(code: string, updatedChannels: string[]): string {
+  if (code === "conflicting_residence_memory") return "extract_profile";
+  if (code === "stale_selected_city") return "retrieve_policy";
+  if (code === "unexpected_parent_checkpoint") return "checkpoint lineage";
+  return inferNodeFromChannels(updatedChannels);
 }
 
 function normalizeMessages(items: unknown[]): Message[] {

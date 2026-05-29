@@ -198,8 +198,13 @@ Core checks:
   configurable threshold.
 - `oversized_message_history`: message count or serialized message payload size
   crosses a threshold.
-- `missing_parent_checkpoint`: a checkpoint references a parent id that is not
-  present for the same thread and namespace.
+- `reducer_append_duplicate_state`: reducer-backed channels such as `messages`
+  or `memory_events` contain duplicate semantic entries that look like an
+  append/merge mistake.
+- `unexpected_parent_checkpoint`: a checkpoint parent does not match the
+  previous checkpoint in the current ordered timeline. This can be normal
+  branching, so the UI should present it as a resume/lineage signal rather than
+  proof of corruption.
 
 For each finding, the inspector should show:
 

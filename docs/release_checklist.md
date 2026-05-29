@@ -23,6 +23,8 @@ Use this before making the repository public or announcing a release candidate.
 - [ ] SQLite quickstart starts the API and UI against the demo checkpoint DB.
 - [ ] `uv run python scripts/use_case_smoke.py --reset-demo` passes.
 - [ ] Diagnostic click opens Writes and highlights `state.memory_events`.
+- [ ] Diagnostics include reducer append duplicate and unexpected parent
+  checkpoint warning rules with documented false-positive boundaries.
 - [ ] Debug bundle export shows path, file size, and diagnostic ids.
 - [ ] Redacted debug bundle export records redaction mode and masks private
   message/evidence fields without modifying the checkpoint store.

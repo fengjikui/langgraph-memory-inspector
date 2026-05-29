@@ -256,3 +256,22 @@
 - API 分页边界、`from_end` 和筛选测试通过。
 - SQLite reader 分页和筛选测试通过。
 - 前端 build/e2e 和本地浏览器截图检查在提交前执行。
+
+### Reducer and resume diagnostics
+
+用户价值改进：
+
+- 新增 `reducer_append_duplicate_state`，检测 `messages` / `memory_events` 这类 reducer-backed channel 中重复的语义条目。
+- 新增 `unexpected_parent_checkpoint`，检测当前 ordered timeline 中某个 checkpoint 的 parent 不等于相邻前一个 checkpoint，提示可能存在 resume/branch lineage 跳转。
+- debug bundle reproduction notes 会解释这两个新 diagnostic 的下一步排查方向。
+- 前端 diagnostic code mapping 增加对应 state path、write channel 和 node 文案，保证 UI 卡片不会退化成裸 code。
+
+为什么重要：
+
+- 很多 LangGraph bug 并不是“值错了”，而是 reducer 把旧值又 append 了一遍，或者用户以为自己从最新状态 resume，实际 lineage 跳到了另一个 parent。
+- `unexpected_parent_checkpoint` 明确写入 false-positive 边界：LangGraph branch/namespace 可能故意造成非线性 parent link，所以它是排查信号，不是直接判定数据损坏。
+
+已验证：
+
+- 单测覆盖 reducer duplicate 和 parent jump 两类规则。
+- 文档记录 diagnostic id、误报边界和 UI 展示字段。

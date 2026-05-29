@@ -136,6 +136,61 @@ def test_run_diagnostics_detects_memory_staleness_growth_and_duplicates() -> Non
     assert by_id["checkpoint_size_spike"]["evidence"]["spikes"][0]["to_checkpoint_id"] == "cp-3"
 
 
+def test_run_diagnostics_detects_reducer_append_duplicates() -> None:
+    duplicate_memory = {
+        "type": "profile_fact",
+        "value": "prefers subway",
+        "source": "extract_profile",
+        "evidence": "I usually take the subway.",
+    }
+    state = {
+        "messages": [
+            {"type": "human", "content": "I usually take the subway."},
+            {"type": "human", "content": "I usually take the subway."},
+        ],
+        "memory_events": [
+            duplicate_memory,
+            duplicate_memory,
+        ],
+        "retrieved_docs": [],
+    }
+    writes = [
+        {
+            "task_id": "task-reducer",
+            "channel": "memory_events",
+            "node": "extract_profile",
+            "value": state["memory_events"],
+        }
+    ]
+
+    diagnostics = run_diagnostics(state, writes=writes)
+    by_id = {item["id"]: item for item in diagnostics}
+
+    assert "reducer_append_duplicate_state" in by_id
+    duplicates = by_id["reducer_append_duplicate_state"]["evidence"]["duplicates"]
+    assert {item["state_path"] for item in duplicates} >= {"messages", "memory_events"}
+    assert duplicates[0]["indexes"] == [0, 1]
+    assert by_id["reducer_append_duplicate_state"]["evidence"]["write_summary"][0]["channel"] == "memory_events"
+
+
+def test_run_diagnostics_detects_unexpected_parent_checkpoint() -> None:
+    checkpoints = [
+        {"checkpoint_id": "cp-1", "checkpoint_ns": "main", "parent_checkpoint_id": None, "byte_size": 100},
+        {"checkpoint_id": "cp-2", "checkpoint_ns": "main", "parent_checkpoint_id": "cp-1", "byte_size": 120},
+        {"checkpoint_id": "cp-4", "checkpoint_ns": "main", "parent_checkpoint_id": "cp-1", "byte_size": 130},
+    ]
+
+    diagnostics = run_diagnostics({}, checkpoints=checkpoints)
+    by_id = {item["id"]: item for item in diagnostics}
+
+    assert "unexpected_parent_checkpoint" in by_id
+    anomaly = by_id["unexpected_parent_checkpoint"]["evidence"]["anomalies"][0]
+    assert anomaly["checkpoint_id"] == "cp-4"
+    assert anomaly["parent_checkpoint_id"] == "cp-1"
+    assert anomaly["expected_previous_checkpoint_id"] == "cp-2"
+    assert anomaly["parent_present_in_timeline"] is True
+
+
 def test_summarize_writes_groups_by_channel_and_task_id() -> None:
     writes = [
         {

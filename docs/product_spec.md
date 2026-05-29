@@ -47,7 +47,8 @@ The two-week MVP should focus on a single strong demo path:
    - stale memory
    - checkpoint size spike
    - oversized message history
-   - missing parent checkpoint
+   - reducer append duplicate state
+   - unexpected parent checkpoint / resume lineage jump
 8. Export a debug bundle with timeline, state diff, and reproduction notes.
 
 ## Non-goals For MVP

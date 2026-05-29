@@ -308,6 +308,10 @@ def _reproduction_notes(
         notes.append("conflicting_residence_memory indicates multiple active residence_city memories.")
     if "stale_selected_city" in diagnostic_ids:
         notes.append("stale_selected_city indicates selected_city does not match the latest residence memory.")
+    if "reducer_append_duplicate_state" in diagnostic_ids:
+        notes.append("reducer_append_duplicate_state indicates a reducer-backed channel may have appended duplicate semantic state.")
+    if "unexpected_parent_checkpoint" in diagnostic_ids:
+        notes.append("unexpected_parent_checkpoint indicates checkpoint lineage jumps; confirm whether this was an intentional branch or a wrong resume point.")
     if "memory_events" in write_channels:
         notes.append("state.memory_events writes are included as direct evidence for profile memory changes.")
     if state.get("selected_city"):

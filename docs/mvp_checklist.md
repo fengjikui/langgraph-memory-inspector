@@ -50,7 +50,8 @@ platform.
   not match the newest residence memory.
 - [ ] Diagnostics detects `checkpoint_size_spike` with a configurable threshold.
 - [ ] Diagnostics detects `oversized_message_history`.
-- [ ] Diagnostics detects `missing_parent_checkpoint`.
+- [ ] Diagnostics detects `reducer_append_duplicate_state`.
+- [ ] Diagnostics detects `unexpected_parent_checkpoint`.
 - [ ] Diagnostics can identify the first checkpoint where each issue appears.
 - [ ] Findings include enough evidence to reproduce the reasoning without an
   LLM call.

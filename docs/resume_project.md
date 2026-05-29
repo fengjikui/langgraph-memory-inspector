@@ -58,8 +58,8 @@ Shanghai to Hangzhou the graph still retrieves Shanghai policy context. Around
 that fixture, I designed the inspector architecture: a checkpoint adapter, a
 timeline service, a state snapshot API, a JSON diff service, and a diagnostics
 layer that detects conflicting residence memory, stale retrieval context,
-checkpoint size spikes, oversized message history, and missing parent
-checkpoints. I also designed the frontend workflow around a thread timeline,
+checkpoint size spikes, oversized message history, reducer append duplicates,
+and unexpected parent checkpoint jumps. I also designed the frontend workflow around a thread timeline,
 state inspector, diff viewer, and diagnostics panel.
 
 Result:
