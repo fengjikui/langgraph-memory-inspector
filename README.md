@@ -123,7 +123,7 @@ This is an MVP focused on local SQLite checkpoint inspection:
 Planned next steps:
 
 - record a short stale-memory debugging GIF
-- research a read-only Postgres checkpoint adapter
+- implement the planned read-only Postgres checkpoint adapter
 - add richer node-level write attribution across multiple checkpoints
 - export a shareable debug bundle for issues and code review
 

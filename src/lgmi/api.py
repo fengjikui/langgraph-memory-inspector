@@ -7,17 +7,22 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from lgmi.analysis import diff_states
+from lgmi.adapters import CheckpointReader
 from lgmi.checkpoint_reader import SQLiteCheckpointReader
 
 
-def create_app(db_path: str | Path) -> FastAPI:
-    reader = SQLiteCheckpointReader(db_path)
+def create_app(source: str | Path | CheckpointReader) -> FastAPI:
+    reader: CheckpointReader
+    if isinstance(source, (str, Path)):
+        reader = SQLiteCheckpointReader(source)
+    else:
+        reader = source
     app = FastAPI(
         title="LangGraph Memory Inspector API",
         version="0.1.0",
-        description="Local API for inspecting LangGraph SQLite checkpoints.",
+        description="Local API for inspecting LangGraph checkpoints.",
     )
-    app.state.db_path = str(reader.db_path)
+    app.state.db_path = str(getattr(reader, "db_path", ""))
     app.state.reader = reader
 
     app.add_middleware(

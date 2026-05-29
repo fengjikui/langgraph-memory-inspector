@@ -59,3 +59,19 @@
 - `cd web && npm run test:e2e`
 - `uv run python scripts/use_case_smoke.py`
 - 重新录制 `docs/assets/stale-memory-debugging-demo.gif`
+
+### Postgres adapter 前置调研
+
+用户价值改进：
+
+- 当前代码新增 `CheckpointReader` 协议，FastAPI 不再硬绑定 SQLite reader。
+- 新增 `docs/postgres_adapter_plan.md`，记录官方 PostgresSaver schema、blob hydration 方案、read-only 约束和后续实现步骤。
+
+为什么重要：
+
+- 真实生产用户更可能使用 Postgres checkpointer。先把 adapter 边界和 schema 风险讲清楚，可以避免为了“支持 Postgres”而引入会误读 checkpoint 或误操作生产库的实现。
+
+已验证：
+
+- 使用 LangGraph 官方持久化文档和 PostgresSaver 源码核对 schema。
+- 新增 API adapter 测试，保证 backend route 可以接入非 SQLite reader。
