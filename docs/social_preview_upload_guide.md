@@ -12,7 +12,7 @@ Use:
 docs/assets/github-social-preview.png
 ```
 
-Verified on 2026-05-29:
+Verified on 2026-05-30:
 
 - Format: PNG
 - Size: 1280 x 640 pixels
@@ -27,7 +27,9 @@ uv run python scripts/validate_social_preview.py
 
 GitHub's current docs say repository social preview images should be PNG, JPG,
 or GIF, under 1 MB. GitHub recommends at least 640 x 320 pixels, with 1280 x
-640 pixels for best display:
+640 pixels for best display. The same official docs describe the upload as a
+repository Settings action: open Settings, find Social preview, click Edit, then
+upload an image.
 
 ```text
 https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/customizing-your-repositorys-social-media-preview

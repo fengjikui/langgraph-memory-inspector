@@ -1,24 +1,24 @@
 # v0.1.0 Release Candidate Audit
 
 Date: 2026-05-29
-Last refreshed: 2026-05-29 after launch status automation and CI verification
+Last refreshed: 2026-05-30 after package install smoke and CI verification
 
 ## Summary
 
 The v0.1.0 release candidate is publicly reachable and technically ready for the
 first feedback-oriented launch. The demo, tests, CI, fixture policy, release
-notes, and community launch materials are in place. The remaining launch gate is
-manual/community-facing: upload the GitHub social preview image and then post
-the prepared LangChain Forum thread.
+notes, package install smoke, and community launch materials are in place. The
+remaining launch gate is manual/community-facing: upload the GitHub social
+preview image and then post the prepared LangChain Forum thread.
 
 ## Current Evidence
 
 - Repository: `https://github.com/fengjikui/langgraph-memory-inspector`
 - Default branch: `main`
 - Current visibility: public (`gh repo view` reports `PUBLIC`)
-- Latest audited commit: `9c6572a`
+- Latest audited commit: `2cd6407`
 - Latest green CI:
-  `https://github.com/fengjikui/langgraph-memory-inspector/actions/runs/26645996221`
+  `https://github.com/fengjikui/langgraph-memory-inspector/actions/runs/26647844240`
 - Launch status command:
   `uv run python scripts/launch_status.py`
 - Public fresh-clone audit:
@@ -41,12 +41,13 @@ the prepared LangChain Forum thread.
 | Fixture privacy policy | Pass | README, CONTRIBUTING, issue template, and launch playbook link to `docs/fixture_policy.md`. |
 | Generated artifacts ignored | Pass | `.gitignore` covers demo SQLite files, exports, package builds, web build output, and test artifacts. |
 | Open feedback loop | Pass | #20 is open for real checkpoint bug patterns; #23 tracks the remaining social preview upload. |
-| CI green on main | Pass | Latest checked main CI is green at run `26645996221`. |
+| CI green on main | Pass | Latest checked main CI is green at run `26647844240`. |
 | Public fresh-clone quickstart | Pass | HTTPS clone, `uv sync`, `lgmi doctor --skip-web`, and `lgmi prove-demo --reset-demo --json` pass from `/tmp/lgmi-public-quickstart-audit-20260529`. |
 | Demo GIF | Pass | `docs/assets/stale-memory-debugging-demo.gif` exists. |
 | Product proof CLI | Pass | `uv run lgmi prove-demo --reset-demo --json` proves the stale-memory path and excludes raw evidence payloads. |
 | Diagnostic click e2e | Pass | `npm run test:e2e` covers diagnostic click, Writes highlight, causal chain, and redacted export. |
 | Redacted debug bundle | Pass | Tests cover redaction and non-mutating export behavior. |
+| Package install smoke | Pass | `scripts/package_smoke.py` builds the wheel, installs it into a temporary virtual environment, and verifies the installed `lgmi` entry point exposes the core debugging commands. |
 | Namespace selector | Pass | README, API tests, reader tests, and UI/e2e code cover namespace switching. |
 | Timeline pagination | Pass | API and UI tests cover the paginated timeline contract. |
 | Safe fixture regression | Pass | `tests/test_fixtures.py` validates fixture metadata and matrix alignment. |
@@ -60,6 +61,8 @@ the prepared LangChain Forum thread.
 - [x] Repository is public.
 - [x] Main CI is green.
 - [x] Public fresh-clone proof path passes.
+- [x] Package install smoke verifies the wheel and installed `lgmi` entry
+  point.
 - [x] GitHub feedback issue #20 is open.
 - [x] LangChain Forum launch draft is ready.
 - [x] `uv run python scripts/launch_status.py` reports PASS for local git
@@ -81,7 +84,8 @@ uses actions whose metadata targets Node 24:
 - `astral-sh/setup-uv@v8.1.0`
 
 The current main CI run is green with Python tests, the `lgmi prove-demo` proof
-CLI, Web build/e2e, and real PostgresSaver integration.
+CLI, Web build/e2e, and real PostgresSaver integration. Local release smoke now
+also includes the package install gate.
 
 ## Recommendation
 

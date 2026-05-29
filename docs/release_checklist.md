@@ -3,6 +3,7 @@
 Use this before making the repository public or announcing a release candidate.
 
 Current audit: `docs/release_candidate_audit_2026-05-29.md`.
+Current external-user dry run: `docs/launch_dry_run_2026-05-30.md`.
 Draft release notes: `docs/release_notes_v0.1.0.md`.
 
 ## Repository Readiness

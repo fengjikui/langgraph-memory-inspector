@@ -919,3 +919,24 @@
 - `uv run pytest tests/test_package_smoke.py tests/test_release_smoke.py tests/test_project_metadata.py -q`
 - `uv run python scripts/package_smoke.py`
 - `uv run python scripts/release_smoke.py`
+
+### First external user launch dry run
+
+用户价值改进：
+
+- 新增 `docs/launch_dry_run_2026-05-30.md`，把发布前检查从维护者视角转成外部开发者视角：
+  发现项目、安装、证明 stale-memory bug、导出并审计 redacted evidence bundle。
+- 刷新 `docs/release_candidate_audit_2026-05-29.md`，把最新 audited commit、CI run
+  和 package install smoke 纳入 release candidate evidence。
+
+为什么重要：
+
+- 推广前最容易自嗨的是“功能都在”。dry run 强制检查真实开发者是否能从首屏理解问题、
+  是否能低摩擦跑通、是否敢把证据发给维护者。
+- 当前剩余 blocker 被重新确认：不是核心调试能力，而是 GitHub social preview 仍需 Settings
+  上传。上传后才适合发第一篇外部帖子。
+
+已验证：
+
+- `uv run python scripts/launch_status.py`
+- GitHub CI `26647844240` 为 success
