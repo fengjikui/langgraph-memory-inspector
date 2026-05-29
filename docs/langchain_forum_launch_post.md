@@ -53,6 +53,8 @@ The current demo is intentionally concrete:
 - the user first says they live in Shanghai
 - later they say they moved to Hangzhou
 - the agent still answers with Shanghai policy context
+- the inspector surfaces stale retrieved context, not only conflicting profile
+  memory
 - the checkpoint store contains the evidence, but the root cause is several
   checkpoints before the final answer
 
@@ -62,9 +64,11 @@ The Inspector reads the checkpoint store locally and shows:
 - state snapshots and diffs
 - node/channel writes
 - deterministic diagnostics such as `conflicting_residence_memory` and
-  `stale_selected_city`
+  `stale_selected_city`, plus `stale_retrieved_context`
 - a node-level causal path such as
   `extract_profile -> retrieve_policy -> answer`
+- checkpoint id prefix filtering for jumping from logs to the suspicious
+  timeline range
 - redacted debug bundle export for issues, teammates, or PRs
 
 Quickstart:
@@ -91,6 +95,10 @@ uv run --extra postgres lgmi doctor --postgres-conninfo "$DATABASE_URL" --postgr
 uv run --extra postgres lgmi inspect-postgres "$DATABASE_URL" --schema public --build-ui
 ```
 
+`ShallowPostgresSaver` latest-only schemas are detected and reported as
+unsupported because they cannot provide checkpoint timelines. Doctor reports
+redact connection credentials and do not include checkpoint state.
+
 If you want to test the Postgres path before connecting a private store, the repo
 also includes a confidence script that writes a tiny LangGraph PostgresSaver demo
 schema, validates it with the read-only reader and doctor check, and optionally
@@ -111,6 +119,8 @@ deterministic diagnostics. The most useful feedback:
 - Which state channel is hardest to debug?
 - Have you seen stale memory, reducer append bugs, wrong resume points,
   namespace confusion, or message/history bloat?
+- Have you had only a checkpoint id/prefix from logs and needed to jump to that
+  part of the timeline?
 - What would you need to safely inspect a production copy locally?
 
 This is not intended to replace LangSmith or LangGraph Studio. The scope is
