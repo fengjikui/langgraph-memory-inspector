@@ -12,6 +12,10 @@ evidence-backed improvements that make one developer workflow clearer.
 - Improve docs where a first-time user might get stuck.
 - Validate the Postgres reader against another `PostgresSaver` fixture.
 
+The current contributor-friendly starter issue is
+[#29](https://github.com/fengjikui/langgraph-memory-inspector/issues/29),
+which focuses on adding one safe fixture and updating the diagnostic matrix.
+
 Please avoid broad rewrites unless an issue already describes the migration.
 
 ## Local Setup

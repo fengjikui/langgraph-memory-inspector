@@ -359,10 +359,14 @@ This is an MVP focused on local checkpoint inspection:
 
 Planned next steps:
 
-- Validate future saver variants as upstream `langgraph-checkpoint-postgres`
-  evolves.
+- Validate future saver variants and schema-only evidence as upstream
+  checkpointers evolve:
+  [#28](https://github.com/fengjikui/langgraph-memory-inspector/issues/28).
 - Add deeper large-store navigation from real feedback, such as metadata search,
-  virtualized timeline rows, or indexed server-side search.
+  virtualized timeline rows, or indexed server-side search:
+  [#27](https://github.com/fengjikui/langgraph-memory-inspector/issues/27).
+- Make safe fixture contribution approachable for first-time contributors:
+  [#29](https://github.com/fengjikui/langgraph-memory-inspector/issues/29).
 
 ## Known Limitations
 

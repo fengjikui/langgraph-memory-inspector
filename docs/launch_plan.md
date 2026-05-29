@@ -54,10 +54,12 @@ demo locally.
 These issues are intentionally user-value shaped so community feedback can turn
 into fixtures, diagnostics, and tests:
 
-- Validate future saver variants beyond full-history `PostgresSaver` as
-  upstream `langgraph-checkpoint-postgres` evolves.
-- Add deeper large-store navigation after real user feedback, such as metadata
-  search, virtualized timeline rows, or indexed server-side search.
+- [#27](https://github.com/fengjikui/langgraph-memory-inspector/issues/27):
+  Add large-store metadata search for checkpoint timelines.
+- [#28](https://github.com/fengjikui/langgraph-memory-inspector/issues/28):
+  Collect schema-only evidence for more LangGraph checkpointer variants.
+- [#29](https://github.com/fengjikui/langgraph-memory-inspector/issues/29):
+  Create a small contributor fixture from a safe checkpoint pattern.
 
 ## Community Launch
 

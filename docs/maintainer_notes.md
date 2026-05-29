@@ -962,3 +962,25 @@
 
 - `uv run pytest tests/test_feedback_intake.py -q`
 - `uv run python scripts/feedback_intake.py 20`
+
+### Public roadmap issues
+
+用户价值改进：
+
+- 创建 3 个公开路线图 issue，把原来文档里的模糊 next steps 变成外部可见、可讨论、可认领的
+  GitHub 入口：
+  - #27 large-store metadata search / timeline navigation
+  - #28 more checkpointer variant evidence
+  - #29 safe fixture good first issue
+- README、CONTRIBUTING、launch plan、community launch playbook 和 release checklist 都链接到
+  这些 issue。
+
+为什么重要：
+
+- 第一批用户看到项目后，如果只看到一个反馈 issue，会觉得这是单人 demo；看到明确的 roadmap
+  和 good first issue，才更像可以参与的开发者工具。
+- 这些 issue 都用用户问题和验收标准描述，避免路线图变成“想做很多功能”的愿望清单。
+
+已验证：
+
+- `gh issue list --repo fengjikui/langgraph-memory-inspector --state open --limit 20 --json number,title,labels,url`

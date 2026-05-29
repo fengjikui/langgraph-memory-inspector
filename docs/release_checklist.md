@@ -19,6 +19,8 @@ Draft release notes: `docs/release_notes_v0.1.0.md`.
   feature/diagnostic requests.
 - [x] Fixture policy explains acceptable public inputs and is linked from
   checkpoint feedback entry points.
+- [x] Public roadmap issues exist for large-store navigation, future
+  checkpointer evidence, and a safe fixture good-first contribution.
 - [x] Generated demo databases, exports, package builds, web build output, and
   test artifacts are ignored by git.
 - [x] Open issues describe the next product gaps instead of hiding them.

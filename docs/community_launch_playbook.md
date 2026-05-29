@@ -390,6 +390,17 @@ has opted into the conversation.
 10. Which diagnostic should exist after `conflicting_residence_memory`?
 11. Could your bug be reduced to a redacted, synthetic, or schema-only fixture?
 
+## Public Roadmap Hooks
+
+Use these when a commenter asks what is next or how they can help:
+
+- Large-store navigation and metadata search:
+  https://github.com/fengjikui/langgraph-memory-inspector/issues/27
+- Schema-only evidence for more checkpointer variants:
+  https://github.com/fengjikui/langgraph-memory-inspector/issues/28
+- Good first fixture contribution:
+  https://github.com/fengjikui/langgraph-memory-inspector/issues/29
+
 ## Anti-Spam Rules
 
 - Post once per channel per meaningful release candidate.
