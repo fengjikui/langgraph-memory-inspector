@@ -84,6 +84,10 @@ Paste the generated Markdown into the GitHub issue. It includes environment and
 demo health checks, but not checkpoint state, message content, prompts, tokens,
 or production database rows.
 
+Release candidates also build a wheel and install it into a temporary virtual
+environment before posting. That package smoke verifies the installed `lgmi`
+entry point exposes the same core debugging commands as the source checkout.
+
 Build the web UI and start the demo:
 
 ```bash

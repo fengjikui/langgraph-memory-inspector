@@ -894,3 +894,28 @@
 已验证：
 
 - `uv run python scripts/validate_launch_copy.py`
+
+### Package install smoke gate
+
+用户价值改进：
+
+- 新增 `scripts/package_smoke.py`，发布前会构建 sdist/wheel，把 wheel 安装进临时虚拟环境，
+  再运行安装后的 `lgmi --help`。
+- smoke 会确认安装后的 CLI 暴露 `doctor`、`prove-demo`、`export-debug-bundle` 和
+  `audit-debug-bundle`，避免源码 checkout 可用但真实安装入口缺命令。
+- `scripts/release_smoke.py` 默认 gate 增加 `uv run python scripts/package_smoke.py`。
+- `pyproject.toml` 增加 keywords、classifiers 和 GitHub URLs，让包元数据也指向
+  LangGraph checkpoint debugging、developer tooling 和 issue 反馈入口。
+
+为什么重要：
+
+- 真实开发者第一次试用开源工具时，安装失败或 CLI 缺命令会直接打断信任。package smoke
+  把“能安装并打开核心命令”变成可重复验证的发布前证据。
+- README、GitHub topics、包元数据和 release smoke 共同服务同一个用户路径：先找到项目，
+  再低摩擦安装，最后用安全证据反馈真实 checkpoint 问题。
+
+已验证：
+
+- `uv run pytest tests/test_package_smoke.py tests/test_release_smoke.py tests/test_project_metadata.py -q`
+- `uv run python scripts/package_smoke.py`
+- `uv run python scripts/release_smoke.py`

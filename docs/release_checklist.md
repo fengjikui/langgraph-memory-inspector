@@ -42,6 +42,9 @@ Draft release notes: `docs/release_notes_v0.1.0.md`.
   issue reports, and prints a pasteable Markdown summary for GitHub feedback.
 - [x] `audit-debug-bundle` checks generated debug bundles for redaction mode,
   required structure, and obvious token/email/phone-like values before sharing.
+- [x] Package smoke builds the wheel, installs it into a temporary virtual
+  environment, and verifies the installed `lgmi` CLI exposes the core
+  debugging commands.
 - [x] Namespace selector is visible for multi-namespace threads and switching
   namespaces changes the timeline without changing thread context.
 - [x] Timeline API returns a paginated contract and the UI can load earlier
@@ -115,6 +118,7 @@ uv run python scripts/validate_social_preview.py
 uv run python scripts/validate_launch_copy.py
 uv run lgmi prove-demo --reset-demo
 uv run python scripts/issue_bundle_smoke.py
+uv run python scripts/package_smoke.py
 cd web
 npm run build
 npm run test:e2e

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from typing import Sequence
 
+from scripts import launch_status
 from scripts.launch_status import LaunchStatusError, collect_launch_status
 
 
@@ -39,6 +40,24 @@ def test_launch_status_reports_missing_discoverability_topics() -> None:
     assert by_name["repository discoverability"].status == "fail"
     assert "missing topics" in by_name["repository discoverability"].detail
     assert "langchain" in by_name["repository discoverability"].detail
+
+
+def test_launch_status_retries_transient_gh_failures(monkeypatch) -> None:
+    calls = 0
+
+    def fake_run_once(command: Sequence[str]) -> str:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise LaunchStatusError("unexpected EOF")
+        assert command == ("gh", "repo", "view")
+        return "{}"
+
+    monkeypatch.setattr(launch_status, "_run_once", fake_run_once)
+    monkeypatch.setattr(launch_status.time, "sleep", lambda seconds: None)
+
+    assert launch_status._run(("gh", "repo", "view")) == "{}"
+    assert calls == 2
 
 
 def _fake_runner(command: Sequence[str]) -> str:

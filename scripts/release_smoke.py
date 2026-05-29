@@ -18,6 +18,7 @@ DEFAULT_GATES = (
     Gate("launch copy guardrails", ("uv", "run", "python", "scripts/validate_launch_copy.py")),
     Gate("stale-memory proof", ("uv", "run", "lgmi", "prove-demo", "--reset-demo")),
     Gate("issue-safe debug bundle", ("uv", "run", "python", "scripts/issue_bundle_smoke.py")),
+    Gate("package install", ("uv", "run", "python", "scripts/package_smoke.py")),
 )
 
 WEB_GATES = (

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import time
 from dataclasses import dataclass
 from typing import Callable, Sequence
 
@@ -172,6 +173,20 @@ def _json(text: str) -> object:
 
 
 def _run(command: Sequence[str]) -> str:
+    attempts = 2 if command and command[0] == "gh" else 1
+    last_error: LaunchStatusError | None = None
+    for attempt in range(attempts):
+        try:
+            return _run_once(command)
+        except LaunchStatusError as exc:
+            last_error = exc
+            if attempt + 1 < attempts:
+                time.sleep(0.5)
+    assert last_error is not None
+    raise last_error
+
+
+def _run_once(command: Sequence[str]) -> str:
     try:
         completed = subprocess.run(
             command,
