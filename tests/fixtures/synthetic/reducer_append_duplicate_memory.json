@@ -1,0 +1,66 @@
+{
+  "fixture_id": "synthetic_reducer_append_duplicate_memory_v1",
+  "source_safety": "synthetic",
+  "backend": "synthetic_json",
+  "langgraph_version": "synthetic",
+  "checkpointer": "synthetic",
+  "thread_id": "fixture-thread-reducer-duplicate",
+  "checkpoint_ns": "",
+  "checkpoint_ns_shape": "single default namespace",
+  "bug_pattern_tags": [
+    "reducer_append_duplicate_state"
+  ],
+  "state_channels": [
+    "memory_events"
+  ],
+  "expected_diagnostics": [
+    "reducer_append_duplicate_state"
+  ],
+  "state": {
+    "memory_events": [
+      {
+        "type": "profile_fact",
+        "value": "prefers subway",
+        "source": "extract_profile",
+        "evidence": "synthetic user statement"
+      },
+      {
+        "type": "profile_fact",
+        "value": "prefers subway",
+        "source": "extract_profile",
+        "evidence": "synthetic user statement"
+      }
+    ],
+    "messages": []
+  },
+  "writes": [
+    {
+      "task_id": "task-reducer-duplicate",
+      "channel": "memory_events",
+      "node": "extract_profile",
+      "idx": 0,
+      "value": [
+        {
+          "type": "profile_fact",
+          "value": "prefers subway",
+          "source": "extract_profile",
+          "evidence": "synthetic user statement"
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "checkpoint_id": "fixture-cp-1",
+      "checkpoint_ns": "",
+      "parent_checkpoint_id": null,
+      "byte_size": 600
+    },
+    {
+      "checkpoint_id": "fixture-cp-2",
+      "checkpoint_ns": "",
+      "parent_checkpoint_id": "fixture-cp-1",
+      "byte_size": 900
+    }
+  ]
+}

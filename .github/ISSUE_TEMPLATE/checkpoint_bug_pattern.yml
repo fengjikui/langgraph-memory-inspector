@@ -11,6 +11,11 @@ body:
         This template is for product feedback from real LangGraph workflows. The
         most useful reports describe a confusing state transition, not just a
         desired UI feature.
+
+        If you can share a file, follow docs/fixture_policy.md. Please prefer a
+        redacted debug bundle, a minimal synthetic fixture, or schema-only
+        backend details. Do not attach raw production checkpoint stores or
+        unredacted user state.
   - type: dropdown
     id: pattern_type
     attributes:
@@ -52,12 +57,18 @@ body:
     id: evidence
     attributes:
       label: Evidence the inspector should surface
-      description: State path, write channel, node name, checkpoint metadata, or a redacted debug bundle.
+      description: State path, write channel, node name, checkpoint metadata, or a redacted debug bundle that follows docs/fixture_policy.md.
       placeholder: |
         state path:
         write channel:
         node/task:
         checkpoint_ns:
+  - type: input
+    id: fixture_metadata
+    attributes:
+      label: Fixture or metadata shape
+      description: If you can share safe material, note whether it is redacted, synthetic, or schema-only.
+      placeholder: "redacted debug bundle, synthetic JSON fixture, schema-only Postgres snapshot, or no file"
   - type: textarea
     id: desired_diagnostic
     attributes:
@@ -73,3 +84,4 @@ body:
         - label: This pattern matters for production-size stores.
         - label: This pattern includes multiple checkpoint namespaces.
         - label: I can provide a redacted fixture or debug bundle.
+        - label: I reviewed docs/fixture_policy.md and removed raw/private data from anything shared publicly.

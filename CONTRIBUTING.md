@@ -89,6 +89,11 @@ For bug reports, include:
 - a minimal checkpoint database or redacted debug bundle when possible
 - expected state path and actual state path if known
 
+For checkpoint pattern reports or fixture contributions, follow
+`docs/fixture_policy.md`. Public fixtures must be synthetic, redacted, or
+schema-only, and should include metadata for backend, LangGraph version,
+namespace shape, state channels, and expected diagnostics.
+
 ## Storage Hygiene
 
 Do not commit generated artifacts unless they are intentionally tiny fixtures.
@@ -104,7 +109,9 @@ These are disposable and should stay out of commits:
 - caches such as `.pytest_cache/` and `__pycache__/`
 
 Debug bundles are useful for review, but they may contain private state. Share
-only redacted bundles in public issues.
+only redacted bundles in public issues. Do not commit raw production checkpoint
+stores, raw debug bundles, user chats, customer data, secrets, or proprietary
+retrieval content.
 
 ## Pull Request Shape
 

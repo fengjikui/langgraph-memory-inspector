@@ -4,7 +4,7 @@ Local-first checkpoint forensics for LangGraph apps.
 
 [![CI](https://github.com/fengjikui/langgraph-memory-inspector/actions/workflows/ci.yml/badge.svg)](https://github.com/fengjikui/langgraph-memory-inspector/actions/workflows/ci.yml)
 
-[License](LICENSE) · [Contributing](CONTRIBUTING.md) · [Release checklist](docs/release_checklist.md) · [Community launch playbook](docs/community_launch_playbook.md)
+[License](LICENSE) · [Contributing](CONTRIBUTING.md) · [Fixture policy](docs/fixture_policy.md) · [Release checklist](docs/release_checklist.md) · [Community launch playbook](docs/community_launch_playbook.md)
 
 LangGraph agents can fail long after the bad state was written. A user updates
 their profile, a retriever still reads the old value, and the final answer looks
@@ -178,6 +178,14 @@ Raw exports remain available with `--redaction-mode raw` or by disabling the UI
 checkbox, but raw bundles may contain private checkpoint state. Do not share raw
 bundles publicly without reviewing them first.
 
+## Share A Checkpoint Pattern
+
+Real LangGraph bugs are the best source of new diagnostics. If you can share a
+pattern, follow the [fixture intake policy](docs/fixture_policy.md): prefer a
+redacted debug bundle, a minimal synthetic fixture, or a schema-only backend
+snapshot. Do not post raw production checkpoint stores or unredacted user state
+in public issues.
+
 ## Current Scope
 
 This is an MVP focused on local checkpoint inspection:
@@ -197,7 +205,7 @@ Planned next steps:
 
 - run the Postgres adapter against more real-world checkpoint stores
 - add richer node-level write attribution across multiple checkpoints
-- add more production checkpoint-store fixtures
+- add more redacted or synthetic checkpoint-store fixtures
 
 ## Known Limitations
 

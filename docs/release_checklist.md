@@ -10,6 +10,8 @@ Use this before making the repository public or announcing a release candidate.
 - [ ] README includes clear known limitations.
 - [ ] GitHub issue templates exist for bugs, checkpoint bug patterns, and
   feature/diagnostic requests.
+- [ ] Fixture policy explains acceptable public inputs and is linked from
+  checkpoint feedback entry points.
 - [ ] Generated demo databases, exports, package builds, web build output, and
   test artifacts are ignored by git.
 - [ ] Open issues describe the next product gaps instead of hiding them.
@@ -32,6 +34,8 @@ Use this before making the repository public or announcing a release candidate.
   namespaces changes the timeline without changing thread context.
 - [ ] Timeline API returns a paginated contract and the UI can load earlier
   checkpoints without losing the selected thread or namespace.
+- [ ] At least one safe fixture proves a real reported bug pattern through a
+  regression test.
 
 ## Adapter Confidence
 
@@ -50,6 +54,8 @@ Use this before making the repository public or announcing a release candidate.
 - [ ] English launch post draft exists.
 - [ ] Chinese launch post draft exists.
 - [ ] Pinned GitHub feedback issue draft exists.
+- [ ] Feedback drafts point users to the fixture policy before asking for
+  checkpoint data.
 - [ ] OpenClaw consultation prompt exists for distribution critique.
 - [ ] Community feedback asks for checkpoint bug patterns, not only stars.
 

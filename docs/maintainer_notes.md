@@ -275,3 +275,26 @@
 
 - 单测覆盖 reducer duplicate 和 parent jump 两类规则。
 - 文档记录 diagnostic id、误报边界和 UI 展示字段。
+
+### Fixture intake policy and first synthetic fixture
+
+用户价值改进：
+
+- 新增 `docs/fixture_policy.md`，明确哪些真实用户材料可以公开接收：redacted debug bundle、synthetic fixture、schema-only PostgresSaver snapshot 或纯调试故事。
+- 新增 `tests/fixtures/synthetic/reducer_append_duplicate_memory.json`，把 reducer append duplicate 这类真实调试模式收敛成无隐私、可回归的最小 fixture。
+- 新增 fixture 测试，校验公开 fixture 的 metadata、安全边界、文件大小，以及 expected diagnostics 是否真的由 `run_diagnostics()` 产出。
+- README、CONTRIBUTING、checkpoint bug pattern issue form、community launch playbook 和 release checklist 都链接到 fixture policy。
+
+为什么重要：
+
+- 真实用户反馈只有进入测试体系，才会持续提高工具质量。否则社区 issue 很容易停留在描述层，无法变成更可靠的 diagnostic。
+- fixture policy 把“请给我真实 checkpoint 数据”改成“请给我安全、最小、可测试的问题形状”。这能降低用户分享门槛，也能保护项目不误收私密数据。
+
+产品决策变化：
+
+- 从现在开始，能进入仓库的用户材料必须是 synthetic、redacted 或 schema-only，并且每个被接受的 fixture 都应该对应一个 diagnostic 测试或 reader 兼容性测试。
+- #14 的 reducer duplicate 诊断不再只是规则本身；它成为第一条 fixture-driven regression path，后续真实反馈也按同样方式进入产品。
+
+已验证：
+
+- fixture metadata 与 expected diagnostics 由单测覆盖。

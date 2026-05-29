@@ -33,6 +33,7 @@ should see a version of the same user story:
 - [ ] Namespace selector is documented as a production-store safety feature.
 - [ ] Demo script includes diagnostic click, Writes highlight, and Export bundle.
 - [ ] First pinned GitHub issue asks for real checkpoint bug patterns.
+- [ ] Fixture policy is linked wherever users are asked to share checkpoint data.
 - [ ] No launch post asks for stars as the primary call to action.
 
 ## Channel Strategy
@@ -84,6 +85,13 @@ I am looking for real bug patterns from LangGraph users. Useful feedback:
   oversized message history?
 - What would you need to safely inspect a production copy locally?
 
+If you can share a file, please follow the fixture policy:
+<repo url>/blob/main/docs/fixture_policy.md
+
+The safest inputs are redacted debug bundles, small synthetic fixtures, or
+schema-only backend snapshots. Please do not attach raw production checkpoint
+stores or unredacted user state.
+
 Repo/demo: <repo url>
 ```
 
@@ -100,7 +108,9 @@ write, and export a debug bundle for a teammate or issue.
 It currently supports SQLite checkpoint DBs and read-only PostgresSaver stores.
 I am looking for real LangGraph bug patterns to turn into diagnostics: stale
 memory, reducer append mistakes, wrong resume points, namespace confusion, or
-anything else you have hit in production.
+anything else you have hit in production. If you can share evidence, please use
+a redacted bundle, synthetic fixture, or schema-only snapshot:
+<repo url>/blob/main/docs/fixture_policy.md
 
 Repo/demo: <repo url>
 ```
@@ -129,7 +139,9 @@ Current scope is intentionally narrow: SQLite demo DBs, read-only PostgresSaver
 inspection, namespace selection, and one strong debugging path.
 
 I would love feedback from people building stateful agents: what checkpoint
-bugs should a tool like this detect next?
+bugs should a tool like this detect next? If you can share fixture-like
+evidence, please use a redacted bundle, synthetic fixture, or schema-only
+snapshot rather than raw production state.
 ```
 
 ## LangChain Forum / Slack Draft
@@ -151,7 +163,8 @@ The current demo reproduces a stale-memory bug:
 It supports local SQLite checkpoint DBs and read-only PostgresSaver inspection.
 I am looking for feedback on real LangGraph checkpoint pain: namespaces,
 reducers, resume bugs, message bloat, custom state channels, or production-store
-constraints.
+constraints. If you can share evidence, please use a redacted bundle, synthetic
+fixture, or schema-only snapshot and avoid raw/private checkpoint data.
 
 Repo/demo: <repo url>
 ```
@@ -175,6 +188,10 @@ The most useful feedback would be:
 - whether namespaces matter in your setup
 - which state channels are hardest to reason about
 - what diagnostics would have saved you time in a real incident
+
+If you can share evidence, please use the fixture policy: redacted bundle,
+synthetic fixture, or schema-only snapshot. Please do not post raw production
+checkpoint state.
 
 Repo/demo: <repo url>
 ```
@@ -227,6 +244,10 @@ Inspector 会读取本地 checkpoint store，然后把这条因果链串起来�
 - 有没有遇到 stale memory、reducer append、resume 错 checkpoint、messages 越积越大的问题？
 - 如果只允许在本地读取生产库副本，你会需要什么隐私/脱敏能力？
 
+如果你愿意分享材料，请先看 fixture policy：优先分享 redacted debug bundle、
+synthetic fixture 或 schema-only backend snapshot，不要公开贴 raw production
+checkpoint 或未脱敏用户状态。
+
 Repo/demo: <repo url>
 ```
 
@@ -258,6 +279,7 @@ has opted into the conversation.
 8. How large are your typical checkpoint stores and thread histories?
 9. Would you run a local UI against a production database clone?
 10. Which diagnostic should exist after `conflicting_residence_memory`?
+11. Could your bug be reduced to a redacted, synthetic, or schema-only fixture?
 
 ## Anti-Spam Rules
 
