@@ -7,9 +7,7 @@ Draft release notes: `docs/release_notes_v0.1.0.md`.
 
 ## Repository Readiness
 
-- [ ] Repository visibility is intentionally set for public launch. Current
-  state is private; public visibility requires maintainer approval and is
-  tracked in #19.
+- [x] Repository visibility is intentionally set for public launch.
 - [x] `LICENSE` is present and linked from `README.md`.
 - [x] `CONTRIBUTING.md` is present and linked from `README.md`.
 - [x] README includes clear known limitations.
@@ -63,6 +61,9 @@ Draft release notes: `docs/release_notes_v0.1.0.md`.
   checkpoint data.
 - [x] OpenClaw consultation prompt exists for distribution critique.
 - [x] Community feedback asks for checkpoint bug patterns, not only stars.
+- [x] GitHub social preview asset exists at
+  `docs/assets/github-social-preview.png`.
+- [ ] GitHub social preview asset has been uploaded in repository Settings.
 
 ## Commands
 

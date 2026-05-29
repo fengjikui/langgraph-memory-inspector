@@ -35,6 +35,9 @@ should see a version of the same user story:
   Export bundle.
 - [x] First pinned GitHub issue asks for real checkpoint bug patterns.
 - [x] Fixture policy is linked wherever users are asked to share checkpoint data.
+- [x] GitHub social preview image exists at
+  `docs/assets/github-social-preview.png`.
+- [ ] GitHub social preview image has been uploaded in repository Settings.
 - [ ] No launch post asks for stars as the primary call to action.
 
 ## Channel Strategy
@@ -278,8 +281,31 @@ Repo/demo: https://github.com/fengjikui/langgraph-memory-inspector
 - V2EX: rewrite by hand before posting; the community explicitly discourages
   low-information AI-generated content.
 
+## GitHub Social Preview
+
+Asset:
+
+```text
+docs/assets/github-social-preview.png
+```
+
+The image is 1280x640 PNG and under 1 MB, matching GitHub's recommended best
+display size and upload constraints. It uses the actual Inspector UI, the
+stale-memory story, and the product promise rather than a generic logo.
+
+GitHub currently exposes this as a repository Settings workflow, so upload it
+manually:
+
+1. Open `https://github.com/fengjikui/langgraph-memory-inspector/settings`.
+2. Scroll to **Social preview**.
+3. Click **Edit**.
+4. Upload `docs/assets/github-social-preview.png`.
+5. Save and verify `gh repo view fengjikui/langgraph-memory-inspector --json openGraphImageUrl`.
+
 Sources checked on 2026-05-29:
 
+- GitHub social preview docs:
+  https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/customizing-your-repositorys-social-media-preview
 - LangGraph Forum category:
   https://forum.langchain.com/t/about-the-langgraph-category/37
 - LangChain Community Slack guidelines:
