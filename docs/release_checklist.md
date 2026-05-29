@@ -2,62 +2,67 @@
 
 Use this before making the repository public or announcing a release candidate.
 
+Current audit: `docs/release_candidate_audit_2026-05-29.md`.
+Draft release notes: `docs/release_notes_v0.1.0.md`.
+
 ## Repository Readiness
 
-- [ ] Repository visibility is intentionally set.
-- [ ] `LICENSE` is present and linked from `README.md`.
-- [ ] `CONTRIBUTING.md` is present and linked from `README.md`.
-- [ ] README includes clear known limitations.
-- [ ] GitHub issue templates exist for bugs, checkpoint bug patterns, and
+- [ ] Repository visibility is intentionally set for public launch. Current
+  state is private; public visibility requires maintainer approval and is
+  tracked in #19.
+- [x] `LICENSE` is present and linked from `README.md`.
+- [x] `CONTRIBUTING.md` is present and linked from `README.md`.
+- [x] README includes clear known limitations.
+- [x] GitHub issue templates exist for bugs, checkpoint bug patterns, and
   feature/diagnostic requests.
-- [ ] Fixture policy explains acceptable public inputs and is linked from
+- [x] Fixture policy explains acceptable public inputs and is linked from
   checkpoint feedback entry points.
-- [ ] Generated demo databases, exports, package builds, web build output, and
+- [x] Generated demo databases, exports, package builds, web build output, and
   test artifacts are ignored by git.
-- [ ] Open issues describe the next product gaps instead of hiding them.
+- [x] Open issues describe the next product gaps instead of hiding them.
 
 ## Product Proof
 
-- [ ] CI is green on `main`.
-- [ ] README quickstart works from a fresh clone.
-- [ ] The stale-memory demo GIF is present at
+- [x] CI is green on `main`.
+- [x] README quickstart works from a fresh clone.
+- [x] The stale-memory demo GIF is present at
   `docs/assets/stale-memory-debugging-demo.gif`.
-- [ ] SQLite quickstart starts the API and UI against the demo checkpoint DB.
-- [ ] `uv run python scripts/use_case_smoke.py --reset-demo` passes.
-- [ ] Diagnostic click opens Writes and highlights `state.memory_events`.
-- [ ] Diagnostics include reducer append duplicate and unexpected parent
+- [x] SQLite quickstart starts the API and UI against the demo checkpoint DB.
+- [x] `uv run python scripts/use_case_smoke.py --reset-demo` passes.
+- [x] Diagnostic click opens Writes and highlights `state.memory_events`.
+- [x] Diagnostics include reducer append duplicate and unexpected parent
   checkpoint warning rules with documented false-positive boundaries.
-- [ ] Debug bundle export shows path, file size, and diagnostic ids.
-- [ ] Redacted debug bundle export records redaction mode and masks private
+- [x] Debug bundle export shows path, file size, and diagnostic ids.
+- [x] Redacted debug bundle export records redaction mode and masks private
   message/evidence fields without modifying the checkpoint store.
-- [ ] Namespace selector is visible for multi-namespace threads and switching
+- [x] Namespace selector is visible for multi-namespace threads and switching
   namespaces changes the timeline without changing thread context.
-- [ ] Timeline API returns a paginated contract and the UI can load earlier
+- [x] Timeline API returns a paginated contract and the UI can load earlier
   checkpoints without losing the selected thread or namespace.
-- [ ] At least one safe fixture proves a real reported bug pattern through a
+- [x] At least one safe fixture proves a real reported bug pattern through a
   regression test.
 
 ## Adapter Confidence
 
-- [ ] SQLite reader tests pass.
-- [ ] Postgres integration test passes in CI against a real `postgres` service.
-- [ ] README explains that Postgres inspection is read-only.
-- [ ] Known limitations mention large production stores and cross-namespace
+- [x] SQLite reader tests pass.
+- [x] Postgres integration test passes in CI against a real `postgres` service.
+- [x] README explains that Postgres inspection is read-only.
+- [x] Known limitations mention large production stores and cross-namespace
   boundaries.
 
 ## Launch Assets
 
-- [ ] README explains the problem in the first viewport.
-- [ ] Demo story uses the Shanghai -> Hangzhou stale-memory bug.
-- [ ] `docs/community_launch_playbook.md` exists and links every channel to a
+- [x] README explains the problem in the first viewport.
+- [x] Demo story uses the Shanghai -> Hangzhou stale-memory bug.
+- [x] `docs/community_launch_playbook.md` exists and links every channel to a
   user-problem framing.
-- [ ] English launch post draft exists.
-- [ ] Chinese launch post draft exists.
-- [ ] Pinned GitHub feedback issue draft exists.
-- [ ] Feedback drafts point users to the fixture policy before asking for
+- [x] English launch post draft exists.
+- [x] Chinese launch post draft exists.
+- [x] Pinned GitHub feedback issue draft exists.
+- [x] Feedback drafts point users to the fixture policy before asking for
   checkpoint data.
-- [ ] OpenClaw consultation prompt exists for distribution critique.
-- [ ] Community feedback asks for checkpoint bug patterns, not only stars.
+- [x] OpenClaw consultation prompt exists for distribution critique.
+- [x] Community feedback asks for checkpoint bug patterns, not only stars.
 
 ## Commands
 

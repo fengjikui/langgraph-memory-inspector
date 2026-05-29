@@ -107,5 +107,6 @@ The first public release candidate is ready when:
 - CI is green on main.
 - README quickstart works from a fresh clone.
 - SQLite demo and Postgres integration are both documented.
-- At least three user-centered issues are open.
+- The next user-centered product issue is explicit, even if only one or two
+  issues remain open after the release-candidate cleanup.
 - The repo has license, contribution notes, and clear known limitations.

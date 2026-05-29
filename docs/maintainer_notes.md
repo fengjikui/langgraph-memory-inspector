@@ -316,3 +316,21 @@
 已验证：
 
 - `tests/test_fixtures.py` 覆盖 matrix 与 fixture metadata 的一致性。
+
+### v0.1.0 release candidate audit
+
+用户价值改进：
+
+- 新增 `docs/release_candidate_audit_2026-05-29.md`，把发布前检查从空 checklist 变成带证据的 gate review。
+- 新增 `docs/release_notes_v0.1.0.md`，提前准备面向外部开发者的 release note 草稿，突出 stale-memory 调试路径、local-first、redacted export 和 fixture-driven 维护机制。
+- `docs/release_checklist.md` 更新为当前 pass/fail 状态，唯一明确 public launch blocker 是仓库仍为 private，需要维护者显式批准后再公开。
+- CI workflow 升级到 metadata 使用 `node24` 的 action 版本：`actions/checkout@v6.0.2`、`actions/setup-node@v6.4.0`、`astral-sh/setup-uv@v8.1.0`。
+
+为什么重要：
+
+- 发布候选不是“感觉差不多”，而是每个门都有证据。这样公开前能清楚知道哪里已可信，哪里还需要人工决策。
+- Node deprecation annotation 虽然不影响功能，但公开项目前 CI 页面应该尽量干净。能安全升级就升级，减少第一批用户看到的噪音。
+
+已验证：
+
+- RC commit 需要通过完整本地验证和 GitHub CI 后才能关闭 #18。
