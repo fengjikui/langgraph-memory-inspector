@@ -18,6 +18,7 @@ function App() {
   const [writes, setWrites] = useState<NodeWrite[]>([]);
   const [diff, setDiff] = useState<TimelineDiff>();
   const [activeTab, setActiveTab] = useState<ViewerTab>("state");
+  const [selectedDiagnostic, setSelectedDiagnostic] = useState<Diagnostic>();
 
   useEffect(() => {
     async function loadShell() {
@@ -75,8 +76,9 @@ function App() {
   );
 
   function selectDiagnostic(diagnostic: Diagnostic) {
+    setSelectedDiagnostic(diagnostic);
     setSelectedCheckpointId(diagnostic.checkpointId);
-    setActiveTab(diagnostic.suggestedTab ?? "state");
+    setActiveTab(diagnostic.writeChannel ? "writes" : diagnostic.suggestedTab ?? "state");
   }
 
   return (
@@ -89,6 +91,7 @@ function App() {
           onSelectThread={(threadId) => {
             setSelectedThreadId(threadId);
             setActiveTab("state");
+            setSelectedDiagnostic(undefined);
           }}
         />
         <div className="center-stack">
@@ -98,6 +101,7 @@ function App() {
             onSelectCheckpoint={(checkpointId) => {
               setSelectedCheckpointId(checkpointId);
               setActiveTab("state");
+              setSelectedDiagnostic(undefined);
             }}
           />
           <DiagnosticsPanel
@@ -110,6 +114,7 @@ function App() {
           checkpoint={selectedCheckpoint}
           writes={writes}
           diff={diff}
+          selectedDiagnostic={selectedDiagnostic}
           activeTab={activeTab}
           onTabChange={setActiveTab}
         />

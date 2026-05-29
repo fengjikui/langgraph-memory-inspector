@@ -64,6 +64,17 @@ This test exercises the product's core value proposition: it proves from
 checkpoint evidence that the user moved to Hangzhou while the final retrieval
 still used Shanghai.
 
+Run the browser interaction test:
+
+```bash
+cd web
+npm run test:e2e
+```
+
+The e2e test uses `VITE_LGMI_API_MODE=mock`, opens the inspector, clicks the
+`conflicting_residence_memory` diagnostic, and verifies that the related
+`state.memory_events` write is highlighted.
+
 ## Optional LLM Mode
 
 The demo runs without an API key using deterministic local responses. To use a

@@ -60,18 +60,30 @@ PASS 检查器证据链已经证明 stale memory 故障路径。
 
 ## 最新产品打磨
 
-当前 UI 已经把 diagnostic 从静态提示改成可点击证据卡片：
+当前 UI 已经把 diagnostic 从静态提示改成可点击证据路径：
 
 - 卡片展示对应 checkpoint。
 - 卡片展示相关 state path，例如 `selected_city` 或
   `memory_events[type=residence_city]`。
 - 卡片展示相关 write channel，例如 `memory_events` 或 `selected_city`。
 - 点击 diagnostic 会跳转到对应 checkpoint，缩短从问题到证据的路径。
+- 如果 diagnostic 带有 write channel，点击后会自动打开 Writes tab。
+- Writes tab 会高亮匹配的写入行，例如 `state.memory_events`。
+
+新增的浏览器 e2e 覆盖了这个关键交互：
+
+```bash
+cd web && npm run test:e2e
+```
+
+测试会打开 UI，点击 `conflicting_residence_memory`，并确认 Writes tab 中的
+`state.memory_events` 写入被高亮。
 
 ## 剩余展示缺口
 
-下一步最值得增强的是更完整的 write attribution 视图：
+下一步最值得增强的是更完整的 node-level write attribution：
 
-- 在 Writes tab 中高亮 diagnostic 关联的 write channel。
+- 把多个 checkpoint 上的相关 writes 串成一条因果链，而不是只看当前 checkpoint。
 - 展示 `extract_profile -> memory_events`，说明杭州是在哪里 append 进去的。
 - 展示 `retrieve_policy -> selected_city`，说明 stale 上海选择是在哪里发生的。
+- 为每个 diagnostic 给出“下一步该看哪个节点源码”的建议。

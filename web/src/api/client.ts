@@ -2,6 +2,10 @@ import { mockCheckpoints, mockDiff, mockSummary, mockThreads } from "./mockData"
 import type { Checkpoint, Diagnostic, Message, NodeWrite, Summary, Thread, TimelineDiff } from "../types";
 
 async function requestJson<T>(path: string): Promise<T | undefined> {
+  if (import.meta.env.VITE_LGMI_API_MODE === "mock") {
+    return undefined;
+  }
+
   try {
     const response = await fetch(path, {
       headers: { Accept: "application/json" }

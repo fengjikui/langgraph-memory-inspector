@@ -1,10 +1,11 @@
 import { Braces, FileDiff, ListTree } from "lucide-react";
-import type { Checkpoint, NodeWrite, TimelineDiff } from "../types";
+import type { Checkpoint, Diagnostic, NodeWrite, TimelineDiff } from "../types";
 
 type DetailProps = {
   checkpoint?: Checkpoint;
   writes: NodeWrite[];
   diff?: TimelineDiff;
+  selectedDiagnostic?: Diagnostic;
   activeTab: "state" | "diff" | "writes";
   onTabChange: (tab: "state" | "diff" | "writes") => void;
 };
@@ -13,7 +14,14 @@ function JsonBlock({ value }: { value: unknown }) {
   return <pre className="json-block">{JSON.stringify(value, null, 2)}</pre>;
 }
 
-export function CheckpointDetail({ checkpoint, writes, diff, activeTab, onTabChange }: DetailProps) {
+export function CheckpointDetail({
+  checkpoint,
+  writes,
+  diff,
+  selectedDiagnostic,
+  activeTab,
+  onTabChange
+}: DetailProps) {
   if (!checkpoint) {
     return (
       <aside className="detail-panel">
@@ -94,8 +102,20 @@ export function CheckpointDetail({ checkpoint, writes, diff, activeTab, onTabCha
 
       {activeTab === "writes" ? (
         <div className="viewer-section writes-list">
+          {selectedDiagnostic?.writeChannel ? (
+            <div className="write-focus">
+              <strong>{selectedDiagnostic.code}</strong>
+              <span>
+                Looking for writes to <code>state.{selectedDiagnostic.writeChannel}</code>
+                {selectedDiagnostic.statePath ? <> from <code>{selectedDiagnostic.statePath}</code></> : null}.
+              </span>
+            </div>
+          ) : null}
           {writes.map((write) => (
-            <div className="write-row" key={write.id}>
+            <div
+              className={matchesDiagnosticWrite(write, selectedDiagnostic) ? "write-row focused" : "write-row"}
+              key={write.id}
+            >
               <div>
                 <strong>{write.operation}</strong>
                 <code>{write.path}</code>
@@ -104,8 +124,19 @@ export function CheckpointDetail({ checkpoint, writes, diff, activeTab, onTabCha
               <JsonBlock value={write.after} />
             </div>
           ))}
+          {selectedDiagnostic?.writeChannel && !writes.some((write) => matchesDiagnosticWrite(write, selectedDiagnostic)) ? (
+            <div className="write-empty-match">
+              No direct write row for <code>state.{selectedDiagnostic.writeChannel}</code> is attached to this checkpoint.
+              The diagnostic is still grounded in the decoded state snapshot above.
+            </div>
+          ) : null}
         </div>
       ) : null}
     </aside>
   );
+}
+
+function matchesDiagnosticWrite(write: NodeWrite, diagnostic?: Diagnostic): boolean {
+  if (!diagnostic?.writeChannel) return false;
+  return write.path === `state.${diagnostic.writeChannel}`;
 }
