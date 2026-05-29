@@ -111,9 +111,10 @@ The e2e test uses `VITE_LGMI_API_MODE=mock`, opens the inspector, clicks the
 
 ## Current Scope
 
-This is an MVP focused on local SQLite checkpoint inspection:
+This is an MVP focused on local checkpoint inspection:
 
 - read LangGraph SQLite checkpoint databases
+- optionally inspect LangGraph PostgresSaver stores in read-only mode
 - list threads and checkpoint timelines
 - decode common state channels
 - show diffs and writes
@@ -122,10 +123,34 @@ This is an MVP focused on local SQLite checkpoint inspection:
 
 Planned next steps:
 
-- record a short stale-memory debugging GIF
-- implement the planned read-only Postgres checkpoint adapter
+- run the Postgres adapter against more real-world checkpoint stores
 - add richer node-level write attribution across multiple checkpoints
 - export a shareable debug bundle for issues and code review
+
+## Optional Postgres Inspection
+
+Install the optional Postgres dependencies:
+
+```bash
+uv sync --extra postgres
+```
+
+Start the inspector against a full LangGraph `PostgresSaver` schema:
+
+```bash
+lgmi inspect-postgres "$DATABASE_URL" --schema public --no-browser --port 8765
+```
+
+The Postgres reader is read-only. It does not call `setup()`, `put()`,
+`put_writes()`, or `delete_thread()`. It targets the full historical
+`PostgresSaver` tables: `checkpoints`, `checkpoint_blobs`, and
+`checkpoint_writes`.
+
+To run the optional integration test against your own local Postgres:
+
+```bash
+LGMI_POSTGRES_TEST_DSN="$DATABASE_URL" uv run --extra postgres pytest tests/test_postgres_reader.py -m integration
+```
 
 ## Optional LLM Mode
 

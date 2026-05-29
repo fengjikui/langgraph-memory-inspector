@@ -93,6 +93,28 @@ Every backend should implement:
 This keeps FastAPI routes and frontend normalization independent from the
 database implementation.
 
+## Implementation Status
+
+Initial implementation exists in `src/lgmi/postgres_reader.py`.
+
+Implemented:
+
+- optional `postgres` dependency extra
+- `PostgresCheckpointReader(conninfo, schema="public")`
+- schema validation for the full historical PostgresSaver tables
+- checkpoint hydration from `checkpoint_blobs`
+- write decoding from `checkpoint_writes`
+- incoming-writes semantics aligned with the SQLite reader
+- CLI entrypoint: `lgmi inspect-postgres`
+- optional integration test gated by `LGMI_POSTGRES_TEST_DSN`
+
+Still needs broader validation:
+
+- run against several real production-like checkpoint stores
+- test shallow saver detection against an actual shallow schema
+- add pagination limits before encouraging very large production DB usage
+- improve namespace selection in the API/UI
+
 ## Thin Implementation Plan
 
 1. Add optional dependencies only for Postgres inspection:

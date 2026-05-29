@@ -75,3 +75,21 @@
 
 - 使用 LangGraph 官方持久化文档和 PostgresSaver 源码核对 schema。
 - 新增 API adapter 测试，保证 backend route 可以接入非 SQLite reader。
+
+### Postgres adapter 初版实现
+
+用户价值改进：
+
+- 新增 `PostgresCheckpointReader`，支持 full `PostgresSaver` schema 的 read-only inspection。
+- 新增 `lgmi inspect-postgres "$DATABASE_URL" --schema public` CLI。
+- 支持从 `checkpoint_blobs` 还原非 primitive channel，例如 `memory_events`。
+- 支持从 `checkpoint_writes` 解码 node/task writes，并沿用 incoming-writes 语义。
+
+为什么重要：
+
+- 这让项目从 SQLite demo 往真实生产 LangGraph 项目前进了一步。用户可以在不迁移数据、不上传 traces、不调用 LangGraph 写接口的前提下读取 Postgres checkpoint store。
+
+已验证：
+
+- 本机没有 Docker/Postgres server，因此真实 Postgres 集成测试通过 `LGMI_POSTGRES_TEST_DSN` 作为显式可选测试。
+- 默认测试已覆盖 blob hydration、write decoding、schema 安全校验。

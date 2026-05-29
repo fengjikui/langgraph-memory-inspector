@@ -116,9 +116,9 @@ Recommended backend boundaries:
   snapshots, writes, and metadata.
 - `SQLiteCheckpointAdapter`: first implementation backed by LangGraph SQLite
   saver tables.
-- `PostgresCheckpointAdapter`: planned read-only implementation backed by
-  `checkpoints`, `checkpoint_blobs`, and `checkpoint_writes`. See
-  `docs/postgres_adapter_plan.md`.
+- `PostgresCheckpointAdapter`: read-only implementation backed by
+  `checkpoints`, `checkpoint_blobs`, and `checkpoint_writes`, available through
+  the optional `postgres` dependency extra. See `docs/postgres_adapter_plan.md`.
 - `TimelineService`: turns checkpoint rows and parent links into ordered
   execution timelines.
 - `DiffService`: compares decoded state snapshots and write sets.

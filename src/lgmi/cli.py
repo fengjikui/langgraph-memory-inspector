@@ -4,6 +4,7 @@ import argparse
 import sys
 import webbrowser
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 import uvicorn
 
@@ -14,6 +15,8 @@ def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     if args.command == "inspect":
         return _run_inspect(args)
+    if args.command == "inspect-postgres":
+        return _run_inspect_postgres(args)
     raise SystemExit(f"Unknown command: {args.command}")
 
 
@@ -36,6 +39,19 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="store_true",
         help="Do not open the API URL in a browser.",
     )
+    postgres_parser = subparsers.add_parser(
+        "inspect-postgres",
+        help="Start a local API server for a LangGraph Postgres checkpoint store.",
+    )
+    postgres_parser.add_argument("conninfo", help="Postgres connection string or conninfo.")
+    postgres_parser.add_argument("--schema", default="public")
+    postgres_parser.add_argument("--host", default="127.0.0.1")
+    postgres_parser.add_argument("--port", default=8000, type=int)
+    postgres_parser.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="Do not open the API URL in a browser.",
+    )
     return parser.parse_args(argv)
 
 
@@ -45,17 +61,44 @@ def _run_inspect(args: argparse.Namespace) -> int:
         print(f"Checkpoint database not found: {db_path}", file=sys.stderr)
         return 2
 
-    app = create_app(db_path)
+    return _serve_app(create_app(db_path), args, f"Checkpoint DB: {db_path}")
+
+
+def _run_inspect_postgres(args: argparse.Namespace) -> int:
+    from lgmi.postgres_reader import PostgresCheckpointReader
+
+    reader = PostgresCheckpointReader(args.conninfo, schema=args.schema)
+    return _serve_app(
+        create_app(reader),
+        args,
+        f"Checkpoint store: {_redact_conninfo(args.conninfo)} schema={args.schema}",
+    )
+
+
+def _serve_app(app: object, args: argparse.Namespace, source_label: str) -> int:
     display_host = "127.0.0.1" if args.host in {"0.0.0.0", "::"} else args.host
     url = f"http://{display_host}:{args.port}/api/summary"
     print(f"LangGraph Memory Inspector API: {url}")
-    print(f"Checkpoint DB: {db_path}")
+    print(source_label)
 
     if not args.no_browser:
         webbrowser.open(url)
 
     uvicorn.run(app, host=args.host, port=args.port, log_level="info")
     return 0
+
+
+def _redact_conninfo(conninfo: str) -> str:
+    if "://" not in conninfo:
+        return "<postgres conninfo>"
+    try:
+        parsed = urlsplit(conninfo)
+    except ValueError:
+        return "<postgres conninfo>"
+    if "@" not in parsed.netloc:
+        return conninfo
+    host = parsed.netloc.rsplit("@", 1)[-1]
+    return urlunsplit((parsed.scheme, f"***@{host}", parsed.path, parsed.query, parsed.fragment))
 
 
 if __name__ == "__main__":
