@@ -45,6 +45,11 @@ Recording checklist for the future GIF:
 
 ## Quickstart
 
+Prerequisites:
+
+- `uv`
+- Node.js and npm
+
 Generate demo checkpoint data:
 
 ```bash
@@ -52,13 +57,19 @@ uv sync
 uv run python examples/relocation_policy_agent/run_demo.py
 ```
 
-Start the Inspector API:
+Start the Inspector API in terminal 1:
 
 ```bash
 uv run lgmi inspect examples/relocation_policy_agent/data/checkpoints.sqlite --no-browser --port 8765
 ```
 
-Start the web UI in another terminal:
+Optional API health check:
+
+```bash
+curl http://127.0.0.1:8765/api/summary
+```
+
+Start the web UI in terminal 2:
 
 ```bash
 cd web
@@ -104,6 +115,7 @@ Run frontend build and browser interaction tests:
 ```bash
 cd web
 npm run build
+npx playwright install chromium
 npm run test:e2e
 ```
 
