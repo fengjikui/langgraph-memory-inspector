@@ -116,6 +116,9 @@ uv run --extra postgres python scripts/postgres_confidence.py --dsn "$DATABASE_U
 Repo/demo:
 https://github.com/fengjikui/langgraph-memory-inspector
 
+Feedback home base:
+https://github.com/fengjikui/langgraph-memory-inspector/issues/20
+
 I am looking for real LangGraph checkpoint bug patterns to turn into
 deterministic diagnostics. The most useful feedback:
 

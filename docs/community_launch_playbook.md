@@ -64,6 +64,12 @@ should see a version of the same user story:
 
 ## Pinned GitHub Issue Draft
 
+Live feedback issue:
+
+```text
+https://github.com/fengjikui/langgraph-memory-inspector/issues/20
+```
+
 Title:
 
 ```text
@@ -386,6 +392,7 @@ has opted into the conversation.
 - Rewrite the framing for each community instead of cross-posting identical copy.
 - Ask for concrete feedback before asking for stars.
 - Do not tag maintainers unless they have invited feedback.
+- Run `uv run python scripts/validate_launch_copy.py` before broad posting.
 - Do not send unsolicited DMs.
 - If a channel has designated showcase/vendor areas, use those areas.
 - Bring a runnable repo, a clear demo, and a specific question.

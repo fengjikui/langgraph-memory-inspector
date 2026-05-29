@@ -63,6 +63,9 @@ Draft release notes: `docs/release_notes_v0.1.0.md`.
 - [x] Pinned GitHub feedback issue draft exists.
 - [x] Feedback drafts point users to the fixture policy before asking for
   checkpoint data.
+- [x] `uv run python scripts/validate_launch_copy.py` verifies the launch copy
+  keeps the repo link, #20 feedback issue, fixture policy, redacted evidence
+  wording, raw-production warning, and no-star primary CTA guardrails.
 - [x] OpenClaw consultation prompt exists for distribution critique.
 - [x] Community feedback asks for checkpoint bug patterns, not only stars.
 - [x] GitHub social preview asset exists at
@@ -79,6 +82,7 @@ Draft release notes: `docs/release_notes_v0.1.0.md`.
 ```bash
 uv run pytest -q
 uv run python scripts/validate_social_preview.py
+uv run python scripts/validate_launch_copy.py
 uv run lgmi prove-demo --reset-demo
 cd web
 npm run build

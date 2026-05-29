@@ -675,3 +675,25 @@
 
 - `uv run python scripts/validate_social_preview.py`
 - `uv run pytest tests/test_social_preview.py -q`
+
+### Launch copy guardrail
+
+用户价值改进：
+
+- 新增 `scripts/validate_launch_copy.py`，校验 Forum draft、public launch packet 和
+  community launch playbook 是否保留 repo 链接、#20 反馈入口、fixture policy、redacted
+  evidence 表述、raw production 警示和非求 star 的主 CTA。
+- 新增 `tests/test_launch_copy.py`，把推广文案的用户信任边界纳入 pytest。
+- Release checklist、public launch packet 和 community launch playbook 记录了发布前运行
+  `uv run python scripts/validate_launch_copy.py`。
+
+为什么重要：
+
+- 推广不是硬发链接。公开文案如果丢掉隐私边界、反馈入口或 fixture policy，很容易让项目
+  看起来像噪音，甚至诱导用户贴出不该公开的 checkpoint 数据。
+- 这个 guardrail 把“站在真实用户角度做推广”变成可测试约束。
+
+已验证：
+
+- `uv run python scripts/validate_launch_copy.py`
+- `uv run pytest tests/test_launch_copy.py -q`

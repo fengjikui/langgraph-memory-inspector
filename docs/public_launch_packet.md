@@ -54,6 +54,12 @@ Known manual gate before broad posting:
 - Do not post identical copy across communities.
 - Do not tag maintainers unless they invited feedback.
 
+Run the launch-copy guardrail before broad posting:
+
+```bash
+uv run python scripts/validate_launch_copy.py
+```
+
 ## Primary Positioning
 
 One-liner:
