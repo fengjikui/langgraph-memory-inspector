@@ -237,14 +237,42 @@ def test_api_returns_diagnostic_causal_chain() -> None:
     assert response.status_code == 200
     assert payload["diagnostic_id"] == "conflicting_residence_memory"
     assert payload["selected_checkpoint_id"] == "checkpoint-5"
+    assert payload["headline"].startswith("conflicting_residence_memory:")
+    assert payload["node_path"]
+    assert payload["next_action"].startswith("Inspect state.memory_events")
     assert payload["state_paths"] == ["memory_events[type=residence_city]"]
     assert payload["write_channels"] == ["memory_events"]
     assert payload["range"]["scanned_checkpoint_count"] == 5
     assert any(step["checkpoint_id"] == "checkpoint-3" for step in payload["steps"])
     write_steps = [step for step in payload["steps"] if step["writes"]]
+    assert write_steps[0]["action"] == "extract_profile wrote state.memory_events"
     assert write_steps[0]["writes"][0]["channel"] == "memory_events"
     assert write_steps[0]["writes"][0]["state_path"] == "state.memory_events"
     assert write_steps[0]["writes"][0]["node"] == "extract_profile"
+
+
+def test_api_returns_stale_selected_city_node_path() -> None:
+    client = TestClient(create_app(FakeCheckpointReader()))
+
+    response = client.get(
+        "/api/threads/thread-1/causal-chain"
+        "?checkpoint_id=checkpoint-5&diagnostic=stale_selected_city"
+    )
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert payload["diagnostic_id"] == "stale_selected_city"
+    assert "extract_profile" in payload["node_path"]
+    assert "retrieve_policy" in payload["node_path"]
+    assert payload["state_paths"] == [
+        "memory_events[type=residence_city]",
+        "selected_city",
+        "retrieved_docs",
+        "messages",
+    ]
+    assert "retrieved_docs" in payload["write_channels"]
+    assert any("state.selected_city" in step["action"] for step in payload["steps"])
+    assert payload["next_action"].startswith("Inspect state.selected_city")
 
 
 def test_api_exports_debug_bundle_only_when_requested(tmp_path: Path, monkeypatch) -> None:

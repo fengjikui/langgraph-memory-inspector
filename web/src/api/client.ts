@@ -1,4 +1,4 @@
-import { mockCausalChain, mockCheckpoints, mockDiff, mockSummary, mockThreads } from "./mockData";
+import { mockCausalChain, mockCausalChains, mockCheckpoints, mockDiff, mockSummary, mockThreads } from "./mockData";
 import type {
   CausalChain,
   CausalChainStep,
@@ -144,7 +144,7 @@ export const inspectorApi = {
     const raw = await requestJson<Record<string, unknown>>(
       `/api/threads/${threadId}/causal-chain?checkpoint_id=${encodeURIComponent(checkpointId)}&diagnostic=${encodeURIComponent(diagnosticId)}${namespaceQueryPart(checkpointNs)}`
     );
-    return raw ? normalizeCausalChain(raw) : mockCausalChain;
+    return raw ? normalizeCausalChain(raw) : mockCausalChains[diagnosticId] ?? mockCausalChain;
   },
 
   async exportDebugBundle(
@@ -304,6 +304,9 @@ function normalizeCausalChain(raw: Record<string, unknown>): CausalChain {
     checkpointNs: String(raw.checkpoint_ns ?? ""),
     diagnosticId: String(raw.diagnostic_id ?? ""),
     selectedCheckpointId: String(raw.selected_checkpoint_id ?? ""),
+    headline: String(raw.headline ?? ""),
+    nodePath: asStringArray(raw.node_path),
+    nextAction: String(raw.next_action ?? ""),
     statePaths: asStringArray(raw.state_paths),
     writeChannels: asStringArray(raw.write_channels),
     range: {
@@ -330,6 +333,7 @@ function normalizeCausalStep(raw: Record<string, unknown>): CausalChainStep {
     ordinal: Number(raw.ordinal ?? 0),
     node: String(raw.node ?? "unknown"),
     relation: String(raw.relation ?? "related_write"),
+    action: String(raw.action ?? ""),
     statePaths: asStringArray(raw.state_paths),
     writeChannels: asStringArray(raw.write_channels),
     updatedChannels: asStringArray(raw.updated_channels),

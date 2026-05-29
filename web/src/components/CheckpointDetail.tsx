@@ -185,7 +185,19 @@ export function CheckpointDetail({
             <div className="causal-chain" aria-label="Causal chain">
               <div className="causal-chain-header">
                 <strong>Causal chain</strong>
+                <span className="causal-headline">{causalChain.headline || causalChain.summary}</span>
+                {causalChain.nodePath.length > 0 ? (
+                  <div className="causal-node-path" aria-label="Node path">
+                    {causalChain.nodePath.map((node, index) => (
+                      <span key={`${node}-${index}`}>
+                        <code>{node}</code>
+                        {index < causalChain.nodePath.length - 1 ? <b>-&gt;</b> : null}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
                 <span>{causalChain.summary}</span>
+                {causalChain.nextAction ? <p>{causalChain.nextAction}</p> : null}
               </div>
               <div className="causal-chain-steps">
                 {causalChain.steps.map((step) => (
@@ -194,7 +206,8 @@ export function CheckpointDetail({
                       <strong>{step.checkpointId}</strong>
                       <code>{step.node}</code>
                     </div>
-                    <span>{labelForRelation(step.relation)}</span>
+                    <span>{step.action || labelForRelation(step.relation)}</span>
+                    <small>{labelForRelation(step.relation)}</small>
                     <div className="causal-step-meta">
                       {step.writeChannels.map((channel) => (
                         <code key={channel}>write {channel}</code>

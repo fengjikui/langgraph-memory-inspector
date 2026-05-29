@@ -85,11 +85,13 @@ After `uv run lgmi demo --build-ui` opens the app:
 1. Click the `conflicting_residence_memory` diagnostic.
 2. Confirm the timeline jumps to the checkpoint where the bad state is visible.
 3. Open **Writes** and look for the highlighted `state.memory_events` channel.
-4. Keep **Redact private fields** enabled and click **Export redacted**.
+4. Click `stale_selected_city` and read the node path:
+   `extract_profile -> retrieve_policy -> answer`.
+5. Keep **Redact private fields** enabled and click **Export redacted**.
 
 That is the core workflow: start from a wrong final answer, follow the
-diagnostic to the checkpoint/write that made the stale state visible, then share
-a redacted evidence bundle without uploading private traces.
+diagnostic to the node/write sequence that made the stale state visible, then
+share a redacted evidence bundle without uploading private traces.
 
 Optional API health check:
 
@@ -280,7 +282,7 @@ This is an MVP focused on local checkpoint inspection:
 Planned next steps:
 
 - run the Postgres adapter against more real-world checkpoint stores
-- add richer node-level write attribution across multiple checkpoints
+- add more production-shaped causal-chain fixtures beyond the relocation demo
 - add more redacted or synthetic checkpoint-store fixtures
 
 ## Known Limitations

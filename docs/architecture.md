@@ -148,9 +148,11 @@ without loading the full history.
 for one diagnostic. It maps the diagnostic id to state paths and write
 channels, scans checkpoints up to the selected checkpoint, and returns related
 checkpoint ids, nodes/tasks, updated channels, relevant writes, and state
-previews. The first supported path is the stale-memory demo:
-`conflicting_residence_memory` -> `memory_events[type=residence_city]` ->
-`state.memory_events` writes from `extract_profile`.
+previews. It also returns a display headline, node path, per-step action text,
+and next inspection suggestion so the UI can explain the debugging path without
+LLM-generated summaries. The stale-memory demo now shows both the root conflict
+and the downstream stale-answer path:
+`extract_profile -> retrieve_policy -> answer`.
 
 `POST /api/exports/debug-bundle` is an explicit user action. It writes a JSON
 artifact under `exports/` with database summary, thread/checkpoint metadata,

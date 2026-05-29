@@ -28,6 +28,17 @@ test("diagnostic click opens writes and highlights the related channel", async (
   await expect(page.getByLabel("Causal chain")).toContainText("ckpt_003_hangzhou_appended");
   await expect(page.locator(".write-row.focused")).toContainText("state.memory_events");
 
+  const staleDiagnosticCard = page.getByRole("button", { name: /stale_selected_city retrieve_policy/i });
+  await expect(staleDiagnosticCard).toBeVisible();
+  await staleDiagnosticCard.click();
+
+  await expect(page.getByLabel("Causal chain")).toContainText("stale_selected_city: extract_profile -> retrieve_policy -> answer_benefits");
+  await expect(page.getByLabel("Node path")).toContainText("extract_profile");
+  await expect(page.getByLabel("Node path")).toContainText("retrieve_policy");
+  await expect(page.getByLabel("Node path")).toContainText("answer_benefits");
+  await expect(page.getByLabel("Causal chain")).toContainText("retrieve_policy wrote state.selected_city");
+  await expect(page.getByLabel("Causal chain")).toContainText("answer_benefits wrote state.messages");
+
   await expect(page.getByLabel("Redact private fields")).toBeChecked();
   await page.getByRole("button", { name: /Export redacted/i }).click();
 

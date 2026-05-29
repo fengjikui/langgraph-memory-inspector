@@ -113,11 +113,15 @@ diagnostics 和复现备注。
 会保留 checkpoint id、state path、diagnostic、write channel 等调试结构，同时
 遮住 message content、evidence、token、email、phone-like string 等容易泄露的值。
 
-## 剩余展示缺口
+## 本轮展示增强
 
-下一步最值得增强的是更完整的 node-level write attribution：
+`stale_selected_city` 现在可以展示更完整的 node-level write attribution：
 
 - 把多个 checkpoint 上的相关 writes 串成一条因果链，而不是只看当前 checkpoint。
 - 展示 `extract_profile -> memory_events`，说明杭州是在哪里 append 进去的。
 - 展示 `retrieve_policy -> selected_city`，说明 stale 上海选择是在哪里发生的。
-- 为每个 diagnostic 给出“下一步该看哪个节点源码”的建议。
+- 展示 `answer -> messages`，说明最终回答如何继续使用 stale 上海上下文。
+- 为 diagnostic 给出“下一步该看哪个节点源码 / state path”的建议。
+
+这让演示路径从“看见某个 write”升级成“看见一条可解释的节点路径”：
+`extract_profile -> retrieve_policy -> answer`。

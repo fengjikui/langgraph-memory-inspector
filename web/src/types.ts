@@ -127,6 +127,7 @@ export type CausalChainStep = {
   ordinal: number;
   node: string;
   relation: "related_write" | "introduced_diagnostic" | "selected_checkpoint" | string;
+  action: string;
   statePaths: string[];
   writeChannels: string[];
   updatedChannels: string[];
@@ -142,6 +143,9 @@ export type CausalChain = {
   checkpointNs: string;
   diagnosticId: string;
   selectedCheckpointId: string;
+  headline: string;
+  nodePath: string[];
+  nextAction: string;
   statePaths: string[];
   writeChannels: string[];
   range: {

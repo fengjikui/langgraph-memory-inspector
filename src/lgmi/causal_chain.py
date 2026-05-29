@@ -11,8 +11,13 @@ DIAGNOSTIC_TARGETS: dict[str, dict[str, list[str]]] = {
         "write_channels": ["memory_events"],
     },
     "stale_selected_city": {
-        "state_paths": ["selected_city", "memory_events[type=residence_city]"],
-        "write_channels": ["selected_city", "memory_events"],
+        "state_paths": [
+            "memory_events[type=residence_city]",
+            "selected_city",
+            "retrieved_docs",
+            "messages",
+        ],
+        "write_channels": ["memory_events", "selected_city", "retrieved_docs", "messages"],
     },
     "reducer_append_duplicate_state": {
         "state_paths": ["messages", "memory_events"],
@@ -86,6 +91,18 @@ def build_causal_chain(
         introduced_diagnostic = diagnostic_active and not previous_diagnostic_active
         previous_diagnostic_active = diagnostic_active
 
+        relevant_nodes = {
+            str(write.get("node") or "")
+            for write in relevant_writes
+            if str(write.get("node") or "")
+        }
+        if (
+            len(relevant_nodes) > 1
+            and not introduced_diagnostic
+            and current_checkpoint_id != checkpoint_id
+        ):
+            continue
+
         if not relevant_writes and not changed_channels and not introduced_diagnostic and current_checkpoint_id != checkpoint_id:
             continue
 
@@ -100,6 +117,7 @@ def build_causal_chain(
                 "ordinal": ordinal,
                 "node": _node_for_step(relevant_writes, changed_channels, diagnostic_id),
                 "relation": relation,
+                "action": _step_action(relevant_writes, changed_channels, relation),
                 "state_paths": state_paths,
                 "write_channels": sorted({write["channel"] for write in relevant_writes}),
                 "updated_channels": changed_channels,
@@ -108,14 +126,30 @@ def build_causal_chain(
             }
         )
 
+    if diagnostic_id == "stale_selected_city":
+        introduced_index = next(
+            (
+                index
+                for index, step in enumerate(steps)
+                if step["relation"] == "introduced_diagnostic"
+            ),
+            None,
+        )
+        if introduced_index is not None:
+            steps = steps[introduced_index:]
+
     if len(steps) > max_steps:
         steps = steps[-max_steps:]
 
+    node_path = _node_path(steps)
     return {
         "thread_id": thread_id,
         "checkpoint_ns": checkpoint_ns if checkpoint_ns is not None else "",
         "diagnostic_id": diagnostic_id,
         "selected_checkpoint_id": checkpoint_id,
+        "headline": _headline(diagnostic_id, steps, node_path),
+        "node_path": node_path,
+        "next_action": _next_action(steps),
         "state_paths": state_paths,
         "write_channels": write_channels,
         "range": {
@@ -137,6 +171,80 @@ def _summary(diagnostic_id: str, steps: list[dict[str, Any]]) -> str:
         f"{diagnostic_id} is linked to {len(steps)} checkpoint step(s)"
         f" and {write_count} relevant write(s)."
     )
+
+
+def _headline(
+    diagnostic_id: str,
+    steps: list[dict[str, Any]],
+    node_path: list[str],
+) -> str:
+    if not steps:
+        return f"{diagnostic_id}: no direct write chain found"
+    if node_path:
+        return f"{diagnostic_id}: {' -> '.join(node_path)}"
+    return f"{diagnostic_id}: {len(steps)} checkpoint step(s)"
+
+
+def _node_path(steps: list[dict[str, Any]]) -> list[str]:
+    path: list[str] = []
+    seen: set[str] = set()
+    for step in steps:
+        node = str(step.get("node") or "")
+        if not node or node == "diagnostic":
+            continue
+        if node in seen:
+            continue
+        seen.add(node)
+        path.append(node)
+    return path
+
+
+def _next_action(steps: list[dict[str, Any]]) -> str:
+    for step in reversed(steps):
+        writes = step.get("writes")
+        if not isinstance(writes, list) or not writes:
+            continue
+        write = writes[-1]
+        if isinstance(write, Mapping):
+            node = str(write.get("node") or step.get("node") or "unknown node")
+            state_path = str(write.get("state_path") or "state")
+            return f"Inspect {state_path} written by {node} at checkpoint {step['checkpoint_id']}."
+    if steps:
+        return f"Inspect checkpoint {steps[-1]['checkpoint_id']} and compare its state preview."
+    return "Inspect the selected checkpoint state snapshot."
+
+
+def _step_action(
+    writes: list[dict[str, Any]],
+    changed_channels: list[str],
+    relation: str,
+) -> str:
+    if writes:
+        nodes = _unique([str(write.get("node") or "unknown") for write in writes])
+        state_paths = _unique(
+            [
+                str(write.get("state_path") or f"state.{write.get('channel')}")
+                for write in writes
+            ]
+        )
+        return f"{' / '.join(nodes)} wrote {', '.join(state_paths)}"
+    if changed_channels:
+        changed_paths = ", ".join(f"state.{channel}" for channel in changed_channels)
+        return f"Checkpoint updated {changed_paths}"
+    if relation == "introduced_diagnostic":
+        return "Diagnostic first became active at this checkpoint"
+    return "Checkpoint is part of the diagnostic range"
+
+
+def _unique(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        if not value or value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return result
 
 
 def _summarize_write(write: Any) -> dict[str, Any]:
