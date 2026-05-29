@@ -58,11 +58,18 @@ If the doctor reports a `WARN` or `ERROR`, follow the printed next command and
 run it again. This is the quickest way to verify the demo checkpoint, API reader,
 Node.js/npm, and web UI dependencies before opening the app.
 
-Prepare the demo checkpoint data and start the Inspector API:
+Build the web UI once, then start the demo:
 
 ```bash
+cd web
+npm install
+npm run build
+cd ..
 uv run lgmi demo
 ```
+
+Open `http://127.0.0.1:8765/`. When `web/dist` exists, `lgmi demo` serves the
+Inspector UI and API from the same local server.
 
 Optional API health check:
 
@@ -70,11 +77,10 @@ Optional API health check:
 curl http://127.0.0.1:8765/api/summary
 ```
 
-Start the web UI in terminal 2:
+For frontend development, keep the API running and start Vite in terminal 2:
 
 ```bash
 cd web
-npm install
 npm run dev
 ```
 

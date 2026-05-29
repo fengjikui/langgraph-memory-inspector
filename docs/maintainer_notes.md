@@ -350,3 +350,23 @@
 已验证：
 
 - API contract、真实 relocation demo causal chain、前端 build/e2e 需要在提交前通过。
+
+### Single-server demo mode
+
+用户价值改进：
+
+- `create_app(..., ui_dir=...)` 现在可以把 `web/dist` 挂到同一个 FastAPI 服务下，`/` 返回 Inspector UI，`/api/*` 继续返回 checkpoint API。
+- `lgmi demo`、`lgmi inspect` 和 `lgmi inspect-postgres` 会自动发现 `web/dist`，也支持显式传入 `--ui-dir`。
+- `lgmi doctor` 会检查 built UI 是否存在，并在可用时给出单条下一步命令：`uv run lgmi demo --no-browser`。
+- README、demo script 和 public launch packet 改成先 `npm run build`，再用一个本地服务打开 UI 的路径。
+
+为什么重要：
+
+- 外部用户第一次试用时，两个终端和 Vite proxy 是明显摩擦点。单服务模式让 demo 更像一个完整工具，而不是开发环境拼装。
+- 这也降低社区推广后的支持成本：如果用户已经 build 过 UI，后续只要启动 `lgmi demo` 就能打开完整检查器。
+
+已验证：
+
+- `uv run lgmi doctor`
+- `uv run lgmi demo --no-browser --port 8771` 后，浏览器打开 `http://127.0.0.1:8771/`，页面标题为 LangGraph Memory Inspector，能看到 `conflicting_residence_memory`，控制台无 error。
+- `curl http://127.0.0.1:8771/`、`curl http://127.0.0.1:8771/api/summary` 和静态 JS 资源均返回 200。

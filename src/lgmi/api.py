@@ -5,6 +5,8 @@ from typing import Any, Callable, Literal
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from lgmi.analysis import diff_states
@@ -24,7 +26,11 @@ class DebugBundleRequest(BaseModel):
     keep_paths: list[str] = Field(default_factory=list)
 
 
-def create_app(source: str | Path | CheckpointReader) -> FastAPI:
+def create_app(
+    source: str | Path | CheckpointReader,
+    *,
+    ui_dir: str | Path | None = None,
+) -> FastAPI:
     reader: CheckpointReader
     if isinstance(source, (str, Path)):
         reader = SQLiteCheckpointReader(source)
@@ -156,7 +162,38 @@ def create_app(source: str | Path | CheckpointReader) -> FastAPI:
             )
         )
 
+    _mount_static_ui(app, ui_dir)
     return app
+
+
+def _mount_static_ui(app: FastAPI, ui_dir: str | Path | None) -> None:
+    if ui_dir is None:
+        app.state.ui_dir = ""
+        return
+
+    root = Path(ui_dir).expanduser().resolve()
+    index_html = root / "index.html"
+    if not index_html.exists():
+        app.state.ui_dir = ""
+        return
+
+    app.state.ui_dir = str(root)
+    assets_dir = root / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="ui-assets")
+
+    @app.get("/", include_in_schema=False)
+    def ui_index() -> FileResponse:
+        return FileResponse(index_html)
+
+    @app.get("/{path:path}", include_in_schema=False)
+    def ui_fallback(path: str) -> FileResponse:
+        if path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="Not found")
+        candidate = (root / path).resolve()
+        if candidate.is_file() and root in candidate.parents:
+            return FileResponse(candidate)
+        return FileResponse(index_html)
 
 
 def _read_or_404(func: Callable[[], Any]) -> Any:

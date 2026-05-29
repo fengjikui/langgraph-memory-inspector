@@ -81,6 +81,11 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="store_true",
         help="Generate demo checkpoint data and print startup steps without serving the API.",
     )
+    demo_parser.add_argument(
+        "--ui-dir",
+        default=None,
+        help="Directory containing a built web UI, such as web/dist. Defaults to web/dist when it exists.",
+    )
 
     inspect_parser = subparsers.add_parser(
         "inspect",
@@ -94,6 +99,11 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="store_true",
         help="Do not open the API URL in a browser.",
     )
+    inspect_parser.add_argument(
+        "--ui-dir",
+        default=None,
+        help="Directory containing a built web UI, such as web/dist. Defaults to web/dist when it exists.",
+    )
     postgres_parser = subparsers.add_parser(
         "inspect-postgres",
         help="Start a local API server for a LangGraph Postgres checkpoint store.",
@@ -106,6 +116,11 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         "--no-browser",
         action="store_true",
         help="Do not open the API URL in a browser.",
+    )
+    postgres_parser.add_argument(
+        "--ui-dir",
+        default=None,
+        help="Directory containing a built web UI, such as web/dist. Defaults to web/dist when it exists.",
     )
     export_parser = subparsers.add_parser(
         "export-debug-bundle",
@@ -173,7 +188,7 @@ def _run_doctor(args: argparse.Namespace) -> int:
         else:
             try:
                 with contextlib.redirect_stdout(io.StringIO()):
-                    demo.run_demo(reset=False, use_llm=False)
+                    demo.run_demo(reset=True, use_llm=False)
                 summary = SQLiteCheckpointReader(demo.DB_PATH).summary()
                 add(
                     "OK",
@@ -206,6 +221,12 @@ def _run_doctor(args: argparse.Namespace) -> int:
         else:
             add("WARN", "Web dependencies", "run `cd web && npm install` before `npm run dev`")
 
+        web_dist = _resolve_ui_dir(None)
+        if web_dist:
+            add("OK", "Built web UI", str(web_dist))
+        else:
+            add("WARN", "Built web UI", "run `cd web && npm run build` for single-server demo mode")
+
     print("LangGraph Memory Inspector doctor", flush=True)
     print("=" * 38, flush=True)
     for status, name, detail in checks:
@@ -218,12 +239,21 @@ def _run_doctor(args: argparse.Namespace) -> int:
         return 1
 
     print("Result: ready for the local demo path.", flush=True)
-    if demo is not None:
+    if not args.skip_web:
+        if _resolve_ui_dir(None):
+            print("Next command:", flush=True)
+            print("uv run lgmi demo --no-browser", flush=True)
+        else:
+            if demo is not None:
+                print("Next API command:", flush=True)
+                print("uv run lgmi demo --no-browser", flush=True)
+            print("Next UI command:", flush=True)
+            print("cd web && npm install && npm run dev", flush=True)
+            print("Optional single-server mode:", flush=True)
+            print("cd web && npm run build && cd .. && uv run lgmi demo --no-browser", flush=True)
+    elif demo is not None:
         print("Next API command:", flush=True)
         print("uv run lgmi demo --no-browser", flush=True)
-    if not args.skip_web:
-        print("Next UI command:", flush=True)
-        print("cd web && npm run dev", flush=True)
     return 0
 
 
@@ -273,13 +303,14 @@ def _run_demo(args: argparse.Namespace) -> int:
     run_demo = demo.run_demo
 
     run_demo(reset=not args.no_reset, use_llm=args.use_llm)
-    _print_demo_next_steps(DB_PATH, args.host, args.port, args.prepare_only)
+    ui_dir = _resolve_ui_dir(args.ui_dir)
+    _print_demo_next_steps(DB_PATH, args.host, args.port, args.prepare_only, ui_dir)
 
     if args.prepare_only:
         return 0
 
     return _serve_app(
-        create_app(DB_PATH),
+        create_app(DB_PATH, ui_dir=ui_dir),
         args,
         f"Demo checkpoint DB: {DB_PATH.resolve()}",
     )
@@ -291,7 +322,11 @@ def _run_inspect(args: argparse.Namespace) -> int:
         print(f"Checkpoint database not found: {db_path}", file=sys.stderr)
         return 2
 
-    return _serve_app(create_app(db_path), args, f"Checkpoint DB: {db_path}")
+    return _serve_app(
+        create_app(db_path, ui_dir=_resolve_ui_dir(args.ui_dir)),
+        args,
+        f"Checkpoint DB: {db_path}",
+    )
 
 
 def _run_inspect_postgres(args: argparse.Namespace) -> int:
@@ -299,7 +334,7 @@ def _run_inspect_postgres(args: argparse.Namespace) -> int:
 
     reader = PostgresCheckpointReader(args.conninfo, schema=args.schema)
     return _serve_app(
-        create_app(reader),
+        create_app(reader, ui_dir=_resolve_ui_dir(args.ui_dir)),
         args,
         f"Checkpoint store: {_redact_conninfo(args.conninfo)} schema={args.schema}",
     )
@@ -338,18 +373,31 @@ def _run_export_debug_bundle(args: argparse.Namespace) -> int:
 
 def _serve_app(app: object, args: argparse.Namespace, source_label: str) -> int:
     display_host = "127.0.0.1" if args.host in {"0.0.0.0", "::"} else args.host
-    url = f"http://{display_host}:{args.port}/api/summary"
-    print(f"LangGraph Memory Inspector API: {url}", flush=True)
+    api_url = f"http://{display_host}:{args.port}/api/summary"
+    ui_dir = str(getattr(getattr(app, "state", object()), "ui_dir", ""))
+    browser_url = f"http://{display_host}:{args.port}/" if ui_dir else api_url
+    print(f"LangGraph Memory Inspector API: {api_url}", flush=True)
+    if ui_dir:
+        print(f"LangGraph Memory Inspector UI: {browser_url}", flush=True)
+        print(f"Serving built web UI: {ui_dir}", flush=True)
+    else:
+        print("Built web UI not found; serve the React app with `cd web && npm run dev`.", flush=True)
     print(source_label, flush=True)
 
     if not args.no_browser:
-        webbrowser.open(url)
+        webbrowser.open(browser_url)
 
     uvicorn.run(app, host=args.host, port=args.port, log_level="info")
     return 0
 
 
-def _print_demo_next_steps(db_path: Path, host: str, port: int, prepare_only: bool) -> None:
+def _print_demo_next_steps(
+    db_path: Path,
+    host: str,
+    port: int,
+    prepare_only: bool,
+    ui_dir: Path | None,
+) -> None:
     display_host = "127.0.0.1" if host in {"0.0.0.0", "::"} else host
     print(flush=True)
     print("Demo checkpoint data is ready.", flush=True)
@@ -365,13 +413,31 @@ def _print_demo_next_steps(db_path: Path, host: str, port: int, prepare_only: bo
     else:
         print(flush=True)
         print(f"Inspector API will start at: http://{display_host}:{port}/api/summary", flush=True)
-    print(flush=True)
-    print("Start the web UI in another terminal:", flush=True)
-    print("cd web", flush=True)
-    print("npm install", flush=True)
-    print("npm run dev", flush=True)
-    print(flush=True)
-    print("Open: http://127.0.0.1:5173/", flush=True)
+    if ui_dir:
+        print(flush=True)
+        print(f"Built web UI will be served from: {ui_dir}", flush=True)
+        print(f"Open: http://{display_host}:{port}/", flush=True)
+    else:
+        print(flush=True)
+        print("Start the web UI in another terminal:", flush=True)
+        print("cd web", flush=True)
+        print("npm install", flush=True)
+        print("npm run dev", flush=True)
+        print(flush=True)
+        print("Open: http://127.0.0.1:5173/", flush=True)
+        print(flush=True)
+        print("Optional single-server mode:", flush=True)
+        print("cd web && npm run build && cd .. && uv run lgmi demo", flush=True)
+
+
+def _resolve_ui_dir(ui_dir: str | None) -> Path | None:
+    if ui_dir:
+        candidate = Path(ui_dir).expanduser().resolve()
+        return candidate if (candidate / "index.html").exists() else None
+
+    repo_root = Path(__file__).resolve().parents[2]
+    candidate = repo_root / "web" / "dist"
+    return candidate.resolve() if (candidate / "index.html").exists() else None
 
 
 def _load_relocation_demo() -> ModuleType | None:

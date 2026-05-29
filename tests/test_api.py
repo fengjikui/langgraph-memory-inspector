@@ -149,6 +149,26 @@ def test_api_accepts_checkpoint_reader_adapter() -> None:
     assert client.get("/api/threads/thread-1/checkpoints/checkpoint-1/writes").json()[0]["channel"] == "selected_city"
 
 
+def test_api_serves_built_static_ui(tmp_path: Path) -> None:
+    ui_dir = tmp_path / "dist"
+    assets_dir = ui_dir / "assets"
+    assets_dir.mkdir(parents=True)
+    (ui_dir / "index.html").write_text(
+        '<div id="root"></div><script type="module" src="/assets/app.js"></script>',
+        encoding="utf-8",
+    )
+    (assets_dir / "app.js").write_text("console.log('lgmi')", encoding="utf-8")
+
+    client = TestClient(create_app(FakeCheckpointReader(), ui_dir=ui_dir))
+
+    assert client.get("/").status_code == 200
+    assert '<div id="root"></div>' in client.get("/").text
+    assert client.get("/assets/app.js").text == "console.log('lgmi')"
+    assert client.get("/some/react/route").status_code == 200
+    assert client.get("/api/summary").json()["thread_count"] == 1
+    assert client.get("/api/does-not-exist").status_code == 404
+
+
 def test_api_passes_checkpoint_namespace_to_reader() -> None:
     client = TestClient(create_app(FakeCheckpointReader()))
 

@@ -7,7 +7,9 @@ from typing import Any
 from lgmi import cli
 
 
-def test_demo_prepare_only_generates_checkpoint_data(capsys: Any) -> None:
+def test_demo_prepare_only_generates_checkpoint_data(monkeypatch: Any, capsys: Any) -> None:
+    monkeypatch.setattr(cli, "_resolve_ui_dir", lambda ui_dir: None)
+
     result = cli.main(["demo", "--prepare-only"])
 
     output = capsys.readouterr().out
@@ -16,6 +18,20 @@ def test_demo_prepare_only_generates_checkpoint_data(capsys: Any) -> None:
     assert "conflicting_residence_memory" in output
     assert "uv run lgmi inspect" in output
     assert "npm run dev" in output
+
+
+def test_demo_prepare_only_reports_built_ui(monkeypatch: Any, tmp_path: Path, capsys: Any) -> None:
+    ui_dir = tmp_path / "dist"
+    ui_dir.mkdir()
+    (ui_dir / "index.html").write_text("<div id='root'></div>", encoding="utf-8")
+    monkeypatch.setattr(cli, "_resolve_ui_dir", lambda ui_dir_arg: ui_dir)
+
+    result = cli.main(["demo", "--prepare-only"])
+
+    output = capsys.readouterr().out
+    assert result == 0
+    assert "Built web UI will be served from:" in output
+    assert "Optional single-server mode" not in output
 
 
 def test_doctor_skip_modes_report_ready(capsys: Any) -> None:
@@ -42,9 +58,11 @@ def test_doctor_reports_missing_demo_source(monkeypatch: Any, capsys: Any) -> No
 
 def test_demo_serves_generated_database(monkeypatch: Any) -> None:
     served: dict[str, Any] = {}
+    monkeypatch.setattr(cli, "_resolve_ui_dir", lambda ui_dir: None)
 
-    def fake_create_app(source: Path) -> object:
+    def fake_create_app(source: Path, *, ui_dir: Path | None = None) -> object:
         served["source"] = source
+        served["ui_dir"] = ui_dir
         return object()
 
     def fake_serve_app(app: object, args: argparse.Namespace, source_label: str) -> int:
@@ -60,5 +78,35 @@ def test_demo_serves_generated_database(monkeypatch: Any) -> None:
 
     assert result == 0
     assert served["source"].name == "checkpoints.sqlite"
+    assert served["ui_dir"] is None
     assert served["port"] == 8766
     assert "Demo checkpoint DB:" in served["source_label"]
+
+
+def test_demo_serves_built_ui_when_available(monkeypatch: Any, tmp_path: Path) -> None:
+    served: dict[str, Any] = {}
+    ui_dir = tmp_path / "dist"
+    ui_dir.mkdir()
+    (ui_dir / "index.html").write_text("<div id='root'></div>", encoding="utf-8")
+    monkeypatch.setattr(cli, "_resolve_ui_dir", lambda ui_dir_arg: ui_dir)
+
+    def fake_create_app(source: Path, *, ui_dir: Path | None = None) -> object:
+        served["source"] = source
+        served["ui_dir"] = ui_dir
+        return object()
+
+    def fake_serve_app(app: object, args: argparse.Namespace, source_label: str) -> int:
+        served["app"] = app
+        served["port"] = args.port
+        served["source_label"] = source_label
+        return 0
+
+    monkeypatch.setattr(cli, "create_app", fake_create_app)
+    monkeypatch.setattr(cli, "_serve_app", fake_serve_app)
+
+    result = cli.main(["demo", "--no-browser", "--port", "8766"])
+
+    assert result == 0
+    assert served["source"].name == "checkpoints.sqlite"
+    assert served["ui_dir"] == ui_dir
+    assert served["port"] == 8766

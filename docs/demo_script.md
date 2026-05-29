@@ -104,21 +104,25 @@ sqlite3 examples/relocation_policy_agent/data/checkpoints.sqlite \
 
 ## 3:00-5:30 - Open Inspector
 
-Start the API:
-
-```bash
-uv run lgmi demo
-```
-
-Start the UI in another terminal:
+Build the UI once and start the single-server demo:
 
 ```bash
 cd web
 npm install
-npm run dev
+npm run build
+cd ..
+uv run lgmi demo
 ```
 
-Open `http://127.0.0.1:5173/`.
+Open `http://127.0.0.1:8765/`.
+
+For frontend development, keep the API running and start Vite in another
+terminal:
+
+```bash
+cd web
+npm run dev
+```
 
 Show:
 
