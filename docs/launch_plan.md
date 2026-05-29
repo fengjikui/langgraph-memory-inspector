@@ -17,6 +17,8 @@ demo locally.
 - Explicit debug bundle export for teammate, issue, and PR handoff.
 - Community launch playbook with channel-specific drafts and feedback prompts
   in `docs/community_launch_playbook.md`.
+- Public launch packet with copy-paste-ready posts, reply templates, and
+  channel tracking in `docs/public_launch_packet.md`.
 
 ## Pre-Public Checklist
 

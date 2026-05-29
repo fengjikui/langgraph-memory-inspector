@@ -5,6 +5,9 @@ one-way announcement. The goal is to find developers who have felt LangGraph
 state bugs, help them understand the stale-memory demo in under one minute, and
 ask for the next checkpoint bug patterns they want the inspector to detect.
 
+For copy-paste-ready launch posts, reply templates, and channel tracking, use
+`docs/public_launch_packet.md`.
+
 ## Launch Principle
 
 Lead with the debugging pain:
