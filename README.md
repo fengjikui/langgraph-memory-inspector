@@ -4,7 +4,7 @@ Local-first checkpoint forensics for LangGraph apps.
 
 [![CI](https://github.com/fengjikui/langgraph-memory-inspector/actions/workflows/ci.yml/badge.svg)](https://github.com/fengjikui/langgraph-memory-inspector/actions/workflows/ci.yml)
 
-[License](LICENSE) · [Contributing](CONTRIBUTING.md) · [Release checklist](docs/release_checklist.md)
+[License](LICENSE) · [Contributing](CONTRIBUTING.md) · [Release checklist](docs/release_checklist.md) · [Community launch playbook](docs/community_launch_playbook.md)
 
 LangGraph agents can fail long after the bad state was written. A user updates
 their profile, a retriever still reads the old value, and the final answer looks

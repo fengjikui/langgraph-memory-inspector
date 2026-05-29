@@ -142,11 +142,11 @@ OpenClaw 给出的推广侧高优先级建议：
 
 ## 当前发布准备状态
 
-最新 launch checklist 和社区内容草稿见 `docs/launch_plan.md`。
+最新 launch checklist 见 `docs/launch_plan.md`，可执行社区发布方案见
+`docs/community_launch_playbook.md`。
 
 在公开首发前，优先补齐：
 
-- license 和 contribution 文档。
 - fresh-clone quickstart audit。
-- namespace selector。
-- debug bundle export。
+- 仓库公开前最后一次 CI 和 README quickstart 验证。
+- 第一批真实用户反馈 issue。

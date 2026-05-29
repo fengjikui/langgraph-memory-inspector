@@ -15,6 +15,8 @@ demo locally.
 - Read-only PostgresSaver reader with CI-backed Postgres integration.
 - Use-case smoke test proving the stale-memory evidence chain.
 - Explicit debug bundle export for teammate, issue, and PR handoff.
+- Community launch playbook with channel-specific drafts and feedback prompts
+  in `docs/community_launch_playbook.md`.
 
 ## Pre-Public Checklist
 
@@ -23,6 +25,7 @@ demo locally.
 - [x] Add `CONTRIBUTING.md`.
 - Add issue templates for bug reports and feature requests.
 - [x] Add a release checklist.
+- [x] Add a community launch playbook.
 - [x] Add a short "known limitations" section to README.
 - Verify README quickstart from a fresh clone.
 - Keep generated checkpoint DBs and export artifacts out of commits.
@@ -73,41 +76,29 @@ Acceptance criteria:
 - Update README and docs until the path is smooth.
 - Keep the audit log in docs.
 
-## Community Posts
+## Community Launch
 
-### English Short Post
+Detailed drafts and channel rules live in
+`docs/community_launch_playbook.md`. The launch should be treated as a
+feedback loop, not a one-way announcement.
 
-Working title:
+Core story:
 
-> Debug LangGraph memory bugs from checkpoints, not guesses
+- A user moves from Shanghai to Hangzhou.
+- The agent still answers with Shanghai context.
+- The inspector clicks `conflicting_residence_memory`, jumps to the checkpoint,
+  highlights `state.memory_events` in Writes, and exports a debug bundle.
 
-Draft:
+Primary feedback ask:
 
-> I built a local-first inspector for LangGraph checkpoints. The demo recreates
-> a stale-memory bug: a user moves from Shanghai to Hangzhou, but retrieval
-> still uses Shanghai. The inspector jumps from diagnostic -> checkpoint ->
-> state diff -> node writes, and now supports SQLite plus read-only Postgres
-> checkpoint stores.
+- Tell us which checkpoint bug patterns real LangGraph users want detected
+  next: stale memory, reducer append mistakes, wrong resume points, namespace
+  confusion, message bloat, or production-store constraints.
 
-Call to action:
+Anti-spam rule:
 
-> Try the deterministic demo, open the GIF, and tell me which checkpoint bug
-> patterns you want detected next.
-
-### Chinese Long Post
-
-Working title:
-
-> LangGraph Agent 回答错了，怎么找到是哪一步状态写坏了？
-
-Outline:
-
-1. 为什么 Agent debugging 不只是看最后一次 LLM response。
-2. checkpoint / writes / memory_events 的关系。
-3. stale memory demo：上海 -> 杭州 -> 仍然检索上海。
-4. Inspector 如何从 diagnostic 跳到 checkpoint 和 write channel。
-5. 为什么 local-first 和 read-only Postgres 很重要。
-6. 下一步：namespace selector、debug bundle、更多真实 bug patterns。
+- Ask for concrete feedback before asking for stars, rewrite posts per channel,
+  and do not use unsolicited DMs or upvote requests.
 
 ## Release Candidate Definition
 

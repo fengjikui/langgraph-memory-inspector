@@ -180,3 +180,21 @@
 - `uv run pytest -q`
 - `cd web && npm run build`
 - `cd web && npm run test:e2e`
+
+### Community launch playbook
+
+用户价值改进：
+
+- 新增 `docs/community_launch_playbook.md`，把 GitHub、LangChain Forum/Slack、HN、Reddit、X 和中文社区的发布方式拆成不同用户语境。
+- 发布目标从“求 star”改为“请真实 LangGraph 用户验证 checkpoint 调试工作流，并提供 bug pattern”。
+- 新增 pinned issue、英文短帖、Show HN、LangChain 社区、Reddit、中文长文、中文短帖和 OpenClaw 咨询提示词。
+- `docs/demo_script.md` 补齐现场演示闭环：点击 `conflicting_residence_memory` -> Writes 高亮 `state.memory_events` -> Export debug bundle。
+
+为什么重要：
+
+- 一个真正会被采用的开发者工具，需要让用户先看到自己的问题，而不是先看到功能列表。
+- 社区发布如果不尊重渠道规则，很容易变成噪音。playbook 明确要求每个渠道都用不同问题 framing、不要拉票、不要私信轰炸、优先收集真实痛点。
+
+已验证：
+
+- 文档一致性检查和完整测试在本次提交前执行。

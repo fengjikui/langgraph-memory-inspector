@@ -37,8 +37,12 @@ Use this before making the repository public or announcing a release candidate.
 
 - [ ] README explains the problem in the first viewport.
 - [ ] Demo story uses the Shanghai -> Hangzhou stale-memory bug.
+- [ ] `docs/community_launch_playbook.md` exists and links every channel to a
+  user-problem framing.
 - [ ] English launch post draft exists.
 - [ ] Chinese launch post draft exists.
+- [ ] Pinned GitHub feedback issue draft exists.
+- [ ] OpenClaw consultation prompt exists for distribution critique.
 - [ ] Community feedback asks for checkpoint bug patterns, not only stars.
 
 ## Commands

@@ -123,6 +123,7 @@ Open `http://127.0.0.1:5173/`.
 Show:
 
 - Left sidebar: database summary and thread list.
+- Namespace selector: active checkpoint namespace for the selected thread.
 - Main timeline: ordered checkpoints for `relocation-demo-user-001`.
 - Right panel: selected checkpoint state.
 - State, diff, writes, and diagnostics tabs/panels.
@@ -134,15 +135,22 @@ Narrate the debugging path:
 3. Compare the checkpoint before and after the second turn.
 4. In the diff, show `memory_events` changing from one residence to two.
 5. Open diagnostics and highlight `conflicting_residence_memory`.
-6. Move to the final answer checkpoint and show `selected_city=Shanghai`.
-7. Explain the root cause: the newest memory is Hangzhou, but retrieval used the
+6. Click `conflicting_residence_memory`.
+7. Confirm the UI jumps to the related checkpoint, opens Writes, and highlights
+   `state.memory_events`.
+8. Move to the final answer checkpoint and show `selected_city=Shanghai`.
+9. Explain the root cause: the newest memory is Hangzhou, but retrieval used the
    oldest memory.
+10. Click `Export`.
+11. Show that the UI reports the exported bundle path, file size, and diagnostic
+    ids.
 
 Say:
 
 "The value of the tool is not just showing JSON. It connects the final bad
 answer to the checkpoint where the bad state became visible, then points to the
-node/write path that made it happen."
+node/write path that made it happen. Export turns that local diagnosis into a
+shareable artifact for a teammate, issue, or PR."
 
 ## 5:30-6:45 - Show The Fix Direction
 
