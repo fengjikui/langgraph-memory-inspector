@@ -609,3 +609,25 @@
 - `uv run pytest tests/test_fixtures.py -q`
 - `uv run pytest -q`
 - `git diff --check`
+
+### Release and feedback copy reflect fixture coverage
+
+用户价值改进：
+
+- Release notes、public launch packet、LangChain Forum draft 和 pinned GitHub
+  issue draft 都补充了 repeated retrieved context、message/history bloat、
+  namespace confusion、checkpoint size spike 和 wrong-resume lineage jump。
+- 对外反馈 ask 从“再补基础诊断”推进到“请给生产形态/真实模式”，并明确当前所有
+  diagnostic 都已经由 deterministic demo 或 committed safe fixture 支撑。
+
+为什么重要：
+
+- 公开首发时，用户看到的反馈入口应该反映当前真实成熟度：不是一个只有 demo 的项目，
+  而是已经有诊断矩阵和 fixture 回归的调试工具。
+- #20 作为反馈 home base，需要引导用户提交最有价值的下一类证据，而不是重复已经覆盖的
+  合成 bug pattern。
+
+已验证：
+
+- `uv run pytest -q`
+- `git diff --check`

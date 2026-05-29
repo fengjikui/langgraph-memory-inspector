@@ -75,6 +75,9 @@ uv run --extra postgres lgmi inspect-postgres "$DATABASE_URL" --schema public --
 - Diagnostics for stale/conflicting memory, stale selected city, stale retrieved
   context, oversized messages, repeated retrieval context, reducer append
   duplicates, checkpoint size spikes, and unexpected parent checkpoint jumps.
+- Every current diagnostic is backed by the deterministic demo or a committed
+  safe fixture in the diagnostic matrix, so new feedback can be turned into
+  regression tests instead of one-off examples.
 - Explicit debug bundle export from CLI, API, and UI.
 - Redacted export mode for private fields, message content, evidence, prompts,
   secrets, tokens, emails, and phone-like strings.
@@ -119,6 +122,9 @@ checkpoint debugging pattern:
 - Which backend do you use: SQLite, PostgresSaver, Redis, or custom?
 - Do checkpoint namespaces matter in your app?
 - Which state channels are hardest to debug?
-- Have you seen stale memory, reducer append bugs, wrong resume points, or
-  oversized message histories?
+- Have you seen stale memory, stale retrieved context, repeated retrieval,
+  reducer append bugs, wrong resume points, namespace confusion, or oversized
+  message histories?
+- Do logs or incidents give you only a checkpoint id/prefix that you need to
+  jump to in a long timeline?
 - Can the pattern be reduced to a redacted, synthetic, or schema-only fixture?

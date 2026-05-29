@@ -65,6 +65,9 @@ The Inspector reads the checkpoint store locally and shows:
 - node/channel writes
 - deterministic diagnostics such as `conflicting_residence_memory` and
   `stale_selected_city`, plus `stale_retrieved_context`
+- additional diagnostics for repeated retrieved context, reducer append
+  duplicates, message/history bloat, namespace confusion, checkpoint size
+  spikes, and wrong-resume lineage jumps
 - a node-level causal path such as
   `extract_profile -> retrieve_policy -> answer`
 - checkpoint id prefix filtering for jumping from logs to the suspicious
@@ -117,11 +120,16 @@ deterministic diagnostics. The most useful feedback:
 - Which checkpoint backend do you use: SQLite, PostgresSaver, Redis, custom?
 - Do you use multiple `checkpoint_ns` values under one `thread_id`?
 - Which state channel is hardest to debug?
-- Have you seen stale memory, reducer append bugs, wrong resume points,
-  namespace confusion, or message/history bloat?
+- Have you seen stale memory, stale retrieved context, repeated retrieval,
+  reducer append bugs, wrong resume points, namespace confusion, or
+  message/history bloat?
 - Have you had only a checkpoint id/prefix from logs and needed to jump to that
   part of the timeline?
 - What would you need to safely inspect a production copy locally?
+
+Every current diagnostic is backed by the deterministic demo or a committed
+safe fixture in the diagnostic matrix, so the next useful input is a real
+production-shaped pattern rather than another synthetic-only example.
 
 This is not intended to replace LangSmith or LangGraph Studio. The scope is
 narrower: local checkpoint forensics when persisted state is wrong and you need

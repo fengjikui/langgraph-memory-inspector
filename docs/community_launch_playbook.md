@@ -82,24 +82,31 @@ LangGraph Memory Inspector started from one reproducible bug:
 The current inspector can:
 
 - read a local SQLite checkpoint database
-- inspect a read-only PostgresSaver store
-- show checkpoint state, diffs, writes, and diagnostics
+- inspect a read-only full-history PostgresSaver store
+- detect unsupported ShallowPostgresSaver latest-only schemas safely
+- show checkpoint state, diffs, writes, diagnostics, and compact causal chains
 - click `conflicting_residence_memory` to jump to the related checkpoint and
   highlight `state.memory_events`
 - click `stale_selected_city` to see `extract_profile -> retrieve_policy ->
   answer`
 - detect `stale_retrieved_context` when retrieved docs do not match the latest
   user or query context
+- detect repeated retrieved context, reducer append duplicates, message history
+  bloat, namespace confusion, checkpoint size spikes, and wrong-resume lineage
+  jumps
 - filter long timelines by checkpoint id prefix when a log or error only gives
   a partial checkpoint id
-- export a debug bundle for an issue, teammate, or PR
+- export a redacted debug bundle for an issue, teammate, or PR
+- show a diagnostic matrix where every current diagnostic is backed by the demo
+  or a committed safe fixture
 
 I am looking for real bug patterns from LangGraph users. Useful feedback:
 
-- Which checkpoint backend do you use: SQLite, Postgres, Redis, custom?
+- Which checkpoint backend do you use: SQLite, PostgresSaver, Redis, custom?
 - Do you use multiple checkpoint namespaces for one thread?
 - Which state channels are hardest to debug?
-- Have you seen stale memory, reducer append bugs, wrong checkpoint resume, or
+- Have you seen stale memory, stale retrieved context, repeated retrieval,
+  reducer append bugs, wrong checkpoint resume, namespace confusion, or
   oversized message history?
 - Have you had only a checkpoint id/prefix from logs and needed to jump to that
   part of the timeline?

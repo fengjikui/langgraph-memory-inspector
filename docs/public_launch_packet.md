@@ -100,6 +100,9 @@ The Inspector reads the checkpoint store locally and shows:
 - node/channel writes
 - deterministic diagnostics such as `conflicting_residence_memory` and
   `stale_selected_city`, plus `stale_retrieved_context`
+- additional diagnostics for repeated retrieved context, reducer append
+  duplicates, message/history bloat, namespace confusion, checkpoint size
+  spikes, and wrong-resume lineage jumps
 - node-level causal path such as
   `extract_profile -> retrieve_policy -> answer`
 - compact causal chain from diagnostic -> checkpoint range -> write evidence
@@ -149,10 +152,14 @@ I am looking for real LangGraph checkpoint bug patterns to turn into determinist
 - Which checkpoint backend do you use?
 - Do you use multiple `checkpoint_ns` values under one `thread_id`?
 - Which state channel is hardest to debug?
-- Have you seen stale memory, reducer append bugs, wrong resume points, namespace confusion, or message bloat?
+- Have you seen stale memory, stale retrieved context, repeated retrieval, reducer append bugs, wrong resume points, namespace confusion, or message bloat?
 - Have you had only a checkpoint id/prefix from logs and needed to jump to that
   part of the timeline?
 - What would you need to safely inspect a production copy locally?
+
+Every current diagnostic is backed by the deterministic demo or a committed
+safe fixture in the diagnostic matrix; I am especially looking for
+production-shaped patterns that should become the next fixture or diagnostic.
 
 If you can share evidence, please use a redacted bundle, synthetic fixture, or schema-only snapshot. Please do not share raw production checkpoint stores:
 https://github.com/fengjikui/langgraph-memory-inspector/blob/main/docs/fixture_policy.md
@@ -168,7 +175,7 @@ Demo bug: a user moves from Shanghai to Hangzhou, but the agent still answers wi
 Repo/demo: https://github.com/fengjikui/langgraph-memory-inspector
 Feedback home base: https://github.com/fengjikui/langgraph-memory-inspector/issues/20
 
-I am especially interested in stale memory, reducer append mistakes, wrong resume points, namespace confusion, and production-store constraints. Please share redacted/synthetic/schema-only evidence only; no raw production state.
+I am especially interested in stale memory, stale retrieved context, repeated retrieval, reducer append mistakes, wrong resume points, namespace confusion, message/history bloat, and production-store constraints. Please share redacted/synthetic/schema-only evidence only; no raw production state.
 ```
 
 ## X / LinkedIn Short Thread
