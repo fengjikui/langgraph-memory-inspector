@@ -6,7 +6,8 @@ state bugs, help them understand the stale-memory demo in under one minute, and
 ask for the next checkpoint bug patterns they want the inspector to detect.
 
 For copy-paste-ready launch posts, reply templates, and channel tracking, use
-`docs/public_launch_packet.md`.
+`docs/public_launch_packet.md`. For the first external post, use
+`docs/langchain_forum_launch_post.md`.
 
 ## Launch Principle
 
@@ -23,6 +24,7 @@ should see a version of the same user story:
 2. The agent still retrieved Shanghai policy context.
 3. The inspector opens the checkpoint timeline, clicks
    `conflicting_residence_memory`, highlights `state.memory_events` in Writes,
+   shows the node-level path `extract_profile -> retrieve_policy -> answer`,
    then exports a debug bundle for handoff.
 
 ## Launch Gates
@@ -36,12 +38,15 @@ should see a version of the same user story:
 - [x] Namespace selector is documented as a production-store safety feature.
 - [x] Demo script includes diagnostic click, Writes highlight, Causal chain, and
   Export bundle.
+- [x] Postgres confidence script exists for local/safe PostgresSaver validation.
 - [x] First pinned GitHub issue asks for real checkpoint bug patterns.
 - [x] Fixture policy is linked wherever users are asked to share checkpoint data.
 - [x] GitHub social preview image exists at
   `docs/assets/github-social-preview.png`.
 - [ ] GitHub social preview image has been uploaded in repository Settings.
-- [ ] No launch post asks for stars as the primary call to action.
+- [x] LangChain Forum post draft is ready at
+  `docs/langchain_forum_launch_post.md`.
+- [x] No launch post asks for stars as the primary call to action.
 
 ## Channel Strategy
 
@@ -49,7 +54,7 @@ should see a version of the same user story:
 | --- | --- | --- | --- |
 | GitHub issue/discussion | "Help shape checkpoint diagnostics from real bugs." | Share checkpoint stores, write channels, and bug patterns. | Asking only for stars. |
 | LangChain Forum / LangGraph category | "I built a local-first checkpoint debugging workflow for LangGraph." | Ask whether the stale-memory diagnostic matches real LangGraph failures. | Posting as product support or dumping a generic link. |
-| LangChain Slack | "Showcasing an agent debugging workflow and asking for feedback." | Ask for one concrete debugging pain point in a public thread. | Unsolicited DMs, double-posting, tagging maintainers, lead-gen language. |
+| LangChain Slack | "Showcasing an agent debugging workflow and asking for feedback." | Ask for one concrete debugging pain point in a public thread after the Forum post exists. | Product support questions, unsolicited DMs, double-posting, tagging maintainers, lead-gen language. |
 | Hacker News Show HN | "Show HN: Local-first inspector for LangGraph checkpoint bugs." | Try the local demo and critique the debugging flow. | Posting before the repo is runnable, launch hype, upvote requests. |
 | Reddit r/LangChain | "Here is a concrete LangGraph memory bug and the checkpoint trail." | Ask what state/writes views would help production users. | Cross-posted marketing copy. |
 | X / Twitter | "A 30-second GIF of a stale-memory bug becoming a write-level cause." | Ask for bug patterns to turn into diagnostics. | Long thread full of claims without a runnable repo. |
@@ -81,6 +86,8 @@ The current inspector can:
 - show checkpoint state, diffs, writes, and diagnostics
 - click `conflicting_residence_memory` to jump to the related checkpoint and
   highlight `state.memory_events`
+- click `stale_selected_city` to see `extract_profile -> retrieve_policy ->
+  answer`
 - export a debug bundle for an issue, teammate, or PR
 
 I am looking for real bug patterns from LangGraph users. Useful feedback:
@@ -113,6 +120,9 @@ the diagnostic, jump to the checkpoint, highlight the related `state.memory_even
 write, and export a debug bundle for a teammate or issue.
 
 It currently supports SQLite checkpoint DBs and read-only PostgresSaver stores.
+It also includes a Postgres confidence script that writes a tiny PostgresSaver
+demo schema and validates the read-only inspection path before you connect a
+private store.
 I am looking for real LangGraph bug patterns to turn into diagnostics: stale
 memory, reducer append mistakes, wrong resume points, namespace confusion, or
 anything else you have hit in production. If you can share evidence, please use
@@ -166,6 +176,8 @@ The current demo reproduces a stale-memory bug:
   `conflicting_residence_memory` diagnostic
 - clicking the diagnostic opens the related checkpoint and highlights
   `state.memory_events`
+- clicking `stale_selected_city` shows the node path
+  `extract_profile -> retrieve_policy -> answer`
 
 It supports local SQLite checkpoint DBs and read-only PostgresSaver inspection.
 I am looking for feedback on real LangGraph checkpoint pain: namespaces,
@@ -185,8 +197,8 @@ feedback from people who have debugged stateful agents.
 The demo is a concrete memory bug rather than a toy chat UI: a user moves from
 Shanghai to Hangzhou, but the agent still answers using Shanghai context. The
 checkpoint DB has the evidence. The inspector shows the timeline, state diff,
-writes, diagnostics, and can export a debug bundle after you click into the
-problem.
+writes, diagnostics, the node path behind the stale answer, and can export a
+debug bundle after you click into the problem.
 
 It currently handles SQLite checkpoint DBs and read-only PostgresSaver stores.
 The most useful feedback would be:
@@ -231,16 +243,18 @@ Inspector 会读取本地 checkpoint store，然后把这条因果链串起来�
 
 - timeline：是哪一个 checkpoint 出现了状态变化
 - diff：`memory_events` 从一条 residence 变成两条
-- diagnostics：出现 `conflicting_residence_memory`
+- diagnostics：出现 `conflicting_residence_memory` 和 `stale_selected_city`
 - writes：点击 diagnostic 后自动高亮 `state.memory_events`
+- causal path：展示 `extract_profile -> retrieve_policy -> answer`
 - export：把这条证据链导出成 debug bundle，方便发给同事、issue 或 PR
 
 现在支持：
 
 - SQLite checkpoint DB
 - read-only PostgresSaver inspection
+- PostgresSaver confidence script
 - namespace selector
-- state / diff / writes / diagnostics
+- state / diff / writes / diagnostics / causal path
 - debug bundle export
 
 我现在最想收集真实开发者的 LangGraph 调试痛点：
@@ -264,7 +278,8 @@ Repo/demo: https://github.com/fengjikui/langgraph-memory-inspector
 我做了一个 LangGraph checkpoint 调试工具：LangGraph Memory Inspector。
 
 核心 demo：用户从上海搬到杭州，但 Agent 仍然用上海上下文回答。工具会从 checkpoint
-timeline 追到 diff、diagnostic、writes，并高亮导致问题的 `state.memory_events`，最后还能导出 debug bundle。
+timeline 追到 diff、diagnostic、writes 和节点路径，并高亮导致问题的
+`state.memory_events`，最后还能导出 debug bundle。
 
 想找真正写 LangGraph / Agent 的同学给反馈：你们最头疼的状态调试问题是什么？
 
