@@ -820,3 +820,26 @@
 
 - `uv run pytest tests/test_export_bundle.py tests/test_launch_status.py -q`
 - `uv run lgmi audit-debug-bundle /tmp/lgmi-audit-export/<bundle>.json`
+
+### Issue bundle release smoke gate
+
+用户价值改进：
+
+- 新增 `scripts/issue_bundle_smoke.py`，把真实用户反馈路径变成 release smoke gate：
+  重置 deterministic demo、选择 stale-memory checkpoint、运行 `export-debug-bundle --issue`、
+  生成 redacted bundle，再运行 `audit-debug-bundle`。
+- smoke 会确认导出的 issue summary 不泄露绝对 export path，bundle/audit 输出不包含 demo
+  用户原句，并且 audit 报告没有自动 blocker。
+- `scripts/release_smoke.py` 默认 gate 增加 `uv run python scripts/issue_bundle_smoke.py`。
+
+为什么重要：
+
+- `prove-demo` 证明“我们能定位 bug”，而 issue bundle smoke 证明“用户能安全地把这个 bug
+  反馈给维护者”。这两条路径都应该在发布前被验证。
+- 公开推广后，真实反馈链路比单纯 demo 更重要；它决定 #20 能不能沉淀成 fixture、diagnostic
+  和测试，而不是变成无法复现的口头描述。
+
+已验证：
+
+- `uv run python scripts/issue_bundle_smoke.py`
+- `uv run pytest tests/test_issue_bundle_smoke.py tests/test_release_smoke.py -q`

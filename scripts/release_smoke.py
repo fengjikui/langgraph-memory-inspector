@@ -17,6 +17,7 @@ DEFAULT_GATES = (
     Gate("social preview asset", ("uv", "run", "python", "scripts/validate_social_preview.py")),
     Gate("launch copy guardrails", ("uv", "run", "python", "scripts/validate_launch_copy.py")),
     Gate("stale-memory proof", ("uv", "run", "lgmi", "prove-demo", "--reset-demo")),
+    Gate("issue-safe debug bundle", ("uv", "run", "python", "scripts/issue_bundle_smoke.py")),
 )
 
 WEB_GATES = (

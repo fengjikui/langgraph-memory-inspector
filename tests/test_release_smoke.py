@@ -10,6 +10,7 @@ def test_release_smoke_default_gates_match_release_checklist() -> None:
     assert "uv run python scripts/validate_social_preview.py" in commands
     assert "uv run python scripts/validate_launch_copy.py" in commands
     assert "uv run lgmi prove-demo --reset-demo" in commands
+    assert "uv run python scripts/issue_bundle_smoke.py" in commands
 
 
 def test_release_smoke_web_gates_are_optional() -> None:

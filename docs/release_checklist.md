@@ -108,6 +108,7 @@ uv run pytest -q
 uv run python scripts/validate_social_preview.py
 uv run python scripts/validate_launch_copy.py
 uv run lgmi prove-demo --reset-demo
+uv run python scripts/issue_bundle_smoke.py
 cd web
 npm run build
 npm run test:e2e
