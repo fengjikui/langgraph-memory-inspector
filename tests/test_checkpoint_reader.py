@@ -83,6 +83,13 @@ def test_reader_paginates_and_filters_checkpoints(tmp_path: Path) -> None:
     assert memory_event_page
     assert all("memory_events" in item.get("updated_channels", []) for item in memory_event_page)
 
+    prefix = reader.list_checkpoints(THREAD_ID)[-1]["checkpoint_id"][:12]
+    prefix_count = reader.count_checkpoints(THREAD_ID, checkpoint_id_prefix=prefix)
+    prefix_page = reader.list_checkpoints(THREAD_ID, checkpoint_id_prefix=prefix)
+    assert prefix_count == len(prefix_page)
+    assert prefix_page
+    assert all(item["checkpoint_id"].startswith(prefix) for item in prefix_page)
+
 
 def test_reader_summarizes_bad_blobs_without_crashing(tmp_path: Path) -> None:
     db_path = tmp_path / "bad.sqlite"

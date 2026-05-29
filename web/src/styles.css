@@ -296,7 +296,7 @@ pre {
 
 .timeline-controls {
   display: grid;
-  grid-template-columns: auto minmax(220px, 1fr);
+  grid-template-columns: auto minmax(300px, 1fr);
   gap: 10px;
   align-items: center;
   min-height: 54px;
@@ -316,6 +316,11 @@ pre {
   font-weight: 600;
 }
 
+.timeline-controls form {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .timeline-controls input[type="checkbox"] {
   width: 14px;
   height: 14px;
@@ -325,7 +330,7 @@ pre {
 .timeline-controls input[type="text"],
 .timeline-controls input:not([type]) {
   min-width: 0;
-  flex: 1 1 160px;
+  flex: 1 1 150px;
   height: 30px;
   padding: 0 9px;
   border: 1px solid #d7dde6;
@@ -977,6 +982,29 @@ pre {
 @media (max-width: 780px) {
   .workspace {
     grid-template-columns: 1fr;
+  }
+
+  .timeline-list {
+    height: auto;
+    min-height: 360px;
+  }
+
+  .timeline-controls {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .timeline-controls label {
+    min-height: 30px;
+  }
+
+  .timeline-controls form {
+    justify-content: stretch;
+  }
+
+  .timeline-controls input[type="text"],
+  .timeline-controls input:not([type]) {
+    flex-basis: 100%;
   }
 
   .diagnostic-grid {

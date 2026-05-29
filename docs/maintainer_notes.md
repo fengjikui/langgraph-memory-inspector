@@ -241,10 +241,10 @@
 
 用户价值改进：
 
-- `/api/threads/{thread_id}/checkpoints` 从数组响应升级为 `{ items, pagination, filters }`，支持 `limit`、`offset`、`from_end`、`diagnostic`、`changed_path`。
+- `/api/threads/{thread_id}/checkpoints` 从数组响应升级为 `{ items, pagination, filters }`，支持 `limit`、`offset`、`from_end`、`diagnostic`、`changed_path`、`checkpoint_id_prefix`。
 - SQLite 和 Postgres readers 增加 `count_checkpoints()`，无筛选时走数据库 limit/offset，避免生产大库首屏全量加载。
 - UI 首次打开当前 thread/namespace 时请求最新一页；用户可以点击 `Load earlier checkpoints` 逐页加载更早历史，选中的 checkpoint 不会丢。
-- Timeline 增加 `Diagnostics only` 和 state path filter，开发者可以从“有诊断”或“某个 state channel 变化”切入调试。
+- Timeline 增加 `Diagnostics only`、checkpoint id prefix 和 state path filter，开发者可以从日志里的 checkpoint id 前缀、“有诊断”或“某个 state channel 变化”切入调试。
 
 为什么重要：
 

@@ -58,6 +58,7 @@ export type Checkpoint = {
 export type TimelineFilters = {
   diagnostic?: boolean;
   changedPath?: string;
+  checkpointIdPrefix?: string;
 };
 
 export type TimelinePagination = {
@@ -65,6 +66,7 @@ export type TimelinePagination = {
   offset: number;
   returnedCount: number;
   totalCount: number;
+  unfilteredTotalCount: number;
   hasPrevious: boolean;
   hasNext: boolean;
   previousOffset?: number;

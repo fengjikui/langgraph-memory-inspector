@@ -376,6 +376,7 @@ function normalizePagination(raw: Record<string, unknown> | undefined, fallbackC
     offset: Number(raw?.offset ?? 0),
     returnedCount: Number(raw?.returned_count ?? fallbackCount),
     totalCount: Number(raw?.total_count ?? fallbackCount),
+    unfilteredTotalCount: Number(raw?.unfiltered_total_count ?? raw?.total_count ?? fallbackCount),
     hasPrevious: Boolean(raw?.has_previous),
     hasNext: Boolean(raw?.has_next),
     previousOffset: raw?.previous_offset === null || raw?.previous_offset === undefined
@@ -407,6 +408,10 @@ function mockCheckpointPage(
       checkpoint.writes.some((write) => write.path === changedPath || write.path.startsWith(`${changedPath}.`))
     );
   }
+  const checkpointIdPrefix = options.filters?.checkpointIdPrefix?.trim();
+  if (checkpointIdPrefix) {
+    rows = rows.filter((checkpoint) => checkpoint.id.startsWith(checkpointIdPrefix));
+  }
   const limit = options.limit ?? 50;
   const requestedOffset = options.fromEnd ? Math.max(rows.length - limit, 0) : options.offset ?? 0;
   const offset = Math.min(requestedOffset, rows.length);
@@ -419,6 +424,7 @@ function mockCheckpointPage(
       offset,
       returnedCount: items.length,
       totalCount: rows.length,
+      unfilteredTotalCount: mockCheckpoints[mockCheckpointKey(threadId, checkpointNs)]?.length ?? mockCheckpoints[threadId]?.length ?? rows.length,
       hasPrevious: offset > 0,
       hasNext: nextOffset < rows.length,
       previousOffset: offset > 0 ? Math.max(offset - limit, 0) : undefined,
@@ -482,6 +488,8 @@ function checkpointPageQuery(
   }
   const changedPath = options.filters?.changedPath?.trim();
   if (changedPath) params.set("changed_path", changedPath);
+  const checkpointIdPrefix = options.filters?.checkpointIdPrefix?.trim();
+  if (checkpointIdPrefix) params.set("checkpoint_id_prefix", checkpointIdPrefix);
   return `?${params.toString()}`;
 }
 

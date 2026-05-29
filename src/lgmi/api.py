@@ -69,6 +69,7 @@ def create_app(
         from_end: bool = Query(default=False),
         diagnostic: bool | None = Query(default=None),
         changed_path: str | None = Query(default=None),
+        checkpoint_id_prefix: str | None = Query(default=None),
     ) -> dict[str, Any]:
         return _read_or_404(
             lambda: _checkpoint_page(
@@ -80,6 +81,7 @@ def create_app(
                 from_end=from_end,
                 diagnostic=diagnostic,
                 changed_path=changed_path,
+                checkpoint_id_prefix=checkpoint_id_prefix,
             )
         )
 
@@ -215,12 +217,24 @@ def _checkpoint_page(
     from_end: bool,
     diagnostic: bool | None,
     changed_path: str | None,
+    checkpoint_id_prefix: str | None,
 ) -> dict[str, Any]:
+    active_filters = (
+        diagnostic is not None
+        or bool(changed_path and changed_path.strip())
+        or bool(checkpoint_id_prefix and checkpoint_id_prefix.strip())
+    )
     total_count = reader.count_checkpoints(
         thread_id,
         checkpoint_ns,
         diagnostic=diagnostic,
         changed_path=changed_path,
+        checkpoint_id_prefix=checkpoint_id_prefix,
+    )
+    unfiltered_total_count = (
+        reader.count_checkpoints(thread_id, checkpoint_ns)
+        if active_filters
+        else total_count
     )
     resolved_offset = max(total_count - limit, 0) if from_end else offset
     resolved_offset = min(resolved_offset, total_count)
@@ -231,6 +245,7 @@ def _checkpoint_page(
         offset=resolved_offset,
         diagnostic=diagnostic,
         changed_path=changed_path,
+        checkpoint_id_prefix=checkpoint_id_prefix,
     )
     returned_count = len(items)
     next_offset = resolved_offset + returned_count
@@ -241,6 +256,7 @@ def _checkpoint_page(
             "offset": resolved_offset,
             "returned_count": returned_count,
             "total_count": total_count,
+            "unfiltered_total_count": unfiltered_total_count,
             "has_previous": resolved_offset > 0,
             "has_next": next_offset < total_count,
             "previous_offset": max(resolved_offset - limit, 0) if resolved_offset > 0 else None,
@@ -250,6 +266,7 @@ def _checkpoint_page(
             "checkpoint_ns": checkpoint_ns,
             "diagnostic": diagnostic,
             "changed_path": changed_path,
+            "checkpoint_id_prefix": checkpoint_id_prefix,
         },
     }
 

@@ -67,7 +67,8 @@ uv run --extra postgres lgmi inspect-postgres "$DATABASE_URL" --schema public --
 - Local SQLite checkpoint inspection.
 - Read-only PostgresSaver inspection against full historical checkpoint tables.
 - Thread and checkpoint namespace selection.
-- Paginated checkpoint timeline with diagnostic and state-path filters.
+- Paginated checkpoint timeline with diagnostic, state-path, and checkpoint id
+  prefix filters, including filtered-vs-total counts.
 - State snapshots, checkpoint diffs, writes, and deterministic diagnostics.
 - Compact causal chain view from a selected diagnostic back to related
   checkpoint writes.
@@ -101,7 +102,7 @@ The current release-candidate CI run should include Python tests, the
 
 - Cross-namespace diffing is not supported.
 - Very large production stores still need richer indexing, virtualized
-  rendering, and server-side search.
+  rendering, and server-side search beyond the current bounded filters.
 - Diagnostics are deterministic rules for known patterns, not a general proof
   of agent correctness.
 - Postgres support targets full historical `PostgresSaver` tables.

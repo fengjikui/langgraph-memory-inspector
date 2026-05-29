@@ -43,16 +43,18 @@ demo locally.
   RAG stale-context fixture and `stale_retrieved_context` diagnostic.
 - [#25](https://github.com/fengjikui/langgraph-memory-inspector/issues/25):
   `ShallowPostgresSaver` latest-only schema detection and safe doctor message.
+- [#26](https://github.com/fengjikui/langgraph-memory-inspector/issues/26):
+  checkpoint id prefix filtering with filtered-vs-total timeline counts.
 
 ### Open Roadmap Issues
 
 These issues are intentionally user-value shaped so community feedback can turn
 into fixtures, diagnostics, and tests:
 
-- [#26](https://github.com/fengjikui/langgraph-memory-inspector/issues/26):
-  improve large checkpoint-store navigation.
 - Validate future saver variants beyond full-history `PostgresSaver` as
   upstream `langgraph-checkpoint-postgres` evolves.
+- Add deeper large-store navigation after real user feedback, such as metadata
+  search, virtualized timeline rows, or indexed server-side search.
 
 ## Community Launch
 

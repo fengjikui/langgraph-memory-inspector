@@ -36,6 +36,7 @@ class FakeCheckpointReader:
         offset: int = 0,
         diagnostic: bool | None = None,
         changed_path: str | None = None,
+        checkpoint_id_prefix: str | None = None,
     ) -> list[dict[str, Any]]:
         assert thread_id == "thread-1"
         assert checkpoint_ns in {None, "ns-a"}
@@ -52,6 +53,8 @@ class FakeCheckpointReader:
             rows = [rows[2], rows[4]]
         if changed_path == "state.memory_events":
             rows = [row for row in rows if "memory_events" in row["updated_channels"]]
+        if checkpoint_id_prefix:
+            rows = [row for row in rows if row["checkpoint_id"].startswith(checkpoint_id_prefix)]
         if limit is None:
             return rows[offset:]
         return rows[offset : offset + limit]
@@ -63,6 +66,7 @@ class FakeCheckpointReader:
         *,
         diagnostic: bool | None = None,
         changed_path: str | None = None,
+        checkpoint_id_prefix: str | None = None,
     ) -> int:
         return len(
             self.list_checkpoints(
@@ -70,6 +74,7 @@ class FakeCheckpointReader:
                 checkpoint_ns,
                 diagnostic=diagnostic,
                 changed_path=changed_path,
+                checkpoint_id_prefix=checkpoint_id_prefix,
             )
         )
 
@@ -196,6 +201,7 @@ def test_api_returns_paginated_checkpoint_contract() -> None:
         "offset": 2,
         "returned_count": 2,
         "total_count": 6,
+        "unfiltered_total_count": 6,
         "has_previous": True,
         "has_next": True,
         "previous_offset": 0,
@@ -219,10 +225,16 @@ def test_api_filters_checkpoint_page() -> None:
 
     diagnostic_payload = client.get("/api/threads/thread-1/checkpoints?diagnostic=true").json()
     changed_payload = client.get("/api/threads/thread-1/checkpoints?changed_path=state.memory_events").json()
+    prefix_payload = client.get("/api/threads/thread-1/checkpoints?checkpoint_id_prefix=checkpoint-5").json()
 
     assert [item["checkpoint_id"] for item in diagnostic_payload["items"]] == ["checkpoint-3", "checkpoint-5"]
     assert diagnostic_payload["pagination"]["total_count"] == 2
+    assert diagnostic_payload["pagination"]["unfiltered_total_count"] == 6
     assert [item["checkpoint_id"] for item in changed_payload["items"]] == ["checkpoint-3"]
+    assert [item["checkpoint_id"] for item in prefix_payload["items"]] == ["checkpoint-5"]
+    assert prefix_payload["pagination"]["total_count"] == 1
+    assert prefix_payload["pagination"]["unfiltered_total_count"] == 6
+    assert prefix_payload["filters"]["checkpoint_id_prefix"] == "checkpoint-5"
 
 
 def test_api_returns_diagnostic_causal_chain() -> None:

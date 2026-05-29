@@ -116,6 +116,7 @@ class SQLiteCheckpointReader:
         offset: int = 0,
         diagnostic: bool | None = None,
         changed_path: str | None = None,
+        checkpoint_id_prefix: str | None = None,
     ) -> list[dict[str, Any]]:
         if offset < 0:
             raise ValueError("offset must be >= 0")
@@ -129,6 +130,7 @@ class SQLiteCheckpointReader:
                     checkpoint_ns,
                     diagnostic=diagnostic,
                     changed_path=changed_path,
+                    checkpoint_id_prefix=checkpoint_id_prefix,
                 )
                 selected_rows = rows[offset : offset + limit if limit is not None else None]
                 return [
@@ -137,6 +139,7 @@ class SQLiteCheckpointReader:
                 ]
 
             namespace_sql, params = self._namespace_filter(checkpoint_ns)
+            prefix_sql, prefix_params = _checkpoint_id_prefix_filter(checkpoint_id_prefix, placeholder="?")
             limit_sql = "" if limit is None else "limit ? offset ?"
             limit_params: tuple[int, ...] = () if limit is None else (limit, offset)
             rows = conn.execute(
@@ -146,10 +149,11 @@ class SQLiteCheckpointReader:
                 from checkpoints
                 where thread_id = ?
                 {namespace_sql}
+                {prefix_sql}
                 order by rowid
                 {limit_sql}
                 """,
-                (thread_id, *params, *limit_params),
+                (thread_id, *params, *prefix_params, *limit_params),
             ).fetchall()
             return [
                 self._checkpoint_row_to_dict(row, include_checkpoint=False)
@@ -163,6 +167,7 @@ class SQLiteCheckpointReader:
         *,
         diagnostic: bool | None = None,
         changed_path: str | None = None,
+        checkpoint_id_prefix: str | None = None,
     ) -> int:
         with self._connect() as conn:
             if diagnostic is not None or changed_path:
@@ -173,10 +178,12 @@ class SQLiteCheckpointReader:
                         checkpoint_ns,
                         diagnostic=diagnostic,
                         changed_path=changed_path,
+                        checkpoint_id_prefix=checkpoint_id_prefix,
                     )
                 )
 
             namespace_sql, params = self._namespace_filter(checkpoint_ns)
+            prefix_sql, prefix_params = _checkpoint_id_prefix_filter(checkpoint_id_prefix, placeholder="?")
             return int(
                 conn.execute(
                     f"""
@@ -184,8 +191,9 @@ class SQLiteCheckpointReader:
                     from checkpoints
                     where thread_id = ?
                     {namespace_sql}
+                    {prefix_sql}
                     """,
-                    (thread_id, *params),
+                    (thread_id, *params, *prefix_params),
                 ).fetchone()[0]
             )
 
@@ -298,8 +306,10 @@ class SQLiteCheckpointReader:
         *,
         diagnostic: bool | None,
         changed_path: str | None,
+        checkpoint_id_prefix: str | None,
     ) -> list[sqlite3.Row]:
         namespace_sql, params = self._namespace_filter(checkpoint_ns)
+        prefix_sql, prefix_params = _checkpoint_id_prefix_filter(checkpoint_id_prefix, placeholder="?")
         rows = conn.execute(
             f"""
             select rowid, thread_id, checkpoint_ns, checkpoint_id,
@@ -307,9 +317,10 @@ class SQLiteCheckpointReader:
             from checkpoints
             where thread_id = ?
             {namespace_sql}
+            {prefix_sql}
             order by rowid
             """,
-            (thread_id, *params),
+            (thread_id, *params, *prefix_params),
         ).fetchall()
         channel = _channel_from_state_path(changed_path)
         return [
@@ -538,6 +549,21 @@ def _channel_from_state_path(path: str | None) -> str | None:
     if cleaned.startswith("state."):
         cleaned = cleaned.removeprefix("state.")
     return cleaned.split(".", 1)[0].split("[", 1)[0] or None
+
+
+def _checkpoint_id_prefix_filter(
+    checkpoint_id_prefix: str | None,
+    *,
+    placeholder: str,
+) -> tuple[str, tuple[str, ...]]:
+    prefix = (checkpoint_id_prefix or "").strip()
+    if not prefix:
+        return "", ()
+    return f"and checkpoint_id like {placeholder} escape '\\'", (f"{_escape_like(prefix)}%",)
+
+
+def _escape_like(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
 def _to_jsonable(

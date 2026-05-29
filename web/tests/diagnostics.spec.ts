@@ -54,4 +54,10 @@ test("diagnostic click opens writes and highlights the related channel", async (
   await page.getByRole("button", { name: "Apply" }).click();
   await expect(page.getByText("1-1 of 1")).toBeVisible();
   await expect(page.getByText("Move to Hangzhou appended")).toBeVisible();
+
+  await page.getByRole("button", { name: "Clear" }).click();
+  await page.getByLabel("Checkpoint id prefix filter").fill("ckpt_004");
+  await page.getByRole("button", { name: "Apply" }).click();
+  await expect(page.getByText("1-1 of 1 filtered from 5")).toBeVisible();
+  await expect(page.getByText("Retrieval reads stale city")).toBeVisible();
 });

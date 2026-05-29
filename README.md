@@ -323,6 +323,8 @@ This is an MVP focused on local checkpoint inspection:
 - optionally inspect LangGraph PostgresSaver stores in read-only mode
 - list threads and paginated checkpoint timelines
 - show and switch checkpoint namespaces per thread
+- filter long timelines by diagnostic presence, changed state path, or
+  checkpoint id prefix
 - decode common state channels
 - show diffs and writes
 - detect stale/conflicting memory and stale retrieved-context patterns
@@ -334,18 +336,19 @@ This is an MVP focused on local checkpoint inspection:
 
 Planned next steps:
 
-- [#25](https://github.com/fengjikui/langgraph-memory-inspector/issues/25):
-  validate `ShallowPostgresSaver` and newer saver variants.
-- [#26](https://github.com/fengjikui/langgraph-memory-inspector/issues/26):
-  improve large checkpoint-store navigation.
+- Validate future saver variants as upstream `langgraph-checkpoint-postgres`
+  evolves.
+- Add deeper large-store navigation from real feedback, such as metadata search,
+  virtualized timeline rows, or indexed server-side search.
 
 ## Known Limitations
 
 - Namespace switching is per thread. Cross-namespace diffing is not supported
   because checkpoint ids can overlap across namespaces.
-- Timeline pagination loads the latest page first and can load earlier
-  checkpoints on demand. Very large production stores still need deeper
-  indexing, virtualized rendering, and richer server-side search.
+- Timeline pagination loads the latest page first, can load earlier
+  checkpoints on demand, and supports checkpoint id prefix / state-path /
+  diagnostic filters. Very large production stores still need deeper indexing,
+  virtualized rendering, and richer server-side search.
 - Diagnostics are deterministic rules for known memory/debugging patterns, not
   a general correctness proof for every LangGraph application.
 - Postgres support targets the full historical `PostgresSaver` schema.

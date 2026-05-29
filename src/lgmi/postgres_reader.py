@@ -8,7 +8,13 @@ from typing import Any
 
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 
-from lgmi.checkpoint_reader import _channel_from_state_path, _preview_bytes, _preview_value, _to_jsonable
+from lgmi.checkpoint_reader import (
+    _channel_from_state_path,
+    _checkpoint_id_prefix_filter,
+    _preview_bytes,
+    _preview_value,
+    _to_jsonable,
+)
 
 
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
@@ -127,6 +133,7 @@ class PostgresCheckpointReader:
         offset: int = 0,
         diagnostic: bool | None = None,
         changed_path: str | None = None,
+        checkpoint_id_prefix: str | None = None,
     ) -> list[dict[str, Any]]:
         if offset < 0:
             raise ValueError("offset must be >= 0")
@@ -141,6 +148,7 @@ class PostgresCheckpointReader:
                         checkpoint_ns,
                         diagnostic=diagnostic,
                         changed_path=changed_path,
+                        checkpoint_id_prefix=checkpoint_id_prefix,
                     )
                     selected_rows = rows[offset : offset + limit if limit is not None else None]
                     return [
@@ -149,6 +157,7 @@ class PostgresCheckpointReader:
                     ]
 
                 namespace_sql, params = self._namespace_filter(checkpoint_ns)
+                prefix_sql, prefix_params = _checkpoint_id_prefix_filter(checkpoint_id_prefix, placeholder="%s")
                 limit_sql = "" if limit is None else "limit %s offset %s"
                 limit_params: tuple[int, ...] = () if limit is None else (limit, offset)
                 cur.execute(
@@ -159,11 +168,12 @@ class PostgresCheckpointReader:
                         from {{checkpoints}}
                         where thread_id = %s
                         {namespace_sql}
+                        {prefix_sql}
                         order by checkpoint_id
                         {limit_sql}
                         """
                     ),
-                    (thread_id, *params, *limit_params),
+                    (thread_id, *params, *prefix_params, *limit_params),
                 )
                 return [
                     self._checkpoint_row_to_dict(cur, row, include_checkpoint=False)
@@ -177,6 +187,7 @@ class PostgresCheckpointReader:
         *,
         diagnostic: bool | None = None,
         changed_path: str | None = None,
+        checkpoint_id_prefix: str | None = None,
     ) -> int:
         with self._connect() as conn:
             with conn.cursor() as cur:
@@ -188,10 +199,12 @@ class PostgresCheckpointReader:
                             checkpoint_ns,
                             diagnostic=diagnostic,
                             changed_path=changed_path,
+                            checkpoint_id_prefix=checkpoint_id_prefix,
                         )
                     )
 
                 namespace_sql, params = self._namespace_filter(checkpoint_ns)
+                prefix_sql, prefix_params = _checkpoint_id_prefix_filter(checkpoint_id_prefix, placeholder="%s")
                 cur.execute(
                     self._sql(
                         f"""
@@ -199,9 +212,10 @@ class PostgresCheckpointReader:
                         from {{checkpoints}}
                         where thread_id = %s
                         {namespace_sql}
+                        {prefix_sql}
                         """
                     ),
-                    (thread_id, *params),
+                    (thread_id, *params, *prefix_params),
                 )
                 return int(cur.fetchone()["count"])
 
@@ -443,8 +457,10 @@ class PostgresCheckpointReader:
         *,
         diagnostic: bool | None,
         changed_path: str | None,
+        checkpoint_id_prefix: str | None,
     ) -> list[dict[str, Any]]:
         namespace_sql, params = self._namespace_filter(checkpoint_ns)
+        prefix_sql, prefix_params = _checkpoint_id_prefix_filter(checkpoint_id_prefix, placeholder="%s")
         cur.execute(
             self._sql(
                 f"""
@@ -453,10 +469,11 @@ class PostgresCheckpointReader:
                 from {{checkpoints}}
                 where thread_id = %s
                 {namespace_sql}
+                {prefix_sql}
                 order by checkpoint_id
                 """
             ),
-            (thread_id, *params),
+            (thread_id, *params, *prefix_params),
         )
         changed_channel = _channel_from_state_path(changed_path)
         rows = cur.fetchall()

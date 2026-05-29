@@ -31,10 +31,15 @@ export function Timeline({
 }: TimelineProps) {
   const selectedItemRef = useRef<HTMLButtonElement | null>(null);
   const [changedPathDraft, setChangedPathDraft] = useState(filters.changedPath ?? "");
+  const [checkpointIdPrefixDraft, setCheckpointIdPrefixDraft] = useState(filters.checkpointIdPrefix ?? "");
 
   useEffect(() => {
     setChangedPathDraft(filters.changedPath ?? "");
   }, [filters.changedPath]);
+
+  useEffect(() => {
+    setCheckpointIdPrefixDraft(filters.checkpointIdPrefix ?? "");
+  }, [filters.checkpointIdPrefix]);
 
   useEffect(() => {
     selectedItemRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -42,18 +47,28 @@ export function Timeline({
 
   function applyPathFilter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onFiltersChange({ ...filters, changedPath: changedPathDraft.trim() || undefined });
+    onFiltersChange({
+      ...filters,
+      changedPath: changedPathDraft.trim() || undefined,
+      checkpointIdPrefix: checkpointIdPrefixDraft.trim() || undefined
+    });
   }
 
   const rangeStart = pagination && pagination.totalCount > 0 ? pagination.offset + 1 : 0;
   const rangeEnd = pagination ? pagination.offset + checkpoints.length : checkpoints.length;
+  const isFiltered = Boolean(filters.diagnostic || filters.changedPath || filters.checkpointIdPrefix);
+  const totalLabel = pagination && isFiltered && pagination.unfilteredTotalCount !== pagination.totalCount
+    ? `${rangeStart}-${rangeEnd} of ${pagination.totalCount} filtered from ${pagination.unfilteredTotalCount}`
+    : pagination
+      ? `${rangeStart}-${rangeEnd} of ${pagination.totalCount}`
+      : `${checkpoints.length} snapshots`;
 
   return (
     <section className="timeline-panel">
       <div className="panel-heading">
         <span>Checkpoint Timeline</span>
         <strong>
-          {pagination ? `${rangeStart}-${rangeEnd} of ${pagination.totalCount}` : `${checkpoints.length} snapshots`}
+          {totalLabel}
         </strong>
       </div>
       <div className="timeline-controls">
@@ -67,15 +82,21 @@ export function Timeline({
         </label>
         <form onSubmit={applyPathFilter}>
           <input
+            aria-label="Checkpoint id prefix filter"
+            onChange={(event) => setCheckpointIdPrefixDraft(event.currentTarget.value)}
+            placeholder="checkpoint id prefix"
+            value={checkpointIdPrefixDraft}
+          />
+          <input
             aria-label="State path filter"
             onChange={(event) => setChangedPathDraft(event.currentTarget.value)}
             placeholder="state.memory_events"
             value={changedPathDraft}
           />
           <button type="submit">Apply</button>
-          {filters.changedPath ? (
+          {filters.changedPath || filters.checkpointIdPrefix ? (
             <button
-              onClick={() => onFiltersChange({ ...filters, changedPath: undefined })}
+              onClick={() => onFiltersChange({ ...filters, changedPath: undefined, checkpointIdPrefix: undefined })}
               type="button"
             >
               Clear

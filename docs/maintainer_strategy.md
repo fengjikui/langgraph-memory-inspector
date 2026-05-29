@@ -148,9 +148,10 @@ OpenClaw 给出的推广侧高优先级建议：
 公开首发前的代码和文档 gate 已经基本就绪。现在优先做两类事：
 
 - 人工上传 GitHub social preview，然后发 LangChain Forum 首帖。
-- 把 #20 收到的真实反馈继续拆成可实现 issue，例如
-  [#26](https://github.com/fengjikui/langgraph-memory-inspector/issues/26)。
+- 把 #20 后续收到的真实反馈继续拆成更小的可实现 issue。
 - 已把 [#24](https://github.com/fengjikui/langgraph-memory-inspector/issues/24)
   落成 synthetic fixture、确定性诊断和诊断矩阵回归。
 - 已把 [#25](https://github.com/fengjikui/langgraph-memory-inspector/issues/25)
   落成 `ShallowPostgresSaver` schema 检测和安全 doctor 报告。
+- 已把 [#26](https://github.com/fengjikui/langgraph-memory-inspector/issues/26)
+  落成 checkpoint id 前缀过滤和 filtered-vs-total 计数。

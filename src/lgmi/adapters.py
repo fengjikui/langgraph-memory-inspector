@@ -21,6 +21,7 @@ class CheckpointReader(Protocol):
         offset: int = 0,
         diagnostic: bool | None = None,
         changed_path: str | None = None,
+        checkpoint_id_prefix: str | None = None,
     ) -> list[dict[str, Any]]:
         """Return timeline checkpoints for a thread."""
 
@@ -31,6 +32,7 @@ class CheckpointReader(Protocol):
         *,
         diagnostic: bool | None = None,
         changed_path: str | None = None,
+        checkpoint_id_prefix: str | None = None,
     ) -> int:
         """Return checkpoint count for a thread and optional timeline filters."""
 
