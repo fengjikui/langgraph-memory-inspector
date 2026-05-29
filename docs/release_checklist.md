@@ -79,6 +79,20 @@ Draft release notes: `docs/release_notes_v0.1.0.md`.
 
 ## Commands
 
+Default local smoke:
+
+```bash
+uv run python scripts/release_smoke.py
+```
+
+Full local smoke with frontend build/e2e:
+
+```bash
+uv run python scripts/release_smoke.py --include-web
+```
+
+Equivalent expanded commands:
+
 ```bash
 uv run pytest -q
 uv run python scripts/validate_social_preview.py

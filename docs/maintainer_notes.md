@@ -697,3 +697,26 @@
 
 - `uv run python scripts/validate_launch_copy.py`
 - `uv run pytest tests/test_launch_copy.py -q`
+
+### Release smoke command
+
+用户价值改进：
+
+- 新增 `scripts/release_smoke.py`，把 release checklist 中的默认发布前检查收成一条命令：
+  `uv run pytest -q`、social preview asset 校验、launch copy guardrail 和
+  `lgmi prove-demo --reset-demo`。
+- `--include-web` 会额外运行 `web/` 下的 `npm run build` 和 `npm run test:e2e`。
+- 新增 `tests/test_release_smoke.py`，防止 release smoke gates 和 release checklist 脱节。
+- `docs/release_checklist.md` 现在先给一键 smoke，再保留展开命令。
+
+为什么重要：
+
+- 发布前 gate 越分散，越容易漏跑。把它收成一条命令，可以让后续每次准备 Forum、Reddit、
+  HN 或中文社区发布前都先跑同一套证据。
+- Web gate 保持可选，是为了让轻量文档/文案检查不用每次都触发浏览器安装，但 broad launch
+  前仍然有完整路径。
+
+已验证：
+
+- `uv run python scripts/release_smoke.py`
+- `uv run pytest tests/test_release_smoke.py -q`
