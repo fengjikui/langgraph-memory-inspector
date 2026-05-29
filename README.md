@@ -198,7 +198,8 @@ This is an MVP focused on local checkpoint inspection:
 - decode common state channels
 - show diffs and writes
 - detect stale/conflicting memory patterns
-- detect reducer append duplicates and unexpected parent checkpoint jumps
+- detect reducer append duplicates, namespace confusion hints, and unexpected
+  parent checkpoint jumps
 - show compact diagnostic causal chains across checkpoint ranges
 - export explicit debug bundles for issues and code review
 - provide a React UI for local debugging

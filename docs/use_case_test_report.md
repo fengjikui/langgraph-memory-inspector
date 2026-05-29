@@ -49,8 +49,9 @@ PASS 检查器证据链已经证明 stale memory 故障路径。
 - 第一次 stale selected-city checkpoint：已检测到
 - diagnostics：`conflicting_residence_memory`、`stale_selected_city`、
   `oversized_message_history`、`checkpoint_size_spike`
-- 诊断引擎还覆盖 `reducer_append_duplicate_state` 和
-  `unexpected_parent_checkpoint`，用于后续真实 reducer/resume bug pattern。
+- 诊断引擎还覆盖 `reducer_append_duplicate_state`、
+  `checkpoint_namespace_confusion` 和 `unexpected_parent_checkpoint`，用于后续
+  真实 reducer/resume/namespace bug pattern。
 
 ## 面向用户的解释
 

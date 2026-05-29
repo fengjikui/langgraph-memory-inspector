@@ -216,6 +216,10 @@ Core checks:
   previous checkpoint in the current ordered timeline. This can be normal
   branching, so the UI should present it as a resume/lineage signal rather than
   proof of corruption.
+- `checkpoint_namespace_confusion`: the same thread has multiple
+  `checkpoint_ns` values whose latest state signatures diverge. This is a
+  navigation hint for cases where a developer is inspecting a replay or fork
+  namespace while expecting production state.
 
 For each finding, the inspector should show:
 

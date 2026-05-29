@@ -191,6 +191,86 @@ def test_run_diagnostics_detects_unexpected_parent_checkpoint() -> None:
     assert anomaly["parent_present_in_timeline"] is True
 
 
+def test_run_diagnostics_detects_checkpoint_namespace_confusion() -> None:
+    checkpoints = [
+        {
+            "thread_id": "thread-ns-demo",
+            "checkpoint_ns": "production",
+            "checkpoint_id": "prod-cp-1",
+            "parent_checkpoint_id": None,
+            "rowid": 1,
+            "checkpoint": {
+                "value": {
+                    "channel_values": {
+                        "selected_city": "Shanghai",
+                        "memory_events": [{"type": "residence_city", "value": "Shanghai"}],
+                    }
+                }
+            },
+        },
+        {
+            "thread_id": "thread-ns-demo",
+            "checkpoint_ns": "production",
+            "checkpoint_id": "prod-cp-2",
+            "parent_checkpoint_id": "prod-cp-1",
+            "rowid": 2,
+            "checkpoint": {
+                "value": {
+                    "channel_values": {
+                        "selected_city": "Hangzhou",
+                        "memory_events": [{"type": "residence_city", "value": "Hangzhou"}],
+                    }
+                }
+            },
+        },
+        {
+            "thread_id": "thread-ns-demo",
+            "checkpoint_ns": "shadow_replay",
+            "checkpoint_id": "shadow-cp-1",
+            "parent_checkpoint_id": None,
+            "rowid": 3,
+            "checkpoint": {
+                "value": {
+                    "channel_values": {
+                        "messages": [{"type": "human", "content": "replay only"}],
+                    }
+                }
+            },
+        },
+    ]
+
+    diagnostics = run_diagnostics({}, checkpoints=checkpoints)
+    by_id = {item["id"]: item for item in diagnostics}
+
+    assert "checkpoint_namespace_confusion" in by_id
+    evidence = by_id["checkpoint_namespace_confusion"]["evidence"]["threads"][0]
+    assert evidence["thread_id"] == "thread-ns-demo"
+    assert evidence["namespaces"] == ["production", "shadow_replay"]
+    latest_by_ns = {item["checkpoint_ns"]: item for item in evidence["latest_by_namespace"]}
+    assert latest_by_ns["production"]["state_summary"]["selected_city"] == "Hangzhou"
+    assert latest_by_ns["shadow_replay"]["state_summary"]["channel_names"] == ["messages"]
+
+
+def test_run_diagnostics_does_not_flag_matching_namespaces() -> None:
+    checkpoints = [
+        {
+            "thread_id": "thread-ns-demo",
+            "checkpoint_ns": namespace,
+            "checkpoint_id": f"{namespace}-cp-1",
+            "rowid": rowid,
+            "state": {
+                "selected_city": "Hangzhou",
+                "memory_events": [{"type": "residence_city", "value": "Hangzhou"}],
+            },
+        }
+        for rowid, namespace in enumerate(["production", "shadow_replay"], start=1)
+    ]
+
+    diagnostics = run_diagnostics({}, checkpoints=checkpoints)
+
+    assert "checkpoint_namespace_confusion" not in {item["id"] for item in diagnostics}
+
+
 def test_summarize_writes_groups_by_channel_and_task_id() -> None:
     writes = [
         {

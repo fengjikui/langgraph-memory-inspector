@@ -169,6 +169,21 @@ def run_diagnostics(
             }
         )
 
+    namespace_confusions = _find_checkpoint_namespace_confusion(_as_list(checkpoints))
+    if namespace_confusions:
+        diagnostics.append(
+            {
+                "id": "checkpoint_namespace_confusion",
+                "severity": "warning",
+                "title": "Checkpoint namespaces diverge for the same thread",
+                "description": "The same thread has multiple checkpoint namespaces with different latest state signatures. Confirm the active checkpoint_ns before treating missing or stale state as a graph bug.",
+                "evidence": {
+                    "threads": namespace_confusions,
+                    "false_positive_note": "Multiple namespaces can be intentional for replay, forks, or experiments. This diagnostic is a navigation hint when the inspected namespace does not match the user's expected run.",
+                },
+            }
+        )
+
     return diagnostics
 
 
@@ -384,6 +399,131 @@ def _find_unexpected_parent_checkpoints(checkpoints: list[Any]) -> list[dict[str
             }
         )
     return anomalies
+
+
+def _find_checkpoint_namespace_confusion(checkpoints: list[Any]) -> list[dict[str, Any]]:
+    by_thread: defaultdict[str, list[tuple[int, Any]]] = defaultdict(list)
+    for index, checkpoint in enumerate(checkpoints):
+        thread_id = str(_get(checkpoint, "thread_id", "") or "__unknown_thread__")
+        by_thread[thread_id].append((index, checkpoint))
+
+    findings: list[dict[str, Any]] = []
+    for thread_id, indexed_checkpoints in sorted(by_thread.items()):
+        by_namespace: defaultdict[str, list[tuple[int, Any]]] = defaultdict(list)
+        for index, checkpoint in indexed_checkpoints:
+            namespace = str(_get(checkpoint, "checkpoint_ns", "") or "")
+            by_namespace[namespace].append((index, checkpoint))
+
+        if len(by_namespace) < 2:
+            continue
+
+        latest_by_namespace: list[dict[str, Any]] = []
+        signatures: set[str] = set()
+        for namespace, items in sorted(by_namespace.items()):
+            latest_index, latest_checkpoint = max(
+                items,
+                key=lambda item: _checkpoint_order_key(item[1], item[0]),
+            )
+            summary = _namespace_latest_summary(namespace, latest_checkpoint, latest_index)
+            signatures.add(summary["state_signature"])
+            latest_by_namespace.append(summary)
+
+        duplicated_checkpoint_ids = _checkpoint_ids_shared_across_namespaces(by_namespace)
+        if len(signatures) < 2 and not duplicated_checkpoint_ids:
+            continue
+
+        findings.append(
+            {
+                "thread_id": None if thread_id == "__unknown_thread__" else thread_id,
+                "namespaces": sorted(by_namespace),
+                "latest_by_namespace": [
+                    {
+                        key: value
+                        for key, value in summary.items()
+                        if key != "state_signature"
+                    }
+                    for summary in latest_by_namespace
+                ],
+                "duplicated_checkpoint_ids": duplicated_checkpoint_ids,
+                "suggested_action": "Switch checkpoint_ns deliberately and compare the latest checkpoint before debugging state as missing or stale.",
+            }
+        )
+
+    return findings
+
+
+def _checkpoint_ids_shared_across_namespaces(
+    by_namespace: Mapping[str, list[tuple[int, Any]]]
+) -> list[dict[str, Any]]:
+    namespaces_by_checkpoint: defaultdict[str, set[str]] = defaultdict(set)
+    for namespace, items in by_namespace.items():
+        for _, checkpoint in items:
+            checkpoint_id = _checkpoint_id(checkpoint)
+            if checkpoint_id:
+                namespaces_by_checkpoint[checkpoint_id].add(namespace)
+    return [
+        {"checkpoint_id": checkpoint_id, "namespaces": sorted(namespaces)}
+        for checkpoint_id, namespaces in sorted(namespaces_by_checkpoint.items())
+        if len(namespaces) > 1
+    ]
+
+
+def _namespace_latest_summary(namespace: str, checkpoint: Any, index: int) -> dict[str, Any]:
+    state = _state_from_checkpoint_like(checkpoint)
+    channel_names = _checkpoint_channel_names(checkpoint, state)
+    state_summary = {
+        "channel_names": channel_names,
+        "selected_city": state.get("selected_city") if isinstance(state, Mapping) else None,
+        "memory_event_values": [
+            _get(event, "value")
+            for event in _as_list(state.get("memory_events") if isinstance(state, Mapping) else None)
+            if _get(event, "value") is not None
+        ],
+        "retrieved_doc_cities": [
+            _get(doc, "city")
+            for doc in _as_list(state.get("retrieved_docs") if isinstance(state, Mapping) else None)
+            if _get(doc, "city") is not None
+        ],
+    }
+    return {
+        "checkpoint_ns": namespace,
+        "checkpoint_id": _checkpoint_id(checkpoint),
+        "parent_checkpoint_id": _parent_checkpoint_id(checkpoint),
+        "rowid": _get(checkpoint, "rowid", None),
+        "ordinal": _get(checkpoint, "ordinal", _get(checkpoint, "step", index)),
+        "state_summary": _jsonable(state_summary),
+        "state_signature": repr(_jsonable(state_summary)),
+    }
+
+
+def _state_from_checkpoint_like(checkpoint: Any) -> Mapping[str, Any]:
+    state = _get(checkpoint, "state", None)
+    if isinstance(state, Mapping):
+        return state
+
+    raw_checkpoint = _get(checkpoint, "checkpoint", None)
+    if isinstance(raw_checkpoint, Mapping):
+        value = raw_checkpoint.get("value")
+        if isinstance(value, Mapping) and isinstance(value.get("channel_values"), Mapping):
+            return value["channel_values"]
+        if isinstance(raw_checkpoint.get("channel_values"), Mapping):
+            return raw_checkpoint["channel_values"]
+    return {}
+
+
+def _checkpoint_channel_names(checkpoint: Any, state: Mapping[str, Any]) -> list[str]:
+    channel_names = _get(checkpoint, "channel_names", None)
+    if isinstance(channel_names, list):
+        return sorted(str(item) for item in channel_names)
+    return sorted(str(key) for key in state.keys())
+
+
+def _checkpoint_order_key(checkpoint: Any, fallback_index: int) -> tuple[int, int]:
+    for priority, key in ((3, "rowid"), (2, "ordinal"), (1, "step")):
+        value = _to_int(_get(checkpoint, key, None))
+        if value is not None:
+            return (priority, value)
+    return (0, fallback_index)
 
 
 def _write_summary(write: Any, index: int) -> dict[str, Any]:

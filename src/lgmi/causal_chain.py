@@ -34,6 +34,10 @@ DIAGNOSTIC_TARGETS: dict[str, dict[str, list[str]]] = {
         "state_paths": ["checkpoint.parent_checkpoint_id"],
         "write_channels": [],
     },
+    "checkpoint_namespace_confusion": {
+        "state_paths": ["checkpoint.checkpoint_ns"],
+        "write_channels": [],
+    },
 }
 
 

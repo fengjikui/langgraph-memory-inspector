@@ -1,0 +1,91 @@
+{
+  "fixture_id": "synthetic_namespace_confusion_multi_ns_v1",
+  "source_safety": "synthetic",
+  "backend": "synthetic_json",
+  "langgraph_version": "synthetic",
+  "checkpointer": "synthetic",
+  "thread_id": "fixture-thread-namespace-confusion",
+  "checkpoint_ns": "production,shadow_replay",
+  "checkpoint_ns_shape": "two namespaces under one thread with divergent latest state",
+  "bug_pattern_tags": [
+    "checkpoint_namespace_confusion",
+    "wrong_namespace_selected",
+    "missing_state_in_shadow_replay"
+  ],
+  "state_channels": [
+    "checkpoint_ns",
+    "memory_events",
+    "messages",
+    "selected_city"
+  ],
+  "expected_diagnostics": [
+    "checkpoint_namespace_confusion"
+  ],
+  "state": {
+    "messages": []
+  },
+  "writes": [],
+  "checkpoints": [
+    {
+      "thread_id": "fixture-thread-namespace-confusion",
+      "checkpoint_ns": "production",
+      "checkpoint_id": "prod-cp-1",
+      "parent_checkpoint_id": null,
+      "rowid": 1,
+      "checkpoint": {
+        "value": {
+          "channel_values": {
+            "selected_city": "Shanghai",
+            "memory_events": [
+              {
+                "type": "residence_city",
+                "value": "Shanghai",
+                "source": "extract_profile"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "thread_id": "fixture-thread-namespace-confusion",
+      "checkpoint_ns": "production",
+      "checkpoint_id": "prod-cp-2",
+      "parent_checkpoint_id": "prod-cp-1",
+      "rowid": 2,
+      "checkpoint": {
+        "value": {
+          "channel_values": {
+            "selected_city": "Hangzhou",
+            "memory_events": [
+              {
+                "type": "residence_city",
+                "value": "Hangzhou",
+                "source": "extract_profile"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "thread_id": "fixture-thread-namespace-confusion",
+      "checkpoint_ns": "shadow_replay",
+      "checkpoint_id": "shadow-cp-1",
+      "parent_checkpoint_id": null,
+      "rowid": 3,
+      "checkpoint": {
+        "value": {
+          "channel_values": {
+            "messages": [
+              {
+                "type": "human",
+                "content": "synthetic replay input"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
