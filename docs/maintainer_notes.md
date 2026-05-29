@@ -93,3 +93,14 @@
 
 - 本机没有 Docker/Postgres server，因此真实 Postgres 集成测试通过 `LGMI_POSTGRES_TEST_DSN` 作为显式可选测试。
 - 默认测试已覆盖 blob hydration、write decoding、schema 安全校验。
+
+### GitHub Actions CI
+
+用户价值改进：
+
+- 新增 CI workflow，覆盖 Python 默认测试、stale-memory smoke test、前端 build/e2e，以及真实 Postgres service 集成测试。
+- README 增加 CI badge，让第一次访问 GitHub 的开发者能看到项目不是只在本机“口头可跑”。
+
+为什么重要：
+
+- Postgres adapter 的可信度必须来自真实 PostgresSaver fixture。CI 里的 Postgres service 可以补上本机没有 Docker/Postgres 的验证缺口，也让后续贡献者改动 adapter 时更放心。
