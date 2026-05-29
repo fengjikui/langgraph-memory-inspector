@@ -201,7 +201,10 @@ function diagnosticsForState(
     code,
     severity: code.includes("conflicting") ? "critical" as const : "warning" as const,
     checkpointId: String(raw.checkpoint_id ?? ""),
-    node: inferNodeFromChannels(asStringArray(raw.updated_channels)),
+    node: code === "conflicting_residence_memory" ? "extract_profile" : inferNodeFromChannels(asStringArray(raw.updated_channels)),
+    statePath: statePathForDiagnostic(code),
+    writeChannel: writeChannelForDiagnostic(code),
+    suggestedTab: "state" as const,
     title: code.split("_").join(" "),
     message: code === "conflicting_residence_memory"
       ? "Residence memory contains more than one city; retrieval may use stale context."
@@ -215,6 +218,9 @@ function diagnosticsForState(
       severity: "critical",
       checkpointId: String(raw.checkpoint_id ?? ""),
       node: "retrieve_policy",
+      statePath: "selected_city",
+      writeChannel: "selected_city",
+      suggestedTab: "state",
       title: "stale selected city",
       message: `Latest residence is ${String(latestResidence)}, but selected_city is ${selectedCity}.`
     });
@@ -228,12 +234,30 @@ function diagnosticsForState(
       severity: "critical",
       checkpointId: String(raw.checkpoint_id ?? ""),
       node: "extract_profile",
+      statePath: "memory_events[type=residence_city]",
+      writeChannel: "memory_events",
+      suggestedTab: "state",
       title: "conflicting residence memory",
       message: "Multiple residence_city memories are active at the same time."
     });
   }
 
   return diagnostics;
+}
+
+function statePathForDiagnostic(code: string): string | undefined {
+  if (code === "conflicting_residence_memory") return "memory_events[type=residence_city]";
+  if (code === "stale_selected_city") return "selected_city";
+  if (code === "oversized_message_history") return "messages";
+  if (code === "checkpoint_size_spike") return "checkpoint.byte_size";
+  return undefined;
+}
+
+function writeChannelForDiagnostic(code: string): string | undefined {
+  if (code === "conflicting_residence_memory") return "memory_events";
+  if (code === "stale_selected_city") return "selected_city";
+  if (code === "oversized_message_history") return "messages";
+  return undefined;
 }
 
 function normalizeMessages(items: unknown[]): Message[] {

@@ -27,6 +27,9 @@ const conflictDiagnostic: Diagnostic = {
   severity: "critical",
   checkpointId: "ckpt_004_retrieve",
   node: "retrieve_policy_context",
+  statePath: "memory_events[type=residence_city]",
+  writeChannel: "memory_events",
+  suggestedTab: "state",
   title: "Conflicting residence memory",
   message:
     "Two residence memories exist: Shanghai was written first, Hangzhou was appended later, but selected_city still resolves to Shanghai."

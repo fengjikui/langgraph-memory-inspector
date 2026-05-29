@@ -1,4 +1,5 @@
 import { AlertTriangle, CheckCircle2, CircleDot, DatabaseZap } from "lucide-react";
+import { useEffect, useRef } from "react";
 import type { Checkpoint } from "../types";
 
 type TimelineProps = {
@@ -14,6 +15,12 @@ function StatusIcon({ checkpoint, selected }: { checkpoint: Checkpoint; selected
 }
 
 export function Timeline({ checkpoints, selectedCheckpointId, onSelectCheckpoint }: TimelineProps) {
+  const selectedItemRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    selectedItemRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [selectedCheckpointId]);
+
   return (
     <section className="timeline-panel">
       <div className="panel-heading">
@@ -28,6 +35,7 @@ export function Timeline({ checkpoints, selectedCheckpointId, onSelectCheckpoint
               className={selected ? "timeline-item selected" : `timeline-item ${checkpoint.status}`}
               key={checkpoint.id}
               onClick={() => onSelectCheckpoint(checkpoint.id)}
+              ref={selected ? selectedItemRef : undefined}
               type="button"
             >
               <span className="timeline-rail">

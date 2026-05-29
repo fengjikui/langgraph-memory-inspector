@@ -145,16 +145,18 @@ pre {
 .center-stack {
   min-height: 0;
   gap: 12px;
+  height: calc(100vh - 82px);
 }
 
 .timeline-panel {
-  min-height: 360px;
-  flex: 1;
+  min-height: 0;
+  flex: 1 1 0;
   overflow: hidden;
 }
 
 .diagnostics-panel {
-  min-height: 205px;
+  flex: 0 0 260px;
+  min-height: 0;
   overflow: auto;
 }
 
@@ -562,10 +564,23 @@ pre {
   border: 1px solid #dbe2eb;
   border-radius: 8px;
   background: #f8fafc;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .diagnostic-card:first-child {
   grid-column: 1 / -1;
+}
+
+.diagnostic-card:hover {
+  border-color: #9fb0c4;
+  background: #f2f6fb;
+}
+
+.diagnostic-card.selected {
+  border-color: #16a085;
+  background: #effcf8;
 }
 
 .diagnostic-card.critical {
@@ -593,6 +608,27 @@ pre {
   color: #475467;
   font-size: 12px;
   line-height: 1.45;
+}
+
+.diagnostic-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.diagnostic-evidence span,
+.diagnostic-evidence code {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 22px;
+  padding: 2px 6px;
+  border: 1px solid #dbe2eb;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #536174;
+  font-size: 11px;
 }
 
 .empty-state {

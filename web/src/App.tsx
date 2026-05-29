@@ -5,7 +5,7 @@ import { TopChrome } from "./components/Chrome";
 import { DiagnosticsPanel } from "./components/DiagnosticsPanel";
 import { ThreadSelector } from "./components/ThreadSelector";
 import { Timeline } from "./components/Timeline";
-import type { Checkpoint, NodeWrite, Summary, Thread, TimelineDiff } from "./types";
+import type { Checkpoint, Diagnostic, NodeWrite, Summary, Thread, TimelineDiff } from "./types";
 
 type ViewerTab = "state" | "diff" | "writes";
 
@@ -74,6 +74,11 @@ function App() {
     [checkpoints, selectedCheckpointId]
   );
 
+  function selectDiagnostic(diagnostic: Diagnostic) {
+    setSelectedCheckpointId(diagnostic.checkpointId);
+    setActiveTab(diagnostic.suggestedTab ?? "state");
+  }
+
   return (
     <div className="app-shell">
       <TopChrome summary={summary} />
@@ -95,7 +100,11 @@ function App() {
               setActiveTab("state");
             }}
           />
-          <DiagnosticsPanel checkpoints={checkpoints} />
+          <DiagnosticsPanel
+            checkpoints={checkpoints}
+            selectedCheckpointId={selectedCheckpointId}
+            onSelectDiagnostic={selectDiagnostic}
+          />
         </div>
         <CheckpointDetail
           checkpoint={selectedCheckpoint}

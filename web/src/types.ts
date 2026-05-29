@@ -68,6 +68,9 @@ export type Diagnostic = {
   severity: Severity;
   checkpointId: string;
   node: string;
+  statePath?: string;
+  writeChannel?: string;
+  suggestedTab?: "state" | "diff" | "writes";
   title: string;
   message: string;
 };

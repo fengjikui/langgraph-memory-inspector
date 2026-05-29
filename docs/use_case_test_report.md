@@ -58,10 +58,20 @@ PASS 检查器证据链已经证明 stale memory 故障路径。
 > 选择了最早的居住地记忆。开发者在阅读源码之前，就能先从 checkpoint
 > 状态里看到第一条证据。
 
+## 最新产品打磨
+
+当前 UI 已经把 diagnostic 从静态提示改成可点击证据卡片：
+
+- 卡片展示对应 checkpoint。
+- 卡片展示相关 state path，例如 `selected_city` 或
+  `memory_events[type=residence_city]`。
+- 卡片展示相关 write channel，例如 `memory_events` 或 `selected_city`。
+- 点击 diagnostic 会跳转到对应 checkpoint，缩短从问题到证据的路径。
+
 ## 剩余展示缺口
 
-下一步最值得增强的是更明确的 node attribution 视图：
+下一步最值得增强的是更完整的 write attribution 视图：
 
+- 在 Writes tab 中高亮 diagnostic 关联的 write channel。
 - 展示 `extract_profile -> memory_events`，说明杭州是在哪里 append 进去的。
 - 展示 `retrieve_policy -> selected_city`，说明 stale 上海选择是在哪里发生的。
-- 允许用户从 diagnostic 直接跳转到对应 checkpoint 和 write channel。
