@@ -5,10 +5,18 @@ from typing import Any, Callable
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
 from lgmi.analysis import diff_states
 from lgmi.adapters import CheckpointReader
 from lgmi.checkpoint_reader import SQLiteCheckpointReader
+from lgmi.export_bundle import export_debug_bundle
+
+
+class DebugBundleRequest(BaseModel):
+    thread_id: str
+    checkpoint_id: str
+    context: int = Field(default=2, ge=0, le=20)
 
 
 def create_app(source: str | Path | CheckpointReader) -> FastAPI:
@@ -29,7 +37,7 @@ def create_app(source: str | Path | CheckpointReader) -> FastAPI:
         CORSMiddleware,
         allow_origins=["*"],
         allow_credentials=False,
-        allow_methods=["GET"],
+        allow_methods=["GET", "POST"],
         allow_headers=["*"],
     )
 
@@ -72,6 +80,17 @@ def create_app(source: str | Path | CheckpointReader) -> FastAPI:
             "to_checkpoint_id": to_checkpoint_id,
             "diff": diff_states(_state_from_checkpoint(before), _state_from_checkpoint(after)),
         }
+
+    @app.post("/api/exports/debug-bundle")
+    def debug_bundle(request: DebugBundleRequest) -> dict[str, Any]:
+        return _read_or_404(
+            lambda: export_debug_bundle(
+                reader,
+                thread_id=request.thread_id,
+                checkpoint_id=request.checkpoint_id,
+                context=request.context,
+            )
+        )
 
     return app
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from fastapi.testclient import TestClient
@@ -57,3 +58,22 @@ def test_api_accepts_checkpoint_reader_adapter() -> None:
         == "Hangzhou"
     )
     assert client.get("/api/threads/thread-1/checkpoints/checkpoint-1/writes").json()[0]["channel"] == "selected_city"
+
+
+def test_api_exports_debug_bundle_only_when_requested(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    client = TestClient(create_app(FakeCheckpointReader()))
+
+    assert not (tmp_path / "exports").exists()
+    response = client.post(
+        "/api/exports/debug-bundle",
+        json={"thread_id": "thread-1", "checkpoint_id": "checkpoint-1"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["thread_id"] == "thread-1"
+    assert payload["checkpoint_id"] == "checkpoint-1"
+    assert payload["file_size_bytes"] > 0
+    assert Path(payload["path"]).exists()
+    assert Path(payload["path"]).parent == tmp_path / "exports"

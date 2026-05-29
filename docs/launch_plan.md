@@ -14,6 +14,7 @@ demo locally.
 - Local SQLite inspector path.
 - Read-only PostgresSaver reader with CI-backed Postgres integration.
 - Use-case smoke test proving the stale-memory evidence chain.
+- Explicit debug bundle export for teammate, issue, and PR handoff.
 
 ## Pre-Public Checklist
 
@@ -46,13 +47,16 @@ Acceptance criteria:
 User value: once a developer finds a bug, they need a shareable artifact for a
 teammate, issue, or pull request.
 
+Status: implemented for SQLite and backend API. A future UI button can call the
+existing API.
+
 Acceptance criteria:
 
-- Export includes summary, timeline slice, selected checkpoint state, writes,
+- [x] Export includes summary, timeline slice, selected checkpoint state, writes,
   diagnostics, and reproduction notes.
-- Export is explicit and writes to `exports/`.
-- Export response displays file path and size.
-- README documents that exports are safe to delete.
+- [x] Export is explicit and writes to `exports/`.
+- [x] Export response displays file path and size.
+- [x] README documents that exports are safe to delete.
 
 ### Fresh-Clone Quickstart Audit
 

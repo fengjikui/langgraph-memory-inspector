@@ -104,3 +104,21 @@
 为什么重要：
 
 - Postgres adapter 的可信度必须来自真实 PostgresSaver fixture。CI 里的 Postgres service 可以补上本机没有 Docker/Postgres 的验证缺口，也让后续贡献者改动 adapter 时更放心。
+
+### Debug bundle 显式导出
+
+用户价值改进：
+
+- 新增 `lgmi export-debug-bundle`，开发者可以把某个 checkpoint 的证据导出成 JSON。
+- 新增 `POST /api/exports/debug-bundle`，为后续 UI 上的“导出证据包”按钮预留入口。
+- bundle 包含数据库摘要、thread/checkpoint 元数据、timeline context、selected checkpoint、incoming writes、diagnostics 和复现备注。
+
+为什么重要：
+
+- 真实调试不是止步于“我在本机看到了问题”。开发者通常还要把证据发给同事、写进 PR、挂到 issue，或用于 incident 复盘。
+- 证据包把本地 checkpoint 排查结果变成可分享 artifact，同时保持 local-first，不需要上传 traces。
+- 导出必须显式触发，默认写到 `exports/`，并在 README 说明可安全删除，避免长期维护时磁盘文件悄悄增长。
+
+已验证：
+
+- `uv run pytest -q`

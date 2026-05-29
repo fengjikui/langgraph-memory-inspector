@@ -123,6 +123,33 @@ The e2e test uses `VITE_LGMI_API_MODE=mock`, opens the inspector, clicks the
 `conflicting_residence_memory` diagnostic, and verifies that the related
 `state.memory_events` write is highlighted.
 
+## Export A Debug Bundle
+
+When you find a suspicious checkpoint, export an explicit JSON bundle that can
+be attached to an issue, pull request, or teammate handoff:
+
+```bash
+uv run lgmi export-debug-bundle examples/relocation_policy_agent/data/checkpoints.sqlite \
+  --thread-id relocation-demo-user-001 \
+  --checkpoint-id <checkpoint-id> \
+  --output-dir exports
+```
+
+The bundle includes:
+
+- database summary
+- thread id, checkpoint namespace, and selected checkpoint id
+- timeline context around the selected checkpoint
+- decoded selected checkpoint state
+- incoming writes for that checkpoint
+- deterministic diagnostics such as `conflicting_residence_memory`
+- short reproduction notes for code review or incident debugging
+
+The inspector never exports automatically. Files are created only after this
+CLI command or the `POST /api/exports/debug-bundle` API action. Generated
+bundles are written under `exports/`, ignored by git, and safe to delete after
+you share or archive the evidence.
+
 ## Current Scope
 
 This is an MVP focused on local checkpoint inspection:
@@ -133,13 +160,14 @@ This is an MVP focused on local checkpoint inspection:
 - decode common state channels
 - show diffs and writes
 - detect stale/conflicting memory patterns
+- export explicit debug bundles for issues and code review
 - provide a React UI for local debugging
 
 Planned next steps:
 
 - run the Postgres adapter against more real-world checkpoint stores
 - add richer node-level write attribution across multiple checkpoints
-- export a shareable debug bundle for issues and code review
+- add namespace-aware filtering for multi-namespace checkpoint stores
 
 ## Optional Postgres Inspection
 

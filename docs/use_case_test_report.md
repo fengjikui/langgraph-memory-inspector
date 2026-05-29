@@ -81,6 +81,31 @@ cd web && npm run test:e2e
 测试会打开 UI，点击 `conflicting_residence_memory`，并确认 Writes tab 中的
 `state.memory_events` 写入被高亮。
 
+## 可分享调试证据包
+
+最新实现新增显式 debug bundle 导出：
+
+```bash
+uv run lgmi export-debug-bundle examples/relocation_policy_agent/data/checkpoints.sqlite \
+  --thread-id relocation-demo-user-001 \
+  --checkpoint-id <checkpoint-id> \
+  --output-dir exports
+```
+
+这解决了真实用户排查后的下一步问题：不仅要在本机看懂 bug，还要把证据发给
+同事、PR、issue 或 incident 复盘。bundle 是 JSON 文件，包含数据库摘要、线程
+和 checkpoint 元数据、上下文 timeline、selected checkpoint、incoming writes、
+diagnostics 和复现备注。
+
+针对 stale memory demo，测试已经验证 bundle 中同时包含：
+
+- `conflicting_residence_memory`
+- `state.memory_events` 里的杭州记忆证据
+- 对应 checkpoint 的 `memory_events` 写入
+
+导出动作不会自动发生，必须由 CLI 或 API 显式触发。生成文件位于 `exports/`，
+已被 git ignore，可以在分享或归档后直接删除。
+
 ## 剩余展示缺口
 
 下一步最值得增强的是更完整的 node-level write attribution：

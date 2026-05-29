@@ -17,6 +17,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_inspect(args)
     if args.command == "inspect-postgres":
         return _run_inspect_postgres(args)
+    if args.command == "export-debug-bundle":
+        return _run_export_debug_bundle(args)
     raise SystemExit(f"Unknown command: {args.command}")
 
 
@@ -52,6 +54,15 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="store_true",
         help="Do not open the API URL in a browser.",
     )
+    export_parser = subparsers.add_parser(
+        "export-debug-bundle",
+        help="Export a shareable JSON evidence bundle from a SQLite checkpoint DB.",
+    )
+    export_parser.add_argument("db_path", help="Path to checkpoints.sqlite.")
+    export_parser.add_argument("--thread-id", required=True)
+    export_parser.add_argument("--checkpoint-id", required=True)
+    export_parser.add_argument("--output-dir", default="exports")
+    export_parser.add_argument("--context", default=2, type=int)
     return parser.parse_args(argv)
 
 
@@ -73,6 +84,28 @@ def _run_inspect_postgres(args: argparse.Namespace) -> int:
         args,
         f"Checkpoint store: {_redact_conninfo(args.conninfo)} schema={args.schema}",
     )
+
+
+def _run_export_debug_bundle(args: argparse.Namespace) -> int:
+    from lgmi.checkpoint_reader import SQLiteCheckpointReader
+    from lgmi.export_bundle import export_debug_bundle
+
+    db_path = Path(args.db_path).expanduser().resolve()
+    if not db_path.exists():
+        print(f"Checkpoint database not found: {db_path}", file=sys.stderr)
+        return 2
+
+    result = export_debug_bundle(
+        SQLiteCheckpointReader(db_path),
+        thread_id=args.thread_id,
+        checkpoint_id=args.checkpoint_id,
+        output_dir=args.output_dir,
+        context=args.context,
+    )
+    print(f"Debug bundle: {result['path']}")
+    print(f"File size: {result['file_size_bytes']} bytes")
+    print(f"Diagnostics: {', '.join(str(item) for item in result['diagnostic_ids'])}")
+    return 0
 
 
 def _serve_app(app: object, args: argparse.Namespace, source_label: str) -> int:

@@ -125,15 +125,21 @@ Recommended backend boundaries:
 - `DiagnosticsService`: runs deterministic checks over checkpoints and diffs.
 - `ExportService`: creates explicit debug bundles only when requested.
 
-Initial API surface:
+Current API surface:
 
-- `GET /api/databases/current/summary`
+- `GET /api/summary`
 - `GET /api/threads`
 - `GET /api/threads/{thread_id}/checkpoints`
 - `GET /api/threads/{thread_id}/checkpoints/{checkpoint_id}`
+- `GET /api/threads/{thread_id}/checkpoints/{checkpoint_id}/writes`
 - `GET /api/threads/{thread_id}/diff?from=...&to=...`
-- `GET /api/threads/{thread_id}/diagnostics`
 - `POST /api/exports/debug-bundle`
+
+`POST /api/exports/debug-bundle` is an explicit user action. It writes a JSON
+artifact under `exports/` with database summary, thread/checkpoint metadata,
+timeline context, selected checkpoint state, incoming writes, diagnostics, and
+reproduction notes. The response returns the generated path and file size so
+the UI can make the artifact visible instead of silently writing files.
 
 The backend should never require an OpenAI key to inspect checkpoints. Optional
 LLM features can be layered later, but the MVP diagnostic path should remain

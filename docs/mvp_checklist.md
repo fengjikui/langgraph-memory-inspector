@@ -84,17 +84,17 @@ platform.
 
 ## Storage Hygiene
 
-- [ ] Demo checkpoint files are documented as safe to delete:
+- [x] Demo checkpoint files are documented as safe to delete:
   `examples/relocation_policy_agent/data/checkpoints.sqlite`,
   `examples/relocation_policy_agent/data/checkpoints.sqlite-shm`, and
   `examples/relocation_policy_agent/data/checkpoints.sqlite-wal`.
-- [ ] Generated debug bundles, timeline exports, diff exports, and diagnostic
+- [x] Generated debug bundles, timeline exports, diff exports, and diagnostic
   exports are documented as safe to delete.
-- [ ] SQLite checkpoint databases, WAL/SHM sidecars, and generated exports are
+- [x] SQLite checkpoint databases, WAL/SHM sidecars, and generated exports are
   excluded from commits unless intentionally added as tiny test fixtures.
-- [ ] Export actions are explicit user actions, not automatic side effects of
+- [x] Export actions are explicit user actions, not automatic side effects of
   opening the inspector.
-- [ ] Export result shows output path and file size.
+- [x] Export result shows output path and file size.
 - [ ] Any recurring generated output has a retention rule, size cap, or cleanup
   command before it is considered MVP complete.
 - [ ] Demo handoff tells the audience which artifacts are generated and what can
