@@ -145,8 +145,10 @@ OpenClaw 给出的推广侧高优先级建议：
 最新 launch checklist 见 `docs/launch_plan.md`，可执行社区发布方案见
 `docs/community_launch_playbook.md`。
 
-在公开首发前，优先补齐：
+公开首发前的代码和文档 gate 已经基本就绪。现在优先做两类事：
 
-- fresh-clone quickstart audit。
-- 仓库公开前最后一次 CI 和 README quickstart 验证。
-- 第一批真实用户反馈 issue。
+- 人工上传 GitHub social preview，然后发 LangChain Forum 首帖。
+- 把 #20 收到的真实反馈拆成可实现 issue，例如
+  [#24](https://github.com/fengjikui/langgraph-memory-inspector/issues/24)、
+  [#25](https://github.com/fengjikui/langgraph-memory-inspector/issues/25)、
+  [#26](https://github.com/fengjikui/langgraph-memory-inspector/issues/26)。

@@ -334,9 +334,12 @@ This is an MVP focused on local checkpoint inspection:
 
 Planned next steps:
 
-- run the Postgres adapter against more real-world checkpoint stores
-- add more production-shaped causal-chain fixtures beyond the relocation demo
-- add more redacted or synthetic checkpoint-store fixtures
+- [#24](https://github.com/fengjikui/langgraph-memory-inspector/issues/24):
+  add a RAG stale-context fixture and diagnostic.
+- [#25](https://github.com/fengjikui/langgraph-memory-inspector/issues/25):
+  validate `ShallowPostgresSaver` and newer saver variants.
+- [#26](https://github.com/fengjikui/langgraph-memory-inspector/issues/26):
+  improve large checkpoint-store navigation.
 
 ## Known Limitations
 

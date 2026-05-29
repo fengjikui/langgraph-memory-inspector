@@ -34,49 +34,23 @@ demo locally.
 
 ## Next Product Issues
 
-### Namespace Selector
+### Implemented v0.1.0 Issues
 
-User value: LangGraph production stores can contain multiple checkpoint
-namespaces. A developer needs to know which namespace they are inspecting and
-switch deliberately.
+- Namespace selector for multi-namespace checkpoint stores.
+- Debug bundle export for teammate, issue, and PR handoff.
+- Public fresh-clone quickstart and product proof path.
 
-Status: implemented for SQLite, Postgres reader APIs, backend routes, and the
-thread sidebar UI.
+### Open Roadmap Issues
 
-Acceptance criteria:
+These issues are intentionally user-value shaped so community feedback can turn
+into fixtures, diagnostics, and tests:
 
-- [x] API exposes namespaces per thread.
-- [x] UI shows active namespace.
-- [x] UI can switch namespace without losing thread context.
-- [x] SQLite and Postgres readers both preserve namespace data.
-
-### Debug Bundle Export
-
-User value: once a developer finds a bug, they need a shareable artifact for a
-teammate, issue, or pull request.
-
-Status: implemented for SQLite, backend API, CLI, and checkpoint detail UI.
-
-Acceptance criteria:
-
-- [x] Export includes summary, timeline slice, selected checkpoint state, writes,
-  diagnostics, and reproduction notes.
-- [x] Export is explicit and writes to `exports/`.
-- [x] Export response displays file path and size.
-- [x] Checkpoint detail UI exposes a user-triggered Export action.
-- [x] README documents that exports are safe to delete.
-
-### Fresh-Clone Quickstart Audit
-
-User value: first-time users should not need project context from the maintainer
-to run the demo.
-
-Acceptance criteria:
-
-- Run from a clean checkout using only README commands.
-- Record every missing command, dependency, or confusing output.
-- Update README and docs until the path is smooth.
-- Keep the audit log in docs.
+- [#24](https://github.com/fengjikui/langgraph-memory-inspector/issues/24):
+  add a RAG stale-context fixture and diagnostic.
+- [#25](https://github.com/fengjikui/langgraph-memory-inspector/issues/25):
+  validate `ShallowPostgresSaver` and newer saver variants.
+- [#26](https://github.com/fengjikui/langgraph-memory-inspector/issues/26):
+  improve large checkpoint-store navigation.
 
 ## Community Launch
 
