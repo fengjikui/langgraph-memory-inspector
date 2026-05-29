@@ -124,8 +124,10 @@ If you can share a file, please follow the fixture policy:
 https://github.com/fengjikui/langgraph-memory-inspector/blob/main/docs/fixture_policy.md
 
 The safest inputs are redacted debug bundles, small synthetic fixtures, or
-schema-only backend snapshots. Please do not attach raw production checkpoint
-stores or unredacted user state.
+schema-only backend snapshots. For SQLite checkpoint copies, ask users to run
+`export-debug-bundle --issue` and then `audit-debug-bundle` before attaching a
+bundle. Please do not attach raw production checkpoint stores or unredacted user
+state.
 
 Repo/demo: https://github.com/fengjikui/langgraph-memory-inspector
 ```
@@ -148,7 +150,8 @@ schema before you connect a private store.
 I am looking for real LangGraph bug patterns to turn into diagnostics: stale
 memory, reducer append mistakes, wrong resume points, namespace confusion, or
 anything else you have hit in production. If you can share evidence, please use
-a redacted bundle, synthetic fixture, or schema-only snapshot:
+a redacted bundle after `audit-debug-bundle`, synthetic fixture, or schema-only
+snapshot:
 https://github.com/fengjikui/langgraph-memory-inspector/blob/main/docs/fixture_policy.md
 
 Repo/demo: https://github.com/fengjikui/langgraph-memory-inspector
@@ -207,8 +210,9 @@ The current demo reproduces a stale-memory bug:
 It supports local SQLite checkpoint DBs and read-only PostgresSaver inspection.
 I am looking for feedback on real LangGraph checkpoint pain: namespaces,
 reducers, resume bugs, message bloat, custom state channels, or production-store
-constraints. If you can share evidence, please use a redacted bundle, synthetic
-fixture, or schema-only snapshot and avoid raw/private checkpoint data.
+constraints. If you can share evidence, please use a redacted bundle after
+`audit-debug-bundle`, synthetic fixture, or schema-only snapshot and avoid
+raw/private checkpoint data.
 
 Repo/demo: https://github.com/fengjikui/langgraph-memory-inspector
 ```

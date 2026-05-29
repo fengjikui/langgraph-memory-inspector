@@ -141,7 +141,9 @@ narrower: local checkpoint forensics when persisted state is wrong and you need
 to find which checkpoint/write made it visible.
 
 If you can share evidence, please use a redacted bundle, synthetic fixture, or
-schema-only snapshot. Please do not share raw production checkpoint stores:
+schema-only snapshot. For SQLite checkpoint copies, `export-debug-bundle --issue`
+creates a redacted bundle and `audit-debug-bundle` runs a local safety check
+before you attach it. Please do not share raw production checkpoint stores:
 https://github.com/fengjikui/langgraph-memory-inspector/blob/main/docs/fixture_policy.md
 ````
 
@@ -163,7 +165,7 @@ That is exactly the kind of pattern I am trying to collect, and raw data is not
 needed. The safest options are:
 
 - describe the state channels and checkpoint backend in prose
-- share a redacted debug bundle
+- share a redacted debug bundle after running `audit-debug-bundle`
 - create a small synthetic fixture that reproduces the shape
 - share a schema-only backend snapshot
 

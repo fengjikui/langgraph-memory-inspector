@@ -71,7 +71,8 @@ Draft release notes: `docs/release_notes_v0.1.0.md`.
   checkpoint data.
 - [x] `uv run python scripts/validate_launch_copy.py` verifies the launch copy
   keeps the repo link, #20 feedback issue, fixture policy, redacted evidence
-  wording, raw-production warning, and no-star primary CTA guardrails.
+  wording, `audit-debug-bundle` safety check, raw-production warning, and
+  no-star primary CTA guardrails.
 - [x] OpenClaw consultation prompt exists for distribution critique.
 - [x] Community feedback asks for checkpoint bug patterns, not only stars.
 - [x] GitHub social preview asset exists at

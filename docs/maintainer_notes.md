@@ -872,3 +872,25 @@
   `pytest` / `prove-demo` / `issue_bundle_smoke` 进程并行跑，否则两个进程可能同时操作
   `examples/relocation_policy_agent/data/checkpoints.sqlite`，导致 SQLite WAL/disk I/O
   类错误。发布 gate 应串行运行。
+
+### Launch copy audit-bundle guardrail
+
+用户价值改进：
+
+- `scripts/validate_launch_copy.py` 现在要求 Forum draft、public launch packet 和 community
+  launch playbook 都包含 `audit-debug-bundle`，避免对外文案只说 redacted bundle，却漏掉本地
+  安全自查步骤。
+- LangChain Forum draft、community launch playbook 和 public launch packet 已同步为：
+  SQLite checkpoint evidence 应先 `export-debug-bundle --issue`，再 `audit-debug-bundle`，
+  然后才附上 redacted bundle。
+
+为什么重要：
+
+- 公开推广后，用户可能直接照着首帖分享证据。如果首帖没有 audit step，最安全的 CLI 能力就
+  容易被忽略。
+- 把 audit step 纳入 launch copy guardrail，可以让隐私边界和产品学习闭环同时出现在所有
+  主要推广文案里。
+
+已验证：
+
+- `uv run python scripts/validate_launch_copy.py`

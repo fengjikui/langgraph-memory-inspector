@@ -170,7 +170,7 @@ Every current diagnostic is backed by the deterministic demo or a committed
 safe fixture in the diagnostic matrix; I am especially looking for
 production-shaped patterns that should become the next fixture or diagnostic.
 
-If you can share evidence, please use a redacted bundle, synthetic fixture, or schema-only snapshot. Please do not share raw production checkpoint stores:
+If you can share evidence, please use a redacted bundle after `audit-debug-bundle`, synthetic fixture, or schema-only snapshot. Please do not share raw production checkpoint stores:
 https://github.com/fengjikui/langgraph-memory-inspector/blob/main/docs/fixture_policy.md
 ````
 
@@ -372,7 +372,7 @@ Most useful feedback:
 - which state channels are hardest to reason about
 - what diagnostics would have saved you time in a real incident
 
-Please do not share raw production checkpoint state. Redacted, synthetic, or schema-only evidence is safer:
+Please do not share raw production checkpoint state. Redacted evidence after `audit-debug-bundle`, synthetic fixtures, or schema-only evidence are safer:
 https://github.com/fengjikui/langgraph-memory-inspector/blob/main/docs/fixture_policy.md
 ```
 

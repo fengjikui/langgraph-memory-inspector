@@ -15,6 +15,7 @@ REQUIRED_PHRASES = {
     "feedback_issue": "https://github.com/fengjikui/langgraph-memory-inspector/issues/20",
     "fixture_policy": "docs/fixture_policy.md",
     "redacted_evidence": "redacted",
+    "bundle_audit": "audit-debug-bundle",
     "no_raw_production": "raw production",
     "real_bug_patterns": "real",
     "not_star_cta": "not",
