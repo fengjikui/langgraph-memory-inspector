@@ -14,6 +14,10 @@ from lgmi.checkpoint_reader import _channel_from_state_path, _preview_bytes, _pr
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
+class UnsupportedPostgresCheckpointSchema(ValueError):
+    """Raised when a Postgres checkpoint schema cannot support LGMI timelines."""
+
+
 class PostgresCheckpointReader:
     """Read LangGraph Postgres checkpoint stores without mutating them."""
 
@@ -260,6 +264,15 @@ class PostgresCheckpointReader:
                     cur.execute("ROLLBACK")
 
     def _ensure_schema(self, cur: Any) -> None:
+        schema_shape = self._schema_shape(cur)
+        if schema_shape == "shallow_postgres_saver":
+            raise UnsupportedPostgresCheckpointSchema(
+                "Unsupported Postgres checkpoint schema: detected ShallowPostgresSaver "
+                "latest-only tables. LGMI requires full PostgresSaver history tables "
+                "with checkpoint_id, parent_checkpoint_id, and checkpoint_blobs.version "
+                "so it can build checkpoint timelines, diffs, writes, and causal chains."
+            )
+
         required = {
             "checkpoints": {"thread_id", "checkpoint_ns", "checkpoint_id", "parent_checkpoint_id", "checkpoint", "metadata"},
             "checkpoint_blobs": {"thread_id", "checkpoint_ns", "channel", "version", "type", "blob"},
@@ -281,11 +294,52 @@ class PostgresCheckpointReader:
         if missing_columns:
             names = ", ".join(missing_columns)
             if "checkpoints.checkpoint_id" in missing_columns or "checkpoint_blobs.version" in missing_columns:
-                raise ValueError(
+                raise UnsupportedPostgresCheckpointSchema(
                     "Unsupported Postgres checkpoint schema. "
                     "LGMI currently targets full PostgresSaver history tables, not ShallowPostgresSaver."
                 )
             raise ValueError(f"Missing LangGraph Postgres checkpoint column(s): {names}")
+
+    def _schema_shape(self, cur: Any) -> str:
+        checkpoint_columns = self._columns(cur, "checkpoints")
+        blob_columns = self._columns(cur, "checkpoint_blobs")
+        write_columns = self._columns(cur, "checkpoint_writes")
+        if not checkpoint_columns and not blob_columns and not write_columns:
+            return "missing"
+        shallow_checkpoint_columns = {
+            "thread_id",
+            "checkpoint_ns",
+            "type",
+            "checkpoint",
+            "metadata",
+        }
+        shallow_blob_columns = {
+            "thread_id",
+            "checkpoint_ns",
+            "channel",
+            "type",
+            "blob",
+        }
+        write_required_columns = {
+            "thread_id",
+            "checkpoint_ns",
+            "checkpoint_id",
+            "task_id",
+            "idx",
+            "channel",
+            "type",
+            "blob",
+        }
+        if (
+            shallow_checkpoint_columns <= checkpoint_columns
+            and "checkpoint_id" not in checkpoint_columns
+            and "parent_checkpoint_id" not in checkpoint_columns
+            and shallow_blob_columns <= blob_columns
+            and "version" not in blob_columns
+            and write_required_columns <= write_columns
+        ):
+            return "shallow_postgres_saver"
+        return "full_or_unknown"
 
     def _columns(self, cur: Any, table_name: str) -> set[str]:
         cur.execute(

@@ -348,8 +348,9 @@ Planned next steps:
   indexing, virtualized rendering, and richer server-side search.
 - Diagnostics are deterministic rules for known memory/debugging patterns, not
   a general correctness proof for every LangGraph application.
-- Postgres support targets the full historical `PostgresSaver` schema. It does
-  not target `ShallowPostgresSaver` yet.
+- Postgres support targets the full historical `PostgresSaver` schema.
+  `ShallowPostgresSaver` latest-only schemas are detected and reported as
+  unsupported because they cannot provide checkpoint timelines.
 - The inspector is local-first and read-only for checkpoint stores, but exported
   raw debug bundles can contain private state. Use redacted exports before
   sharing publicly.
@@ -357,7 +358,9 @@ Planned next steps:
 The Postgres reader is read-only. It does not call `setup()`, `put()`,
 `put_writes()`, or `delete_thread()`. It targets the full historical
 `PostgresSaver` tables: `checkpoints`, `checkpoint_blobs`, and
-`checkpoint_writes`.
+`checkpoint_writes`. `lgmi doctor --postgres-conninfo ...` performs the safe
+shape check first and reports unsupported shallow schemas without exposing
+connection credentials or checkpoint state.
 
 To run the optional integration test against your own local Postgres:
 

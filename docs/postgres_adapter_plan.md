@@ -28,6 +28,10 @@ Research date: 2026-05-29.
   in `checkpoint_blobs`.
 - Current `PostgresSaver.put_writes()` writes intermediate node outputs to
   `checkpoint_writes`, including `task_path`.
+- Local package check on 2026-05-29 used `langgraph-checkpoint-postgres==3.1.0`.
+  `ShallowPostgresSaver` still exists there, is deprecated, and uses a
+  latest-only schema: `checkpoints` is keyed by `(thread_id, checkpoint_ns)`,
+  `checkpoint_blobs` has no `version`, and checkpoint history is not retained.
 
 Primary references:
 
@@ -76,8 +80,9 @@ checkpoint_migrations(v)
 ```
 
 There is also a shallow saver with a different `checkpoints` primary key and no
-historical checkpoint rows. The first LGMI Postgres adapter should explicitly
-target the full saver and detect shallow stores as unsupported or limited mode.
+historical checkpoint rows. LGMI explicitly targets the full saver and detects
+shallow stores as unsupported, because the core product experience depends on
+checkpoint timelines, diffs, writes, and causal chains across history.
 
 ## Adapter Boundary
 
@@ -102,6 +107,8 @@ Implemented:
 - optional `postgres` dependency extra
 - `PostgresCheckpointReader(conninfo, schema="public")`
 - schema validation for the full historical PostgresSaver tables
+- explicit `ShallowPostgresSaver` latest-only schema detection with a safe
+  doctor error instead of a low-level SQL/column failure
 - checkpoint hydration from `checkpoint_blobs`
 - write decoding from `checkpoint_writes`
 - incoming-writes semantics aligned with the SQLite reader
@@ -111,9 +118,10 @@ Implemented:
 Still needs broader validation:
 
 - run against several real production-like checkpoint stores
-- test shallow saver detection against an actual shallow schema
+- test shallow saver detection against an actual shallow schema in CI or a
+  documented local Postgres command
 - add pagination limits before encouraging very large production DB usage
-- improve namespace selection in the API/UI
+- validate newer saver variants as they appear in upstream `langgraph-checkpoint-postgres`
 
 ## Thin Implementation Plan
 
@@ -211,8 +219,9 @@ Still needs broader validation:
   to external services.
 - **Write safety:** The reader must not call `.setup()`, `.put()`,
   `.put_writes()`, or `.delete_thread()`.
-- **Shallow saver:** Detect and report limited support instead of silently
-  presenting a fake timeline.
+- **Shallow saver:** Detect and report unsupported latest-only storage instead
+  of silently presenting a fake timeline. Users who need inspectable history
+  should use full `PostgresSaver` history tables.
 
 ## Open Follow-Up Issue
 

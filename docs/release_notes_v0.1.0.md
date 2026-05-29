@@ -104,8 +104,9 @@ The current release-candidate CI run should include Python tests, the
   rendering, and server-side search.
 - Diagnostics are deterministic rules for known patterns, not a general proof
   of agent correctness.
-- Postgres support targets full historical `PostgresSaver` tables, not
-  `ShallowPostgresSaver`.
+- Postgres support targets full historical `PostgresSaver` tables.
+  `ShallowPostgresSaver` latest-only schemas are detected and reported as
+  unsupported rather than shown as a fake timeline.
 - Raw debug bundles may contain private state. Use redacted exports before
   sharing publicly.
 

@@ -250,6 +250,45 @@ def test_doctor_reports_postgres_error_without_leaking_conninfo(
     assert "postgresql://***@localhost:5432/app" in json.dumps(report)
 
 
+def test_doctor_reports_unsupported_shallow_postgres_schema_without_leaking_data(
+    monkeypatch: Any, capsys: Any
+) -> None:
+    class ShallowSchemaReader:
+        def __init__(self, conninfo: str, *, schema: str = "public") -> None:
+            assert conninfo == "postgresql://user:secret@localhost:5432/app"
+            assert schema == "agent"
+
+        def summary(self) -> dict[str, Any]:
+            raise postgres_reader.UnsupportedPostgresCheckpointSchema(
+                "Unsupported Postgres checkpoint schema: detected ShallowPostgresSaver "
+                "latest-only tables."
+            )
+
+    monkeypatch.setattr(postgres_reader, "PostgresCheckpointReader", ShallowSchemaReader)
+
+    result = cli.main(
+        [
+            "doctor",
+            "--skip-demo",
+            "--skip-web",
+            "--postgres-conninfo",
+            "postgresql://user:secret@localhost:5432/app",
+            "--postgres-schema",
+            "agent",
+            "--json",
+        ]
+    )
+
+    report = json.loads(capsys.readouterr().out)
+    serialized = json.dumps(report)
+    assert result == 1
+    assert report["ready"] is False
+    assert "ShallowPostgresSaver" in report["postgres"]["error"]
+    assert "latest-only" in report["postgres"]["error"]
+    assert "secret" not in serialized
+    assert "thread_id" not in serialized
+
+
 def test_doctor_redacts_keyword_postgres_password(
     monkeypatch: Any, capsys: Any
 ) -> None:

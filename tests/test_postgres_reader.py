@@ -10,7 +10,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 
 from examples.relocation_policy_agent.run_demo import THREAD_ID, build_graph
 from lgmi import cli
-from lgmi.postgres_reader import PostgresCheckpointReader
+from lgmi.postgres_reader import PostgresCheckpointReader, UnsupportedPostgresCheckpointSchema
 
 
 class FakeCursor:
@@ -25,9 +25,105 @@ class FakeCursor:
         return self.rows
 
 
+class ColumnCursor:
+    def __init__(self, columns_by_table: dict[str, set[str]]) -> None:
+        self.columns_by_table = columns_by_table
+        self.table_name = ""
+
+    def execute(self, query: Any, params: tuple[Any, ...] | None = None) -> None:
+        if params:
+            self.table_name = str(params[-1])
+
+    def fetchall(self) -> list[dict[str, Any]]:
+        return [
+            {"column_name": column}
+            for column in sorted(self.columns_by_table.get(self.table_name, set()))
+        ]
+
+
 def test_postgres_reader_rejects_unsafe_schema_identifier() -> None:
     with pytest.raises(ValueError, match="Unsafe Postgres schema"):
         PostgresCheckpointReader("postgresql://unused", schema="public;drop schema public")
+
+
+def test_postgres_reader_detects_shallow_postgres_saver_schema() -> None:
+    reader = PostgresCheckpointReader("postgresql://unused")
+    cursor = ColumnCursor(
+        {
+            "checkpoints": {
+                "thread_id",
+                "checkpoint_ns",
+                "type",
+                "checkpoint",
+                "metadata",
+            },
+            "checkpoint_blobs": {
+                "thread_id",
+                "checkpoint_ns",
+                "channel",
+                "type",
+                "blob",
+            },
+            "checkpoint_writes": {
+                "thread_id",
+                "checkpoint_ns",
+                "checkpoint_id",
+                "task_id",
+                "task_path",
+                "idx",
+                "channel",
+                "type",
+                "blob",
+            },
+        }
+    )
+
+    assert reader._schema_shape(cursor) == "shallow_postgres_saver"
+    with pytest.raises(UnsupportedPostgresCheckpointSchema) as exc:
+        reader._ensure_schema(cursor)
+
+    message = str(exc.value)
+    assert "ShallowPostgresSaver" in message
+    assert "latest-only" in message
+    assert "full PostgresSaver history tables" in message
+
+
+def test_postgres_reader_accepts_full_postgres_saver_schema_without_task_path() -> None:
+    reader = PostgresCheckpointReader("postgresql://unused")
+    cursor = ColumnCursor(
+        {
+            "checkpoints": {
+                "thread_id",
+                "checkpoint_ns",
+                "checkpoint_id",
+                "parent_checkpoint_id",
+                "type",
+                "checkpoint",
+                "metadata",
+            },
+            "checkpoint_blobs": {
+                "thread_id",
+                "checkpoint_ns",
+                "channel",
+                "version",
+                "type",
+                "blob",
+            },
+            "checkpoint_writes": {
+                "thread_id",
+                "checkpoint_ns",
+                "checkpoint_id",
+                "task_id",
+                "idx",
+                "channel",
+                "type",
+                "blob",
+            },
+        }
+    )
+
+    assert reader._schema_shape(cursor) == "full_or_unknown"
+    reader._ensure_schema(cursor)
 
 
 def test_postgres_reader_hydrates_checkpoint_blob_channel() -> None:
