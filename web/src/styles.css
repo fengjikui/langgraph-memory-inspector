@@ -383,6 +383,56 @@ pre {
   overflow-wrap: anywhere;
 }
 
+.detail-actions {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.export-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid #16a085;
+  border-radius: 7px;
+  background: #0f766e;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.export-button:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.export-result {
+  display: grid;
+  gap: 5px;
+  margin: 10px 14px 0;
+  padding: 10px;
+  border: 1px solid #bbf7d0;
+  border-radius: 7px;
+  background: #f0fdf4;
+  color: #28553b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.export-result.error {
+  border-color: #fecaca;
+  background: #fff5f5;
+  color: #b42318;
+}
+
+.export-result code {
+  color: inherit;
+  overflow-wrap: anywhere;
+}
+
 .state-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;

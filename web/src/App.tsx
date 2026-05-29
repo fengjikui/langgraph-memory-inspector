@@ -5,9 +5,22 @@ import { TopChrome } from "./components/Chrome";
 import { DiagnosticsPanel } from "./components/DiagnosticsPanel";
 import { ThreadSelector } from "./components/ThreadSelector";
 import { Timeline } from "./components/Timeline";
-import type { Checkpoint, Diagnostic, NodeWrite, Summary, Thread, TimelineDiff } from "./types";
+import type {
+  Checkpoint,
+  DebugBundleExportResult,
+  Diagnostic,
+  NodeWrite,
+  Summary,
+  Thread,
+  TimelineDiff
+} from "./types";
 
 type ViewerTab = "state" | "diff" | "writes";
+type ExportStatus =
+  | { state: "idle" }
+  | { state: "exporting" }
+  | { state: "success"; result: DebugBundleExportResult }
+  | { state: "error"; message: string };
 
 function App() {
   const [summary, setSummary] = useState<Summary>();
@@ -19,6 +32,7 @@ function App() {
   const [diff, setDiff] = useState<TimelineDiff>();
   const [activeTab, setActiveTab] = useState<ViewerTab>("state");
   const [selectedDiagnostic, setSelectedDiagnostic] = useState<Diagnostic>();
+  const [exportStatus, setExportStatus] = useState<ExportStatus>({ state: "idle" });
 
   useEffect(() => {
     async function loadShell() {
@@ -79,6 +93,21 @@ function App() {
     setSelectedDiagnostic(diagnostic);
     setSelectedCheckpointId(diagnostic.checkpointId);
     setActiveTab(diagnostic.writeChannel ? "writes" : diagnostic.suggestedTab ?? "state");
+    setExportStatus({ state: "idle" });
+  }
+
+  async function exportSelectedCheckpoint() {
+    if (!selectedThreadId || !selectedCheckpointId) return;
+    setExportStatus({ state: "exporting" });
+    try {
+      const result = await inspectorApi.exportDebugBundle(selectedThreadId, selectedCheckpointId);
+      setExportStatus({ state: "success", result });
+    } catch (error) {
+      setExportStatus({
+        state: "error",
+        message: error instanceof Error ? error.message : "Failed to export debug bundle."
+      });
+    }
   }
 
   return (
@@ -102,6 +131,7 @@ function App() {
               setSelectedCheckpointId(checkpointId);
               setActiveTab("state");
               setSelectedDiagnostic(undefined);
+              setExportStatus({ state: "idle" });
             }}
           />
           <DiagnosticsPanel
@@ -117,6 +147,8 @@ function App() {
           selectedDiagnostic={selectedDiagnostic}
           activeTab={activeTab}
           onTabChange={setActiveTab}
+          exportStatus={exportStatus}
+          onExportDebugBundle={exportSelectedCheckpoint}
         />
       </main>
     </div>

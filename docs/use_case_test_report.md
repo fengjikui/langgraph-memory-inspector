@@ -83,7 +83,8 @@ cd web && npm run test:e2e
 
 ## 可分享调试证据包
 
-最新实现新增显式 debug bundle 导出：
+最新实现新增显式 debug bundle 导出。用户可以在 checkpoint detail 里点击
+`Export`，也可以使用 CLI：
 
 ```bash
 uv run lgmi export-debug-bundle examples/relocation_policy_agent/data/checkpoints.sqlite \
@@ -103,8 +104,8 @@ diagnostics 和复现备注。
 - `state.memory_events` 里的杭州记忆证据
 - 对应 checkpoint 的 `memory_events` 写入
 
-导出动作不会自动发生，必须由 CLI 或 API 显式触发。生成文件位于 `exports/`，
-已被 git ignore，可以在分享或归档后直接删除。
+导出动作不会自动发生，必须由 UI、CLI 或 API 显式触发。生成文件位于
+`exports/`，已被 git ignore，可以在分享或归档后直接删除。
 
 ## 剩余展示缺口
 

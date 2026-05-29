@@ -86,3 +86,11 @@ export type TimelineDiff = {
     kind: "added" | "changed" | "unchanged";
   }>;
 };
+
+export type DebugBundleExportResult = {
+  path: string;
+  fileSizeBytes: number;
+  threadId: string;
+  checkpointId: string;
+  diagnosticIds: string[];
+};

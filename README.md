@@ -125,8 +125,11 @@ The e2e test uses `VITE_LGMI_API_MODE=mock`, opens the inspector, clicks the
 
 ## Export A Debug Bundle
 
-When you find a suspicious checkpoint, export an explicit JSON bundle that can
-be attached to an issue, pull request, or teammate handoff:
+When you find a suspicious checkpoint, click **Export** in the checkpoint detail
+panel to create an explicit JSON bundle that can be attached to an issue, pull
+request, or teammate handoff.
+
+You can also export the same bundle from the CLI:
 
 ```bash
 uv run lgmi export-debug-bundle examples/relocation_policy_agent/data/checkpoints.sqlite \
@@ -145,10 +148,10 @@ The bundle includes:
 - deterministic diagnostics such as `conflicting_residence_memory`
 - short reproduction notes for code review or incident debugging
 
-The inspector never exports automatically. Files are created only after this
-CLI command or the `POST /api/exports/debug-bundle` API action. Generated
-bundles are written under `exports/`, ignored by git, and safe to delete after
-you share or archive the evidence.
+The inspector never exports automatically. Files are created only after the UI
+button, this CLI command, or the `POST /api/exports/debug-bundle` API action.
+Generated bundles are written under `exports/`, ignored by git, and safe to
+delete after you share or archive the evidence.
 
 ## Current Scope
 

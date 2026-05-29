@@ -1,5 +1,11 @@
-import { Braces, FileDiff, ListTree } from "lucide-react";
-import type { Checkpoint, Diagnostic, NodeWrite, TimelineDiff } from "../types";
+import { Braces, Download, FileDiff, ListTree } from "lucide-react";
+import type { Checkpoint, DebugBundleExportResult, Diagnostic, NodeWrite, TimelineDiff } from "../types";
+
+type ExportStatus =
+  | { state: "idle" }
+  | { state: "exporting" }
+  | { state: "success"; result: DebugBundleExportResult }
+  | { state: "error"; message: string };
 
 type DetailProps = {
   checkpoint?: Checkpoint;
@@ -8,6 +14,8 @@ type DetailProps = {
   selectedDiagnostic?: Diagnostic;
   activeTab: "state" | "diff" | "writes";
   onTabChange: (tab: "state" | "diff" | "writes") => void;
+  exportStatus: ExportStatus;
+  onExportDebugBundle: () => void;
 };
 
 function JsonBlock({ value }: { value: unknown }) {
@@ -20,7 +28,9 @@ export function CheckpointDetail({
   diff,
   selectedDiagnostic,
   activeTab,
-  onTabChange
+  onTabChange,
+  exportStatus,
+  onExportDebugBundle
 }: DetailProps) {
   if (!checkpoint) {
     return (
@@ -37,8 +47,42 @@ export function CheckpointDetail({
           <span>Checkpoint Detail</span>
           <h2>{checkpoint.id}</h2>
         </div>
-        <code>{checkpoint.node}</code>
+        <div className="detail-actions">
+          <code>{checkpoint.node}</code>
+          <button
+            className="export-button"
+            disabled={exportStatus.state === "exporting"}
+            onClick={onExportDebugBundle}
+            title="Export a shareable debug bundle for this checkpoint"
+            type="button"
+          >
+            <Download size={14} />
+            {exportStatus.state === "exporting" ? "Exporting" : "Export"}
+          </button>
+        </div>
       </div>
+
+      {exportStatus.state === "success" ? (
+        <div className="export-result" role="status">
+          <strong>Debug bundle exported</strong>
+          <span>
+            <code>{exportStatus.result.path}</code>
+          </span>
+          <span>
+            {formatBytes(exportStatus.result.fileSizeBytes)}
+            {exportStatus.result.diagnosticIds.length > 0 ? (
+              <> · {exportStatus.result.diagnosticIds.join(", ")}</>
+            ) : null}
+          </span>
+        </div>
+      ) : null}
+
+      {exportStatus.state === "error" ? (
+        <div className="export-result error" role="alert">
+          <strong>Export failed</strong>
+          <span>{exportStatus.message}</span>
+        </div>
+      ) : null}
 
       <div className="state-cards">
         <div className="state-card">
@@ -139,4 +183,9 @@ export function CheckpointDetail({
 function matchesDiagnosticWrite(write: NodeWrite, diagnostic?: Diagnostic): boolean {
   if (!diagnostic?.writeChannel) return false;
   return write.path === `state.${diagnostic.writeChannel}`;
+}
+
+function formatBytes(value: number): string {
+  if (value < 1024) return `${value} bytes`;
+  return `${(value / 1024).toFixed(1)} KB`;
 }

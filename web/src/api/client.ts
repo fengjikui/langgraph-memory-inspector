@@ -1,5 +1,14 @@
 import { mockCheckpoints, mockDiff, mockSummary, mockThreads } from "./mockData";
-import type { Checkpoint, Diagnostic, Message, NodeWrite, Summary, Thread, TimelineDiff } from "../types";
+import type {
+  Checkpoint,
+  DebugBundleExportResult,
+  Diagnostic,
+  Message,
+  NodeWrite,
+  Summary,
+  Thread,
+  TimelineDiff
+} from "../types";
 
 async function requestJson<T>(path: string): Promise<T | undefined> {
   if (import.meta.env.VITE_LGMI_API_MODE === "mock") {
@@ -19,6 +28,28 @@ async function requestJson<T>(path: string): Promise<T | undefined> {
   } catch {
     return undefined;
   }
+}
+
+async function postJson<T>(path: string, body: unknown): Promise<T | undefined> {
+  if (import.meta.env.VITE_LGMI_API_MODE === "mock") {
+    return undefined;
+  }
+
+  const response = await fetch(path, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(detail || `Request failed with status ${response.status}`);
+  }
+
+  return (await response.json()) as T;
 }
 
 export const inspectorApi = {
@@ -74,6 +105,14 @@ export const inspectorApi = {
       `/api/threads/${threadId}/diff?from=${fromCheckpointId}&to=${toCheckpointId}`
     );
     return raw ? normalizeDiff(raw, fromCheckpointId, toCheckpointId) : mockDiff;
+  },
+
+  async exportDebugBundle(threadId: string, checkpointId: string): Promise<DebugBundleExportResult> {
+    const raw = await postJson<Record<string, unknown>>("/api/exports/debug-bundle", {
+      thread_id: threadId,
+      checkpoint_id: checkpointId
+    });
+    return raw ? normalizeExportResult(raw) : mockExportResult(threadId, checkpointId);
   }
 };
 
@@ -190,6 +229,30 @@ function normalizeDiff(raw: Record<string, unknown>, fromCheckpointId: string, t
     toCheckpointId: String(raw.to_checkpoint_id ?? toCheckpointId),
     summary: rows.length > 0 ? `${rows.length} state field changes detected` : "No top-level state changes detected",
     rows
+  };
+}
+
+function normalizeExportResult(raw: Record<string, unknown>): DebugBundleExportResult {
+  return {
+    path: String(raw.path ?? ""),
+    fileSizeBytes: Number(raw.file_size_bytes ?? 0),
+    threadId: String(raw.thread_id ?? ""),
+    checkpointId: String(raw.checkpoint_id ?? ""),
+    diagnosticIds: asStringArray(raw.diagnostic_ids)
+  };
+}
+
+function mockExportResult(threadId: string, checkpointId: string): DebugBundleExportResult {
+  const diagnostics =
+    mockCheckpoints[threadId]
+      ?.find((checkpoint) => checkpoint.id === checkpointId)
+      ?.diagnostics.map((diagnostic) => diagnostic.code) ?? [];
+  return {
+    path: `exports/lgmi-debug-${threadId}-${checkpointId}-mock.json`,
+    fileSizeBytes: 21946,
+    threadId,
+    checkpointId,
+    diagnosticIds: diagnostics.length > 0 ? diagnostics : ["conflicting_residence_memory"]
   };
 }
 

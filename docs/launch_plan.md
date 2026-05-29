@@ -47,8 +47,7 @@ Acceptance criteria:
 User value: once a developer finds a bug, they need a shareable artifact for a
 teammate, issue, or pull request.
 
-Status: implemented for SQLite and backend API. A future UI button can call the
-existing API.
+Status: implemented for SQLite, backend API, CLI, and checkpoint detail UI.
 
 Acceptance criteria:
 
@@ -56,6 +55,7 @@ Acceptance criteria:
   diagnostics, and reproduction notes.
 - [x] Export is explicit and writes to `exports/`.
 - [x] Export response displays file path and size.
+- [x] Checkpoint detail UI exposes a user-triggered Export action.
 - [x] README documents that exports are safe to delete.
 
 ### Fresh-Clone Quickstart Audit

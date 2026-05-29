@@ -122,3 +122,22 @@
 已验证：
 
 - `uv run pytest -q`
+
+### Checkpoint Detail 导出按钮
+
+用户价值改进：
+
+- checkpoint detail 顶部新增 `Export` 按钮，直接调用 debug bundle API。
+- 导出成功后，UI 显示生成路径、文件大小和 diagnostic ids。
+- 真实 demo 时，用户从 diagnostic 跳到 writes 后，可以立刻把同一条证据链导出给同事或 PR。
+
+为什么重要：
+
+- CLI 是 power-user 路径，但面试和首次体验里，用户更容易相信一个看得见、点得动的调试动作。
+- 这个按钮把“发现问题”到“分享证据”的动作缩短成一步，也让 debug bundle 不再只是后端能力。
+
+已验证：
+
+- `cd web && npm run build`
+- `cd web && npm run test:e2e`
+- Browser 渲染检查：diagnostic -> Writes 高亮 -> Export -> 显示 bundle path、size、diagnostic id。

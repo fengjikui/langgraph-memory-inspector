@@ -12,4 +12,12 @@ test("diagnostic click opens writes and highlights the related channel", async (
   await expect(page.getByRole("button", { name: /Writes/i })).toHaveClass(/active/);
   await expect(page.getByText("Looking for writes to")).toBeVisible();
   await expect(page.locator(".write-row.focused")).toContainText("state.memory_events");
+
+  await page.getByRole("button", { name: /Export/i }).click();
+
+  await expect(page.getByText("Debug bundle exported")).toBeVisible();
+  const exportResult = page.locator(".export-result");
+  await expect(exportResult.getByText(/exports\/lgmi-debug-/)).toBeVisible();
+  await expect(exportResult.getByText(/21\.4 KB/)).toBeVisible();
+  await expect(exportResult.getByText(/conflicting_residence_memory/)).toBeVisible();
 });
