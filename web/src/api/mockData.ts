@@ -5,8 +5,9 @@ export const mockThreads: Thread[] = [
     id: "thread_relocation_demo",
     title: "Relocation Policy Agent",
     namespace: "relocation_policy_agent",
+    namespaces: ["relocation_policy_agent", "shadow_replay"],
     lastNode: "answer_benefits",
-    checkpointCount: 5,
+    checkpointCount: 7,
     updatedAt: "2026-05-29T10:42:00+08:00",
     diagnosticCount: 1
   },
@@ -14,6 +15,7 @@ export const mockThreads: Thread[] = [
     id: "thread_clean_baseline",
     title: "Clean baseline run",
     namespace: "relocation_policy_agent",
+    namespaces: ["relocation_policy_agent"],
     lastNode: "answer_benefits",
     checkpointCount: 4,
     updatedAt: "2026-05-29T09:18:00+08:00",
@@ -39,6 +41,7 @@ export const mockCheckpoints: Record<string, Checkpoint[]> = {
   thread_relocation_demo: [
     {
       id: "ckpt_001_start",
+      namespace: "relocation_policy_agent",
       ordinal: 1,
       node: "__start__",
       title: "Thread initialized",
@@ -55,6 +58,7 @@ export const mockCheckpoints: Record<string, Checkpoint[]> = {
     },
     {
       id: "ckpt_002_shanghai",
+      namespace: "relocation_policy_agent",
       ordinal: 2,
       node: "extract_profile",
       title: "User states Shanghai residence",
@@ -98,6 +102,7 @@ export const mockCheckpoints: Record<string, Checkpoint[]> = {
     },
     {
       id: "ckpt_003_hangzhou_appended",
+      namespace: "relocation_policy_agent",
       ordinal: 3,
       node: "extract_profile",
       title: "Move to Hangzhou appended",
@@ -142,6 +147,7 @@ export const mockCheckpoints: Record<string, Checkpoint[]> = {
     },
     {
       id: "ckpt_004_retrieve",
+      namespace: "relocation_policy_agent",
       ordinal: 4,
       node: "retrieve_policy_context",
       title: "Retrieval reads stale city",
@@ -188,6 +194,7 @@ export const mockCheckpoints: Record<string, Checkpoint[]> = {
     },
     {
       id: "ckpt_005_answer",
+      namespace: "relocation_policy_agent",
       ordinal: 5,
       node: "answer_benefits",
       title: "Final answer grounded in Shanghai",
@@ -262,6 +269,33 @@ mockCheckpoints.thread_clean_baseline = mockCheckpoints.thread_relocation_demo
         }
       ]
     }
+  }));
+
+mockCheckpoints["thread_relocation_demo::relocation_policy_agent"] =
+  mockCheckpoints.thread_relocation_demo;
+
+mockCheckpoints["thread_relocation_demo::shadow_replay"] =
+  mockCheckpoints.thread_relocation_demo.slice(0, 2).map((checkpoint, index) => ({
+    ...checkpoint,
+    id: `shadow_${index + 1}`,
+    namespace: "shadow_replay",
+    title: index === 0 ? "Shadow replay initialized" : "Shadow replay profile check",
+    status: "ok",
+    diagnostics: [],
+    state: {
+      ...checkpoint.state,
+      selected_city: index === 0 ? "" : "Hangzhou",
+      retrieved_city: undefined,
+      residence_memories: index === 0 ? [] : [
+        {
+          key: "residence_city",
+          value: "Hangzhou",
+          source: "shadow_replay",
+          createdAt: "2026-05-29T10:36:00+08:00"
+        }
+      ]
+    },
+    writes: []
   }));
 
 export const mockSummary: Summary = {

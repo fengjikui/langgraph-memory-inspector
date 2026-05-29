@@ -129,11 +129,16 @@ Current API surface:
 
 - `GET /api/summary`
 - `GET /api/threads`
-- `GET /api/threads/{thread_id}/checkpoints`
-- `GET /api/threads/{thread_id}/checkpoints/{checkpoint_id}`
-- `GET /api/threads/{thread_id}/checkpoints/{checkpoint_id}/writes`
-- `GET /api/threads/{thread_id}/diff?from=...&to=...`
+- `GET /api/threads/{thread_id}/checkpoints?checkpoint_ns=...`
+- `GET /api/threads/{thread_id}/checkpoints/{checkpoint_id}?checkpoint_ns=...`
+- `GET /api/threads/{thread_id}/checkpoints/{checkpoint_id}/writes?checkpoint_ns=...`
+- `GET /api/threads/{thread_id}/diff?from=...&to=...&checkpoint_ns=...`
 - `POST /api/exports/debug-bundle`
+
+`GET /api/threads` includes `checkpoint_namespaces` per thread. When
+`checkpoint_ns` is provided, timeline, checkpoint, writes, diff, and debug
+bundle export are scoped to that namespace. When omitted, the default demo path
+remains simple and keeps the previous all-checkpoints behavior.
 
 `POST /api/exports/debug-bundle` is an explicit user action. It writes a JSON
 artifact under `exports/` with database summary, thread/checkpoint metadata,
@@ -162,6 +167,8 @@ Recommended views:
   file size.
 - Thread list: thread id, namespace, checkpoint count, first checkpoint, last
   checkpoint.
+- Namespace selector: active namespace and deliberate switching when a thread
+  contains more than one checkpoint namespace.
 - Timeline: checkpoint order, parent relationship, task/write attribution, and
   size deltas.
 - State inspector: decoded JSON tree with channels such as `memory_events`,

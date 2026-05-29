@@ -35,12 +35,15 @@ User value: LangGraph production stores can contain multiple checkpoint
 namespaces. A developer needs to know which namespace they are inspecting and
 switch deliberately.
 
+Status: implemented for SQLite, Postgres reader APIs, backend routes, and the
+thread sidebar UI.
+
 Acceptance criteria:
 
-- API exposes namespaces per thread.
-- UI shows active namespace.
-- UI can switch namespace without losing thread context.
-- SQLite and Postgres readers both preserve namespace data.
+- [x] API exposes namespaces per thread.
+- [x] UI shows active namespace.
+- [x] UI can switch namespace without losing thread context.
+- [x] SQLite and Postgres readers both preserve namespace data.
 
 ### Debug Bundle Export
 

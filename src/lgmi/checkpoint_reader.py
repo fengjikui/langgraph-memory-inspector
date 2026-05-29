@@ -101,86 +101,138 @@ class SQLiteCheckpointReader:
                     if latest
                     else None
                 )
+                item["checkpoint_namespaces"] = self._thread_namespaces(
+                    conn, str(row["thread_id"])
+                )
                 threads.append(item)
             return threads
 
-    def list_checkpoints(self, thread_id: str) -> list[dict[str, Any]]:
+    def list_checkpoints(
+        self, thread_id: str, checkpoint_ns: str | None = None
+    ) -> list[dict[str, Any]]:
         with self._connect() as conn:
+            namespace_sql, params = self._namespace_filter(checkpoint_ns)
             rows = conn.execute(
-                """
+                f"""
                 select rowid, thread_id, checkpoint_ns, checkpoint_id,
                        parent_checkpoint_id, type, checkpoint, metadata
                 from checkpoints
                 where thread_id = ?
+                {namespace_sql}
                 order by rowid
                 """,
-                (thread_id,),
+                (thread_id, *params),
             ).fetchall()
             return [
                 self._checkpoint_row_to_dict(row, include_checkpoint=False)
                 for row in rows
             ]
 
-    def get_checkpoint(self, thread_id: str, checkpoint_id: str) -> dict[str, Any] | None:
+    def get_checkpoint(
+        self,
+        thread_id: str,
+        checkpoint_id: str,
+        checkpoint_ns: str | None = None,
+    ) -> dict[str, Any] | None:
         with self._connect() as conn:
+            namespace_sql, params = self._namespace_filter(checkpoint_ns)
             row = conn.execute(
-                """
+                f"""
                 select rowid, thread_id, checkpoint_ns, checkpoint_id,
                        parent_checkpoint_id, type, checkpoint, metadata
                 from checkpoints
                 where thread_id = ? and checkpoint_id = ?
+                {namespace_sql}
                 order by rowid
                 limit 1
                 """,
-                (thread_id, checkpoint_id),
+                (thread_id, checkpoint_id, *params),
             ).fetchone()
             if not row:
                 return None
             return self._checkpoint_row_to_dict(row, include_checkpoint=True)
 
-    def list_writes(self, thread_id: str, checkpoint_id: str) -> list[dict[str, Any]]:
+    def list_writes(
+        self,
+        thread_id: str,
+        checkpoint_id: str,
+        checkpoint_ns: str | None = None,
+    ) -> list[dict[str, Any]]:
         with self._connect() as conn:
             writes_checkpoint_id = self._incoming_writes_checkpoint_id(
-                conn, thread_id, checkpoint_id
+                conn, thread_id, checkpoint_id, checkpoint_ns
             )
+            namespace_sql, params = self._namespace_filter(checkpoint_ns)
             rows = conn.execute(
-                """
+                f"""
                 select rowid, thread_id, checkpoint_ns, checkpoint_id,
                        task_id, idx, channel, type, value
                 from writes
                 where thread_id = ? and checkpoint_id = ?
+                {namespace_sql}
                 order by task_id, idx, rowid
                 """,
-                (thread_id, writes_checkpoint_id),
+                (thread_id, writes_checkpoint_id, *params),
             ).fetchall()
             return [self._write_row_to_dict(row) for row in rows]
 
     def _incoming_writes_checkpoint_id(
-        self, conn: sqlite3.Connection, thread_id: str, checkpoint_id: str
+        self,
+        conn: sqlite3.Connection,
+        thread_id: str,
+        checkpoint_id: str,
+        checkpoint_ns: str | None,
     ) -> str:
+        namespace_sql, params = self._namespace_filter(checkpoint_ns)
         row = conn.execute(
-            """
+            f"""
             select parent_checkpoint_id
             from checkpoints
             where thread_id = ? and checkpoint_id = ?
+            {namespace_sql}
             order by rowid
             limit 1
             """,
-            (thread_id, checkpoint_id),
+            (thread_id, checkpoint_id, *params),
         ).fetchone()
         if not row or not row["parent_checkpoint_id"]:
             return checkpoint_id
 
         parent_checkpoint_id = str(row["parent_checkpoint_id"])
+        namespace_sql, params = self._namespace_filter(checkpoint_ns)
         parent_write_count = conn.execute(
-            """
+            f"""
             select count(*)
             from writes
             where thread_id = ? and checkpoint_id = ?
+            {namespace_sql}
             """,
-            (thread_id, parent_checkpoint_id),
+            (thread_id, parent_checkpoint_id, *params),
         ).fetchone()[0]
         return parent_checkpoint_id if parent_write_count else checkpoint_id
+
+    def _thread_namespaces(
+        self, conn: sqlite3.Connection, thread_id: str
+    ) -> list[dict[str, Any]]:
+        rows = conn.execute(
+            """
+            select checkpoint_ns,
+                   count(*) as checkpoint_count,
+                   min(rowid) as first_rowid,
+                   max(rowid) as latest_rowid
+            from checkpoints
+            where thread_id = ?
+            group by checkpoint_ns
+            order by checkpoint_ns
+            """,
+            (thread_id,),
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    def _namespace_filter(self, checkpoint_ns: str | None) -> tuple[str, tuple[str, ...]]:
+        if checkpoint_ns is None:
+            return "", ()
+        return "and checkpoint_ns = ?", (checkpoint_ns,)
 
     def _connect(self) -> sqlite3.Connection:
         if not self.db_path.exists():

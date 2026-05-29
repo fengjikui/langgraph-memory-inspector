@@ -108,46 +108,65 @@ class PostgresCheckpointReader:
                     )
                     item = dict(row)
                     item["latest_checkpoint"] = latest
+                    item["checkpoint_namespaces"] = self._thread_namespaces(
+                        cur, str(row["thread_id"])
+                    )
                     threads.append(item)
                 return threads
 
-    def list_checkpoints(self, thread_id: str) -> list[dict[str, Any]]:
+    def list_checkpoints(
+        self, thread_id: str, checkpoint_ns: str | None = None
+    ) -> list[dict[str, Any]]:
         with self._connect() as conn:
             with conn.cursor() as cur:
+                namespace_sql, params = self._namespace_filter(checkpoint_ns)
                 cur.execute(
                     self._sql(
-                        """
+                        f"""
                         select thread_id, checkpoint_ns, checkpoint_id,
                                parent_checkpoint_id, type, checkpoint, metadata
-                        from {checkpoints}
+                        from {{checkpoints}}
                         where thread_id = %s
+                        {namespace_sql}
                         order by checkpoint_id
                         """
                     ),
-                    (thread_id,),
+                    (thread_id, *params),
                 )
                 return [
                     self._checkpoint_row_to_dict(cur, row, include_checkpoint=False)
                     for row in cur.fetchall()
                 ]
 
-    def get_checkpoint(self, thread_id: str, checkpoint_id: str) -> dict[str, Any] | None:
+    def get_checkpoint(
+        self,
+        thread_id: str,
+        checkpoint_id: str,
+        checkpoint_ns: str | None = None,
+    ) -> dict[str, Any] | None:
         with self._connect() as conn:
             with conn.cursor() as cur:
                 return self._fetch_checkpoint_row(
                     cur,
                     thread_id,
                     checkpoint_id,
+                    checkpoint_ns=checkpoint_ns,
                     include_checkpoint=True,
                 )
 
-    def list_writes(self, thread_id: str, checkpoint_id: str) -> list[dict[str, Any]]:
+    def list_writes(
+        self,
+        thread_id: str,
+        checkpoint_id: str,
+        checkpoint_ns: str | None = None,
+    ) -> list[dict[str, Any]]:
         with self._connect() as conn:
             with conn.cursor() as cur:
                 writes_checkpoint_id = self._incoming_writes_checkpoint_id(
-                    cur, thread_id, checkpoint_id
+                    cur, thread_id, checkpoint_id, checkpoint_ns
                 )
                 task_path_expr = "task_path" if self._has_column(cur, "checkpoint_writes", "task_path") else "'' as task_path"
+                namespace_sql, params = self._namespace_filter(checkpoint_ns)
                 cur.execute(
                     self._sql(
                         f"""
@@ -155,10 +174,11 @@ class PostgresCheckpointReader:
                                task_id, {task_path_expr}, idx, channel, type, blob
                         from {{checkpoint_writes}}
                         where thread_id = %s and checkpoint_id = %s
+                        {namespace_sql}
                         order by task_path, task_id, idx
                         """
                     ),
-                    (thread_id, writes_checkpoint_id),
+                    (thread_id, writes_checkpoint_id, *params),
                 )
                 return [self._write_row_to_dict(row) for row in cur.fetchall()]
 
@@ -235,55 +255,91 @@ class PostgresCheckpointReader:
         thread_id: str,
         checkpoint_id: str,
         *,
+        checkpoint_ns: str | None = None,
         include_checkpoint: bool,
     ) -> dict[str, Any] | None:
+        namespace_sql, params = self._namespace_filter(checkpoint_ns)
         cur.execute(
             self._sql(
-                """
+                f"""
                 select thread_id, checkpoint_ns, checkpoint_id,
                        parent_checkpoint_id, type, checkpoint, metadata
-                from {checkpoints}
+                from {{checkpoints}}
                 where thread_id = %s and checkpoint_id = %s
+                {namespace_sql}
                 order by checkpoint_ns
                 limit 1
                 """
             ),
-            (thread_id, checkpoint_id),
+            (thread_id, checkpoint_id, *params),
         )
         row = cur.fetchone()
         if row is None:
             return None
         return self._checkpoint_row_to_dict(cur, row, include_checkpoint=include_checkpoint)
 
-    def _incoming_writes_checkpoint_id(self, cur: Any, thread_id: str, checkpoint_id: str) -> str:
+    def _incoming_writes_checkpoint_id(
+        self,
+        cur: Any,
+        thread_id: str,
+        checkpoint_id: str,
+        checkpoint_ns: str | None,
+    ) -> str:
+        namespace_sql, params = self._namespace_filter(checkpoint_ns)
         cur.execute(
             self._sql(
-                """
+                f"""
                 select parent_checkpoint_id
-                from {checkpoints}
+                from {{checkpoints}}
                 where thread_id = %s and checkpoint_id = %s
+                {namespace_sql}
                 order by checkpoint_ns
                 limit 1
                 """
             ),
-            (thread_id, checkpoint_id),
+            (thread_id, checkpoint_id, *params),
         )
         row = cur.fetchone()
         if row is None or not row["parent_checkpoint_id"]:
             return checkpoint_id
 
         parent_checkpoint_id = str(row["parent_checkpoint_id"])
+        namespace_sql, params = self._namespace_filter(checkpoint_ns)
+        cur.execute(
+            self._sql(
+                f"""
+                select count(*) as count
+                from {{checkpoint_writes}}
+                where thread_id = %s and checkpoint_id = %s
+                {namespace_sql}
+                """
+            ),
+            (thread_id, parent_checkpoint_id, *params),
+        )
+        return parent_checkpoint_id if int(cur.fetchone()["count"]) else checkpoint_id
+
+    def _thread_namespaces(self, cur: Any, thread_id: str) -> list[dict[str, Any]]:
         cur.execute(
             self._sql(
                 """
-                select count(*) as count
-                from {checkpoint_writes}
-                where thread_id = %s and checkpoint_id = %s
+                select checkpoint_ns,
+                       count(*) as checkpoint_count,
+                       min(checkpoint_id) as first_checkpoint_id,
+                       max(checkpoint_id) as latest_checkpoint_id
+                from {checkpoints}
+                where thread_id = %s
+                group by checkpoint_ns
+                order by checkpoint_ns
                 """
             ),
-            (thread_id, parent_checkpoint_id),
+            (thread_id,),
         )
-        return parent_checkpoint_id if int(cur.fetchone()["count"]) else checkpoint_id
+        return [dict(row) for row in cur.fetchall()]
+
+    def _namespace_filter(self, checkpoint_ns: str | None) -> tuple[str, tuple[str, ...]]:
+        if checkpoint_ns is None:
+            return "", ()
+        return "and checkpoint_ns = %s", (checkpoint_ns,)
 
     def _checkpoint_row_to_dict(
         self,

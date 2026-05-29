@@ -162,6 +162,7 @@ This is an MVP focused on local checkpoint inspection:
 - read LangGraph SQLite checkpoint databases
 - optionally inspect LangGraph PostgresSaver stores in read-only mode
 - list threads and checkpoint timelines
+- show and switch checkpoint namespaces per thread
 - decode common state channels
 - show diffs and writes
 - detect stale/conflicting memory patterns
@@ -172,12 +173,12 @@ Planned next steps:
 
 - run the Postgres adapter against more real-world checkpoint stores
 - add richer node-level write attribution across multiple checkpoints
-- add namespace-aware filtering for multi-namespace checkpoint stores
+- add more production checkpoint-store fixtures
 
 ## Known Limitations
 
-- Namespace selection is not yet interactive. The current UI shows namespace
-  metadata, but multi-namespace stores still need a deliberate selector.
+- Namespace switching is per thread. Cross-namespace diffing is not supported
+  because checkpoint ids can overlap across namespaces.
 - Large production checkpoint stores are not paginated yet. Start with a copied
   or filtered store when a thread has very large history.
 - Diagnostics are deterministic rules for known memory/debugging patterns, not

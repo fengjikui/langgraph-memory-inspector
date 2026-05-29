@@ -16,6 +16,7 @@ from lgmi.export_bundle import export_debug_bundle
 class DebugBundleRequest(BaseModel):
     thread_id: str
     checkpoint_id: str
+    checkpoint_ns: str | None = None
     context: int = Field(default=2, ge=0, le=20)
 
 
@@ -50,28 +51,48 @@ def create_app(source: str | Path | CheckpointReader) -> FastAPI:
         return _read_or_404(reader.list_threads)
 
     @app.get("/api/threads/{thread_id}/checkpoints")
-    def checkpoints(thread_id: str) -> list[dict[str, Any]]:
-        return _read_or_404(lambda: reader.list_checkpoints(thread_id))
+    def checkpoints(
+        thread_id: str,
+        checkpoint_ns: str | None = Query(default=None),
+    ) -> list[dict[str, Any]]:
+        return _read_or_404(lambda: reader.list_checkpoints(thread_id, checkpoint_ns))
 
     @app.get("/api/threads/{thread_id}/checkpoints/{checkpoint_id}")
-    def checkpoint(thread_id: str, checkpoint_id: str) -> dict[str, Any]:
-        item = _read_or_404(lambda: reader.get_checkpoint(thread_id, checkpoint_id))
+    def checkpoint(
+        thread_id: str,
+        checkpoint_id: str,
+        checkpoint_ns: str | None = Query(default=None),
+    ) -> dict[str, Any]:
+        item = _read_or_404(
+            lambda: reader.get_checkpoint(thread_id, checkpoint_id, checkpoint_ns)
+        )
         if item is None:
             raise HTTPException(status_code=404, detail="Checkpoint not found")
         return item
 
     @app.get("/api/threads/{thread_id}/checkpoints/{checkpoint_id}/writes")
-    def writes(thread_id: str, checkpoint_id: str) -> list[dict[str, Any]]:
-        return _read_or_404(lambda: reader.list_writes(thread_id, checkpoint_id))
+    def writes(
+        thread_id: str,
+        checkpoint_id: str,
+        checkpoint_ns: str | None = Query(default=None),
+    ) -> list[dict[str, Any]]:
+        return _read_or_404(
+            lambda: reader.list_writes(thread_id, checkpoint_id, checkpoint_ns)
+        )
 
     @app.get("/api/threads/{thread_id}/diff")
     def diff(
         thread_id: str,
         from_checkpoint_id: str = Query(alias="from"),
         to_checkpoint_id: str = Query(alias="to"),
+        checkpoint_ns: str | None = Query(default=None),
     ) -> dict[str, Any]:
-        before = _read_or_404(lambda: reader.get_checkpoint(thread_id, from_checkpoint_id))
-        after = _read_or_404(lambda: reader.get_checkpoint(thread_id, to_checkpoint_id))
+        before = _read_or_404(
+            lambda: reader.get_checkpoint(thread_id, from_checkpoint_id, checkpoint_ns)
+        )
+        after = _read_or_404(
+            lambda: reader.get_checkpoint(thread_id, to_checkpoint_id, checkpoint_ns)
+        )
         if before is None or after is None:
             raise HTTPException(status_code=404, detail="Checkpoint not found")
 
@@ -88,6 +109,7 @@ def create_app(source: str | Path | CheckpointReader) -> FastAPI:
                 reader,
                 thread_id=request.thread_id,
                 checkpoint_id=request.checkpoint_id,
+                checkpoint_ns=request.checkpoint_ns,
                 context=request.context,
             )
         )

@@ -63,18 +63,18 @@ export const inspectorApi = {
     return raw ? raw.map(normalizeThread) : mockThreads;
   },
 
-  async getCheckpoints(threadId: string): Promise<Checkpoint[]> {
+  async getCheckpoints(threadId: string, checkpointNs?: string): Promise<Checkpoint[]> {
     const raw = await requestJson<Array<Record<string, unknown>>>(
-      `/api/threads/${threadId}/checkpoints`
+      `/api/threads/${threadId}/checkpoints${namespaceQuery(checkpointNs)}`
     );
-    if (!raw) return mockCheckpoints[threadId] ?? [];
+    if (!raw) return mockCheckpoints[mockCheckpointKey(threadId, checkpointNs)] ?? mockCheckpoints[threadId] ?? [];
 
     const details = await Promise.all(
       raw.map(async (checkpoint) => {
         const checkpointId = String(checkpoint.checkpoint_id ?? "");
         return (
           (await requestJson<Record<string, unknown>>(
-            `/api/threads/${threadId}/checkpoints/${checkpointId}`
+            `/api/threads/${threadId}/checkpoints/${checkpointId}${namespaceQuery(checkpointNs)}`
           )) ?? checkpoint
         );
       })
@@ -83,36 +83,49 @@ export const inspectorApi = {
     return details.map((checkpoint, index) => normalizeCheckpoint(checkpoint, index));
   },
 
-  async getCheckpoint(threadId: string, checkpointId: string): Promise<Checkpoint | undefined> {
-    const fallback = mockCheckpoints[threadId]?.find((checkpoint) => checkpoint.id === checkpointId);
+  async getCheckpoint(threadId: string, checkpointId: string, checkpointNs?: string): Promise<Checkpoint | undefined> {
+    const fallback =
+      (mockCheckpoints[mockCheckpointKey(threadId, checkpointNs)] ?? mockCheckpoints[threadId])
+        ?.find((checkpoint) => checkpoint.id === checkpointId);
     const raw = await requestJson<Record<string, unknown>>(
-      `/api/threads/${threadId}/checkpoints/${checkpointId}`
+      `/api/threads/${threadId}/checkpoints/${checkpointId}${namespaceQuery(checkpointNs)}`
     );
     return raw ? normalizeCheckpoint(raw, Number(raw.rowid ?? 0)) : fallback;
   },
 
-  async getWrites(threadId: string, checkpointId: string): Promise<NodeWrite[]> {
+  async getWrites(threadId: string, checkpointId: string, checkpointNs?: string): Promise<NodeWrite[]> {
     const fallback =
-      mockCheckpoints[threadId]?.find((checkpoint) => checkpoint.id === checkpointId)?.writes ?? [];
+      (mockCheckpoints[mockCheckpointKey(threadId, checkpointNs)] ?? mockCheckpoints[threadId])
+        ?.find((checkpoint) => checkpoint.id === checkpointId)?.writes ?? [];
     const raw = await requestJson<Array<Record<string, unknown>>>(
-      `/api/threads/${threadId}/checkpoints/${checkpointId}/writes`
+      `/api/threads/${threadId}/checkpoints/${checkpointId}/writes${namespaceQuery(checkpointNs)}`
     );
     return raw ? raw.map(normalizeWrite) : fallback;
   },
 
-  async getDiff(threadId: string, fromCheckpointId: string, toCheckpointId: string): Promise<TimelineDiff> {
+  async getDiff(
+    threadId: string,
+    fromCheckpointId: string,
+    toCheckpointId: string,
+    checkpointNs?: string
+  ): Promise<TimelineDiff> {
     const raw = await requestJson<Record<string, unknown>>(
-      `/api/threads/${threadId}/diff?from=${fromCheckpointId}&to=${toCheckpointId}`
+      `/api/threads/${threadId}/diff?from=${fromCheckpointId}&to=${toCheckpointId}${namespaceQueryPart(checkpointNs)}`
     );
     return raw ? normalizeDiff(raw, fromCheckpointId, toCheckpointId) : mockDiff;
   },
 
-  async exportDebugBundle(threadId: string, checkpointId: string): Promise<DebugBundleExportResult> {
+  async exportDebugBundle(
+    threadId: string,
+    checkpointId: string,
+    checkpointNs?: string
+  ): Promise<DebugBundleExportResult> {
     const raw = await postJson<Record<string, unknown>>("/api/exports/debug-bundle", {
       thread_id: threadId,
-      checkpoint_id: checkpointId
+      checkpoint_id: checkpointId,
+      checkpoint_ns: checkpointNs
     });
-    return raw ? normalizeExportResult(raw) : mockExportResult(threadId, checkpointId);
+    return raw ? normalizeExportResult(raw) : mockExportResult(threadId, checkpointId, checkpointNs);
   }
 };
 
@@ -129,10 +142,12 @@ function normalizeSummary(raw: Record<string, unknown>): Summary {
 
 function normalizeThread(raw: Record<string, unknown>): Thread {
   const latest = asRecord(raw.latest_checkpoint);
+  const namespaces = normalizeNamespaces(raw.checkpoint_namespaces, latest?.checkpoint_ns);
   return {
     id: String(raw.thread_id ?? ""),
     title: String(raw.thread_id ?? "").includes("relocation") ? "Relocation Policy Agent" : String(raw.thread_id ?? "Thread"),
-    namespace: String(latest?.checkpoint_ns ?? "default"),
+    namespace: namespaces[0] ?? "",
+    namespaces,
     lastNode: inferNodeFromChannels(asStringArray(latest?.updated_channels)),
     checkpointCount: Number(raw.checkpoint_count ?? 0),
     updatedAt: String(latest?.ts ?? new Date().toISOString()),
@@ -154,6 +169,7 @@ function normalizeCheckpoint(raw: Record<string, unknown>, index: number): Check
 
   return {
     id: String(raw.checkpoint_id ?? ""),
+    namespace: String(raw.checkpoint_ns ?? ""),
     ordinal: index + 1,
     node: inferNodeFromChannels(updatedChannels),
     title: titleForCheckpoint(updatedChannels, state, diagnostics),
@@ -242,18 +258,48 @@ function normalizeExportResult(raw: Record<string, unknown>): DebugBundleExportR
   };
 }
 
-function mockExportResult(threadId: string, checkpointId: string): DebugBundleExportResult {
+function mockExportResult(threadId: string, checkpointId: string, checkpointNs?: string): DebugBundleExportResult {
   const diagnostics =
-    mockCheckpoints[threadId]
+    (mockCheckpoints[mockCheckpointKey(threadId, checkpointNs)] ?? mockCheckpoints[threadId])
       ?.find((checkpoint) => checkpoint.id === checkpointId)
       ?.diagnostics.map((diagnostic) => diagnostic.code) ?? [];
   return {
-    path: `exports/lgmi-debug-${threadId}-${checkpointId}-mock.json`,
+    path: `exports/lgmi-debug-${threadId}${checkpointNs ? `-${checkpointNs}` : ""}-${checkpointId}-mock.json`,
     fileSizeBytes: 21946,
     threadId,
     checkpointId,
     diagnosticIds: diagnostics.length > 0 ? diagnostics : ["conflicting_residence_memory"]
   };
+}
+
+function normalizeNamespaces(raw: unknown, fallback: unknown): string[] {
+  const namespaces = asArray(raw)
+    .map(asRecord)
+    .map((item) => String(item?.checkpoint_ns ?? ""))
+    .filter((namespace, index, items) => items.indexOf(namespace) === index);
+  const fallbackNamespace = String(fallback ?? "");
+  if (!namespaces.includes(fallbackNamespace)) {
+    namespaces.unshift(fallbackNamespace);
+  }
+  return [
+    fallbackNamespace,
+    ...namespaces.filter((namespace) => namespace !== fallbackNamespace)
+  ];
+}
+
+function namespaceQuery(checkpointNs: string | undefined): string {
+  if (checkpointNs === undefined) return "";
+  return `?checkpoint_ns=${encodeURIComponent(checkpointNs)}`;
+}
+
+function namespaceQueryPart(checkpointNs: string | undefined): string {
+  if (checkpointNs === undefined) return "";
+  return `&checkpoint_ns=${encodeURIComponent(checkpointNs)}`;
+}
+
+function mockCheckpointKey(threadId: string, checkpointNs: string | undefined): string {
+  if (checkpointNs === undefined) return threadId;
+  return `${threadId}::${checkpointNs}`;
 }
 
 function diagnosticsForState(

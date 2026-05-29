@@ -22,13 +22,16 @@ Use this before making the repository public or announcing a release candidate.
 - [ ] `uv run python scripts/use_case_smoke.py --reset-demo` passes.
 - [ ] Diagnostic click opens Writes and highlights `state.memory_events`.
 - [ ] Debug bundle export shows path, file size, and diagnostic ids.
+- [ ] Namespace selector is visible for multi-namespace threads and switching
+  namespaces changes the timeline without changing thread context.
 
 ## Adapter Confidence
 
 - [ ] SQLite reader tests pass.
 - [ ] Postgres integration test passes in CI against a real `postgres` service.
 - [ ] README explains that Postgres inspection is read-only.
-- [ ] Known limitations mention large production stores and namespace handling.
+- [ ] Known limitations mention large production stores and cross-namespace
+  boundaries.
 
 ## Launch Assets
 

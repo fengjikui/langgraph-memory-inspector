@@ -13,6 +13,7 @@ export type Thread = {
   id: string;
   title: string;
   namespace: string;
+  namespaces: string[];
   lastNode: string;
   checkpointCount: number;
   updatedAt: string;
@@ -34,6 +35,7 @@ export type Message = {
 
 export type Checkpoint = {
   id: string;
+  namespace: string;
   ordinal: number;
   node: string;
   title: string;

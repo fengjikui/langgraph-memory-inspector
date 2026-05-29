@@ -160,3 +160,23 @@
 
 - `uv run pytest -q`
 - `uv build`
+
+### Namespace selector 初版
+
+用户价值改进：
+
+- SQLite 和 Postgres readers 支持按 `checkpoint_ns` 过滤 timeline、checkpoint、writes。
+- `/api/threads` 现在暴露每个 thread 的 `checkpoint_namespaces`，相关 API 接受 `checkpoint_ns` query 参数。
+- 前端 Thread sidebar 显示 active namespace；当一个 thread 有多个 namespace 时，可以在不切换 thread 的情况下切换 namespace。
+- Debug bundle export 也会携带 namespace，避免分享证据时丢失 checkpoint lineage。
+
+为什么重要：
+
+- 生产 LangGraph store 可能在同一个 `thread_id` 下保存多个 checkpoint namespace。如果 UI 把这些混在一起，开发者可能在错误 lineage 上排查。
+- namespace selector 让“我正在看哪条 checkpoint 线”变成显式选择，而不是隐含假设。
+
+已验证：
+
+- `uv run pytest -q`
+- `cd web && npm run build`
+- `cd web && npm run test:e2e`

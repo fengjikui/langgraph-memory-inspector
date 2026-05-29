@@ -61,6 +61,11 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     export_parser.add_argument("db_path", help="Path to checkpoints.sqlite.")
     export_parser.add_argument("--thread-id", required=True)
     export_parser.add_argument("--checkpoint-id", required=True)
+    export_parser.add_argument(
+        "--checkpoint-ns",
+        default=None,
+        help="Checkpoint namespace to export. Use an empty string for the default namespace.",
+    )
     export_parser.add_argument("--output-dir", default="exports")
     export_parser.add_argument("--context", default=2, type=int)
     return parser.parse_args(argv)
@@ -99,6 +104,7 @@ def _run_export_debug_bundle(args: argparse.Namespace) -> int:
         SQLiteCheckpointReader(db_path),
         thread_id=args.thread_id,
         checkpoint_id=args.checkpoint_id,
+        checkpoint_ns=args.checkpoint_ns,
         output_dir=args.output_dir,
         context=args.context,
     )

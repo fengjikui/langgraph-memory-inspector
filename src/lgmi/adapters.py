@@ -12,11 +12,23 @@ class CheckpointReader(Protocol):
     def list_threads(self) -> list[dict[str, Any]]:
         """Return checkpoint threads ordered for debugging."""
 
-    def list_checkpoints(self, thread_id: str) -> list[dict[str, Any]]:
+    def list_checkpoints(
+        self, thread_id: str, checkpoint_ns: str | None = None
+    ) -> list[dict[str, Any]]:
         """Return timeline checkpoints for a thread."""
 
-    def get_checkpoint(self, thread_id: str, checkpoint_id: str) -> dict[str, Any] | None:
+    def get_checkpoint(
+        self,
+        thread_id: str,
+        checkpoint_id: str,
+        checkpoint_ns: str | None = None,
+    ) -> dict[str, Any] | None:
         """Return one decoded checkpoint snapshot."""
 
-    def list_writes(self, thread_id: str, checkpoint_id: str) -> list[dict[str, Any]]:
+    def list_writes(
+        self,
+        thread_id: str,
+        checkpoint_id: str,
+        checkpoint_ns: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Return writes that produced the selected checkpoint snapshot."""

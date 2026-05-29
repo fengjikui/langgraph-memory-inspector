@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
+import json
 from pathlib import Path
 
 from langchain_core.messages import AIMessage, HumanMessage
@@ -130,6 +131,30 @@ def test_reader_summarizes_bad_blobs_without_crashing(tmp_path: Path) -> None:
     assert writes[0]["value"]["preview"]
 
 
+def test_reader_filters_multi_namespace_checkpoint_store(tmp_path: Path) -> None:
+    db_path = _write_multi_namespace_db(tmp_path)
+    reader = SQLiteCheckpointReader(db_path)
+
+    summary = reader.summary()
+    assert summary["checkpoint_namespaces"] == ["ns-a", "ns-b"]
+
+    threads = reader.list_threads()
+    assert threads[0]["namespace_count"] == 2
+    assert [item["checkpoint_ns"] for item in threads[0]["checkpoint_namespaces"]] == ["ns-a", "ns-b"]
+
+    assert [item["checkpoint_ns"] for item in reader.list_checkpoints("thread-1", "ns-a")] == ["ns-a"]
+    assert [item["checkpoint_ns"] for item in reader.list_checkpoints("thread-1", "ns-b")] == ["ns-b"]
+
+    checkpoint = reader.get_checkpoint("thread-1", "checkpoint-1", "ns-b")
+    assert checkpoint is not None
+    state = checkpoint["checkpoint"]["value"]["channel_values"]
+    assert state["selected_city"] == "Hangzhou"
+
+    writes = reader.list_writes("thread-1", "checkpoint-1", "ns-b")
+    assert [write["checkpoint_ns"] for write in writes] == ["ns-b"]
+    assert writes[0]["value"]["value"] == "Hangzhou"
+
+
 def _write_demo_db(tmp_path: Path) -> Path:
     db_path = tmp_path / "checkpoints.sqlite"
     conn = sqlite3.connect(db_path, check_same_thread=False)
@@ -160,4 +185,64 @@ def _write_demo_db(tmp_path: Path) -> Path:
         assert any(isinstance(message, AIMessage) for message in state["messages"])
     finally:
         conn.close()
+    return db_path
+
+
+def _write_multi_namespace_db(tmp_path: Path) -> Path:
+    db_path = tmp_path / "multi_namespace.sqlite"
+    with sqlite3.connect(db_path) as conn:
+        conn.executescript(
+            """
+            create table checkpoints (
+                thread_id text,
+                checkpoint_ns text,
+                checkpoint_id text,
+                parent_checkpoint_id text,
+                type text,
+                checkpoint blob,
+                metadata blob
+            );
+            create table writes (
+                thread_id text,
+                checkpoint_ns text,
+                checkpoint_id text,
+                task_id text,
+                idx integer,
+                channel text,
+                type text,
+                value blob
+            );
+            """
+        )
+        for namespace, city in (("ns-a", "Shanghai"), ("ns-b", "Hangzhou")):
+            checkpoint = {
+                "channel_values": {"selected_city": city},
+                "updated_channels": ["selected_city"],
+                "ts": f"2026-05-29T10:00:00+08:00-{namespace}",
+            }
+            conn.execute(
+                "insert into checkpoints values (?, ?, ?, ?, ?, ?, ?)",
+                (
+                    "thread-1",
+                    namespace,
+                    "checkpoint-1",
+                    None,
+                    "json",
+                    json.dumps(checkpoint).encode("utf-8"),
+                    b'{"source": "test", "step": 1, "parents": {}}',
+                ),
+            )
+            conn.execute(
+                "insert into writes values (?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    "thread-1",
+                    namespace,
+                    "checkpoint-1",
+                    f"task-{namespace}",
+                    0,
+                    "selected_city",
+                    "json",
+                    json.dumps(city).encode("utf-8"),
+                ),
+            )
     return db_path

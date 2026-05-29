@@ -19,6 +19,7 @@ def export_debug_bundle(
     *,
     thread_id: str,
     checkpoint_id: str,
+    checkpoint_ns: str | None = None,
     output_dir: str | Path = DEFAULT_EXPORT_DIR,
     context: int = 2,
     generated_at: dt.datetime | None = None,
@@ -29,12 +30,13 @@ def export_debug_bundle(
         reader,
         thread_id=thread_id,
         checkpoint_id=checkpoint_id,
+        checkpoint_ns=checkpoint_ns,
         context=context,
         generated_at=generated,
     )
     export_dir = Path(output_dir).expanduser()
     export_dir.mkdir(parents=True, exist_ok=True)
-    path = export_dir / _bundle_filename(thread_id, checkpoint_id, generated)
+    path = export_dir / _bundle_filename(thread_id, checkpoint_id, checkpoint_ns, generated)
     path.write_text(json.dumps(bundle, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
 
     return {
@@ -42,6 +44,7 @@ def export_debug_bundle(
         "file_size_bytes": path.stat().st_size,
         "thread_id": thread_id,
         "checkpoint_id": checkpoint_id,
+        "checkpoint_ns": bundle["thread"]["checkpoint_ns"],
         "diagnostic_ids": [item.get("id") for item in bundle["diagnostics"]],
         "schema_version": EXPORT_SCHEMA_VERSION,
     }
@@ -52,16 +55,17 @@ def build_debug_bundle(
     *,
     thread_id: str,
     checkpoint_id: str,
+    checkpoint_ns: str | None = None,
     context: int = 2,
     generated_at: dt.datetime | None = None,
 ) -> dict[str, Any]:
     summary = reader.summary()
-    checkpoints = reader.list_checkpoints(thread_id)
-    checkpoint = reader.get_checkpoint(thread_id, checkpoint_id)
+    checkpoints = reader.list_checkpoints(thread_id, checkpoint_ns)
+    checkpoint = reader.get_checkpoint(thread_id, checkpoint_id, checkpoint_ns)
     if checkpoint is None:
         raise ValueError(f"Checkpoint not found: {checkpoint_id}")
 
-    writes = reader.list_writes(thread_id, checkpoint_id)
+    writes = reader.list_writes(thread_id, checkpoint_id, checkpoint_ns)
     state = _state_from_checkpoint(checkpoint)
     diagnostics = run_diagnostics(state, writes=writes, checkpoints=checkpoints)
     timeline_slice = _timeline_slice(checkpoints, checkpoint_id, context)
@@ -144,9 +148,15 @@ def _state_from_checkpoint(checkpoint: dict[str, Any]) -> dict[str, Any]:
     return channel_values if isinstance(channel_values, dict) else {}
 
 
-def _bundle_filename(thread_id: str, checkpoint_id: str, generated_at: dt.datetime) -> str:
+def _bundle_filename(
+    thread_id: str,
+    checkpoint_id: str,
+    checkpoint_ns: str | None,
+    generated_at: dt.datetime,
+) -> str:
     stamp = generated_at.strftime("%Y%m%dT%H%M%SZ")
-    return f"lgmi-debug-{_slug(thread_id)}-{_slug(checkpoint_id)}-{stamp}.json"
+    namespace = f"-{_slug(checkpoint_ns)}" if checkpoint_ns else ""
+    return f"lgmi-debug-{_slug(thread_id)}{namespace}-{_slug(checkpoint_id)}-{stamp}.json"
 
 
 def _slug(value: str, *, max_length: int = 48) -> str:

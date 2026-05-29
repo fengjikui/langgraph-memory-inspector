@@ -27,21 +27,37 @@ class FakeCheckpointReader:
             }
         ]
 
-    def list_checkpoints(self, thread_id: str) -> list[dict[str, Any]]:
+    def list_checkpoints(
+        self, thread_id: str, checkpoint_ns: str | None = None
+    ) -> list[dict[str, Any]]:
         assert thread_id == "thread-1"
+        assert checkpoint_ns in {None, "ns-a"}
         return [{"checkpoint_id": "checkpoint-1", "checkpoint": {"preview": "{}"}}]
 
-    def get_checkpoint(self, thread_id: str, checkpoint_id: str) -> dict[str, Any] | None:
+    def get_checkpoint(
+        self,
+        thread_id: str,
+        checkpoint_id: str,
+        checkpoint_ns: str | None = None,
+    ) -> dict[str, Any] | None:
         assert thread_id == "thread-1"
         assert checkpoint_id == "checkpoint-1"
+        assert checkpoint_ns in {None, "ns-a"}
         return {
             "checkpoint_id": checkpoint_id,
+            "checkpoint_ns": checkpoint_ns or "",
             "checkpoint": {"value": {"channel_values": {"selected_city": "Hangzhou"}}},
         }
 
-    def list_writes(self, thread_id: str, checkpoint_id: str) -> list[dict[str, Any]]:
+    def list_writes(
+        self,
+        thread_id: str,
+        checkpoint_id: str,
+        checkpoint_ns: str | None = None,
+    ) -> list[dict[str, Any]]:
         assert thread_id == "thread-1"
         assert checkpoint_id == "checkpoint-1"
+        assert checkpoint_ns in {None, "ns-a"}
         return [{"channel": "selected_city", "value": {"decoded": True, "value": "Hangzhou"}}]
 
 
@@ -60,6 +76,19 @@ def test_api_accepts_checkpoint_reader_adapter() -> None:
     assert client.get("/api/threads/thread-1/checkpoints/checkpoint-1/writes").json()[0]["channel"] == "selected_city"
 
 
+def test_api_passes_checkpoint_namespace_to_reader() -> None:
+    client = TestClient(create_app(FakeCheckpointReader()))
+
+    assert client.get("/api/threads/thread-1/checkpoints?checkpoint_ns=ns-a").status_code == 200
+    detail = client.get("/api/threads/thread-1/checkpoints/checkpoint-1?checkpoint_ns=ns-a").json()
+    assert detail["checkpoint_ns"] == "ns-a"
+    assert (
+        client.get("/api/threads/thread-1/checkpoints/checkpoint-1/writes?checkpoint_ns=ns-a").json()[0]["channel"]
+        == "selected_city"
+    )
+    assert client.get("/api/threads/thread-1/diff?from=checkpoint-1&to=checkpoint-1&checkpoint_ns=ns-a").status_code == 200
+
+
 def test_api_exports_debug_bundle_only_when_requested(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     client = TestClient(create_app(FakeCheckpointReader()))
@@ -67,13 +96,14 @@ def test_api_exports_debug_bundle_only_when_requested(tmp_path: Path, monkeypatc
     assert not (tmp_path / "exports").exists()
     response = client.post(
         "/api/exports/debug-bundle",
-        json={"thread_id": "thread-1", "checkpoint_id": "checkpoint-1"},
+        json={"thread_id": "thread-1", "checkpoint_id": "checkpoint-1", "checkpoint_ns": "ns-a"},
     )
 
     assert response.status_code == 200
     payload = response.json()
     assert payload["thread_id"] == "thread-1"
     assert payload["checkpoint_id"] == "checkpoint-1"
+    assert payload["checkpoint_ns"] == "ns-a"
     assert payload["file_size_bytes"] > 0
     assert Path(payload["path"]).exists()
     assert Path(payload["path"]).parent == tmp_path / "exports"

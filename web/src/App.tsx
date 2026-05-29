@@ -27,6 +27,7 @@ function App() {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [checkpoints, setCheckpoints] = useState<Checkpoint[]>([]);
   const [selectedThreadId, setSelectedThreadId] = useState<string>();
+  const [selectedNamespace, setSelectedNamespace] = useState<string>();
   const [selectedCheckpointId, setSelectedCheckpointId] = useState<string>();
   const [writes, setWrites] = useState<NodeWrite[]>([]);
   const [diff, setDiff] = useState<TimelineDiff>();
@@ -42,7 +43,9 @@ function App() {
       ]);
       setSummary(nextSummary);
       setThreads(nextThreads);
-      setSelectedThreadId(nextThreads[0]?.id);
+      const firstThread = nextThreads[0];
+      setSelectedThreadId(firstThread?.id);
+      setSelectedNamespace(firstThread?.namespaces[0]);
     }
 
     void loadShell();
@@ -51,30 +54,33 @@ function App() {
   useEffect(() => {
     if (!selectedThreadId) return;
     const threadId = selectedThreadId;
+    const checkpointNs = selectedNamespace;
 
     async function loadTimeline() {
-      const nextCheckpoints = await inspectorApi.getCheckpoints(threadId);
+      const nextCheckpoints = await inspectorApi.getCheckpoints(threadId, checkpointNs);
       setCheckpoints(nextCheckpoints);
       setSelectedCheckpointId(nextCheckpoints[nextCheckpoints.length - 1]?.id);
     }
 
     void loadTimeline();
-  }, [selectedThreadId]);
+  }, [selectedNamespace, selectedThreadId]);
 
   useEffect(() => {
     if (!selectedThreadId || !selectedCheckpointId) return;
     const threadId = selectedThreadId;
     const checkpointId = selectedCheckpointId;
+    const checkpointNs = selectedNamespace;
 
     async function loadDetail() {
       const selectedIndex = checkpoints.findIndex((checkpoint) => checkpoint.id === checkpointId);
       const previousCheckpoint = checkpoints[Math.max(selectedIndex - 1, 0)];
       const [nextWrites, nextDiff] = await Promise.all([
-        inspectorApi.getWrites(threadId, checkpointId),
+        inspectorApi.getWrites(threadId, checkpointId, checkpointNs),
         inspectorApi.getDiff(
           threadId,
           previousCheckpoint?.id ?? checkpointId,
-          checkpointId
+          checkpointId,
+          checkpointNs
         )
       ]);
       setWrites(nextWrites);
@@ -82,7 +88,7 @@ function App() {
     }
 
     void loadDetail();
-  }, [checkpoints, selectedCheckpointId, selectedThreadId]);
+  }, [checkpoints, selectedCheckpointId, selectedNamespace, selectedThreadId]);
 
   const selectedCheckpoint = useMemo(
     () => checkpoints.find((checkpoint) => checkpoint.id === selectedCheckpointId),
@@ -100,7 +106,11 @@ function App() {
     if (!selectedThreadId || !selectedCheckpointId) return;
     setExportStatus({ state: "exporting" });
     try {
-      const result = await inspectorApi.exportDebugBundle(selectedThreadId, selectedCheckpointId);
+      const result = await inspectorApi.exportDebugBundle(
+        selectedThreadId,
+        selectedCheckpointId,
+        selectedNamespace
+      );
       setExportStatus({ state: "success", result });
     } catch (error) {
       setExportStatus({
@@ -117,10 +127,20 @@ function App() {
         <ThreadSelector
           threads={threads}
           selectedThreadId={selectedThreadId}
+          selectedNamespace={selectedNamespace}
           onSelectThread={(threadId) => {
+            const thread = threads.find((item) => item.id === threadId);
             setSelectedThreadId(threadId);
+            setSelectedNamespace(thread?.namespaces[0]);
             setActiveTab("state");
             setSelectedDiagnostic(undefined);
+            setExportStatus({ state: "idle" });
+          }}
+          onSelectNamespace={(namespace) => {
+            setSelectedNamespace(namespace);
+            setActiveTab("state");
+            setSelectedDiagnostic(undefined);
+            setExportStatus({ state: "idle" });
           }}
         />
         <div className="center-stack">
