@@ -1,7 +1,7 @@
 [project]
 name = "langgraph-memory-inspector"
 version = "0.1.0"
-description = "Local-first tools for inspecting LangGraph checkpoints and memory."
+description = "Local-first DevTools for debugging LangGraph checkpoints and agent memory."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"

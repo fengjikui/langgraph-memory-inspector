@@ -1,6 +1,6 @@
 # v0.1.0 Release Notes
 
-Status: published public release notes.
+These notes are the source of truth for the GitHub Release body.
 
 ## Headline
 
@@ -95,7 +95,7 @@ npm run test:e2e
 ```
 
 The current release-candidate CI run should include Python tests, the
-stale-memory smoke test, web build/e2e, and real PostgresSaver integration.
+`lgmi prove-demo` proof CLI, web build/e2e, and real PostgresSaver integration.
 
 ## Known Limitations
 

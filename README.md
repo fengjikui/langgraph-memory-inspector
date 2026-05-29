@@ -17,6 +17,22 @@ LangGraph Memory Inspector helps developers answer:
 - Which node/write should I inspect next?
 - Can I debug this locally without uploading private traces?
 
+## When To Use It
+
+Use this when a LangGraph app has persisted state and the final LLM answer is
+only the symptom:
+
+| You are seeing | Start here |
+| --- | --- |
+| A memory/profile value changed, but a later node still uses the old value. | Run the stale-memory demo and inspect `conflicting_residence_memory` / `stale_selected_city`. |
+| A local SQLite checkpoint copy might explain a bad answer. | Run `uv run lgmi doctor --sqlite-db ./checkpoints.sqlite`, then `uv run lgmi inspect ./checkpoints.sqlite --build-ui`. |
+| A team uses PostgresSaver and wants a read-only local inspection path. | Run the Postgres doctor first, then `inspect-postgres` only after the shape check is ready. |
+| You need to share evidence with a teammate or issue. | Export a redacted debug bundle instead of pasting raw checkpoint rows. |
+
+This is not a LangSmith or LangGraph Studio replacement. It is narrower:
+local checkpoint forensics when persisted state is wrong and you need to find
+which checkpoint/write made it visible.
+
 ## Demo Story
 
 The included demo agent intentionally reproduces a stale-memory bug:
