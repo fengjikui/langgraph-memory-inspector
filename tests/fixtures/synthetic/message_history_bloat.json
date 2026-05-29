@@ -1,0 +1,85 @@
+{
+  "fixture_id": "synthetic_message_history_bloat_v1",
+  "source_safety": "synthetic",
+  "backend": "synthetic_json",
+  "langgraph_version": "synthetic",
+  "checkpointer": "synthetic",
+  "thread_id": "fixture-thread-message-bloat",
+  "checkpoint_ns": "",
+  "checkpoint_ns_shape": "single default namespace",
+  "bug_pattern_tags": [
+    "message_history_bloat",
+    "context_cost_growth",
+    "untrimmed_agent_messages"
+  ],
+  "state_channels": [
+    "messages"
+  ],
+  "expected_diagnostics": [
+    "oversized_message_history"
+  ],
+  "state": {
+    "messages": [
+      {
+        "type": "human",
+        "content": "synthetic turn 1 asks for a travel plan"
+      },
+      {
+        "type": "ai",
+        "content": "synthetic answer 1 keeps the full previous plan"
+      },
+      {
+        "type": "human",
+        "content": "synthetic turn 2 changes the date"
+      },
+      {
+        "type": "ai",
+        "content": "synthetic answer 2 repeats the earlier itinerary"
+      },
+      {
+        "type": "human",
+        "content": "synthetic turn 3 adds a budget constraint"
+      },
+      {
+        "type": "ai",
+        "content": "synthetic answer 3 includes all earlier context again"
+      },
+      {
+        "type": "human",
+        "content": "synthetic turn 4 asks why the response is slow"
+      }
+    ]
+  },
+  "writes": [
+    {
+      "task_id": "task-message-bloat-1",
+      "channel": "messages",
+      "node": "chat_model",
+      "idx": 0,
+      "value": [
+        {
+          "type": "ai",
+          "content": "synthetic answer 3 includes all earlier context again"
+        },
+        {
+          "type": "human",
+          "content": "synthetic turn 4 asks why the response is slow"
+        }
+      ]
+    }
+  ],
+  "checkpoints": [
+    {
+      "checkpoint_id": "fixture-cp-message-1",
+      "checkpoint_ns": "",
+      "parent_checkpoint_id": null,
+      "byte_size": 900
+    },
+    {
+      "checkpoint_id": "fixture-cp-message-2",
+      "checkpoint_ns": "",
+      "parent_checkpoint_id": "fixture-cp-message-1",
+      "byte_size": 1300
+    }
+  ]
+}

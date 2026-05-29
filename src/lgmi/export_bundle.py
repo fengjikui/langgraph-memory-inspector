@@ -312,6 +312,8 @@ def _reproduction_notes(
         notes.append("stale_retrieved_context indicates retrieved_docs contains context that does not match the latest user or query context.")
     if "reducer_append_duplicate_state" in diagnostic_ids:
         notes.append("reducer_append_duplicate_state indicates a reducer-backed channel may have appended duplicate semantic state.")
+    if "oversized_message_history" in diagnostic_ids:
+        notes.append("oversized_message_history indicates state.messages may need trimming, summarization, or task-scoped checkpointing.")
     if "unexpected_parent_checkpoint" in diagnostic_ids:
         notes.append("unexpected_parent_checkpoint indicates checkpoint lineage jumps; confirm whether this was an intentional branch or a wrong resume point.")
     if "memory_events" in write_channels:

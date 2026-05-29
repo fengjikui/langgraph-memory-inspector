@@ -514,3 +514,25 @@
 - Doctor report 回答“环境是否能跑”，proof report 回答“这个 demo 是否真的证明了
   checkpoint 故障路径”。两者分开后，外部 issue 会更容易定位是安装问题、数据问题，
   还是诊断逻辑问题。
+
+### Message history bloat fixture and evidence
+
+用户价值改进：
+
+- 新增 `synthetic_message_history_bloat_v1` 安全 fixture，专门保护
+  `oversized_message_history` 诊断，不再只依赖 relocation demo 的顺带覆盖。
+- `oversized_message_history` evidence 现在包含 `state_path`、消息数量阈值、
+  role 分布、内容字符数、首尾消息摘要、`messages` 写入摘要和建议动作。
+- Debug bundle 复现备注会解释 oversized message history 应优先考虑 trimming、
+  summarization 或 task-scoped checkpointing。
+
+为什么重要：
+
+- message/history bloat 是真实 Agent 调试里很常见的隐性成本问题。开发者不只想知道
+  “消息多”，还需要知道应该去查哪个 state channel、哪个写入节点，以及下一步怎么收敛。
+- 独立 fixture 让这个诊断变成可维护的 bug pattern，而不是 demo 的附属现象。
+
+已验证：
+
+- `uv run pytest tests/test_analysis.py tests/test_fixtures.py tests/test_export_bundle.py -q`
+- `git diff --check`

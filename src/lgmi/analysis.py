@@ -104,11 +104,7 @@ def run_diagnostics(
                 "severity": "warning",
                 "title": "Message history is large",
                 "description": "The message history is at or above the MVP threshold and may increase checkpoint size or context cost.",
-                "evidence": {
-                    "message_count": len(messages),
-                    "threshold": MESSAGE_HISTORY_THRESHOLD,
-                    "last_messages": [_message_summary(message) for message in messages[-3:]],
-                },
+                "evidence": _message_history_evidence(messages, writes),
             }
         )
 
@@ -341,6 +337,30 @@ def _find_repeated_docs(docs: list[Any]) -> list[dict[str, Any]]:
                 }
             )
     return duplicates
+
+
+def _message_history_evidence(messages: list[Any], writes: Iterable[Any] | None) -> dict[str, Any]:
+    message_summaries = [_message_summary(message) for message in messages]
+    role_counts = Counter(summary["type"] for summary in message_summaries)
+    total_content_chars = sum(len(str(_get(message, "content", ""))) for message in messages)
+    evidence: dict[str, Any] = {
+        "state_path": "messages",
+        "message_count": len(messages),
+        "threshold": MESSAGE_HISTORY_THRESHOLD,
+        "role_counts": dict(sorted(role_counts.items())),
+        "total_content_chars": total_content_chars,
+        "first_message": message_summaries[0] if message_summaries else None,
+        "last_messages": message_summaries[-3:],
+        "suggested_action": "Inspect message-writing nodes and consider trimming, summarizing, or checkpointing only task-relevant history before the next model call.",
+    }
+    if writes is not None:
+        message_writes = [
+            write
+            for write in writes
+            if str(_get(write, "channel", "")) == "messages"
+        ]
+        evidence["write_summary"] = summarize_writes(message_writes)
+    return evidence
 
 
 def _find_stale_retrieved_context(state: Mapping[str, Any]) -> dict[str, Any] | None:

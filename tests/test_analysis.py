@@ -109,7 +109,13 @@ def test_run_diagnostics_detects_memory_staleness_growth_and_duplicates() -> Non
             "channel": "memory_events",
             "node": "extract_profile",
             "value": state["memory_events"],
-        }
+        },
+        {
+            "task_id": "task-chat-6",
+            "channel": "messages",
+            "node": "chat_model",
+            "value": state["messages"][-1:],
+        },
     ]
     checkpoints = [
         {"checkpoint_id": "cp-1", "byte_size": 1000},
@@ -130,9 +136,16 @@ def test_run_diagnostics_detects_memory_staleness_growth_and_duplicates() -> Non
     }
     assert by_id["conflicting_residence_memory"]["severity"] == "error"
     assert by_id["conflicting_residence_memory"]["evidence"]["values"] == ["Shanghai", "Hangzhou"]
-    assert by_id["conflicting_residence_memory"]["evidence"]["write_summary"][0]["channel"] == "memory_events"
+    assert any(
+        item["channel"] == "memory_events"
+        for item in by_id["conflicting_residence_memory"]["evidence"]["write_summary"]
+    )
     assert by_id["stale_selected_city"]["evidence"]["latest_residence_city"] == "Hangzhou"
     assert by_id["oversized_message_history"]["evidence"]["message_count"] == 6
+    assert by_id["oversized_message_history"]["evidence"]["state_path"] == "messages"
+    assert by_id["oversized_message_history"]["evidence"]["role_counts"] == {"human": 6}
+    assert by_id["oversized_message_history"]["evidence"]["write_summary"][0]["channel"] == "messages"
+    assert "trimming" in by_id["oversized_message_history"]["evidence"]["suggested_action"]
     assert by_id["repeated_retrieved_context"]["evidence"]["duplicates"][0]["count"] == 2
     assert by_id["stale_retrieved_context"]["evidence"]["expected_city"] == "Hangzhou"
     assert by_id["stale_retrieved_context"]["evidence"]["stale_docs"][0]["city"] == "Shanghai"
