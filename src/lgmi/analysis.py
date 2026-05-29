@@ -524,6 +524,8 @@ def _find_unexpected_parent_checkpoints(checkpoints: list[Any]) -> list[dict[str
         current_id = _checkpoint_id(current)
         parent_id = _parent_checkpoint_id(current)
         previous_id = _checkpoint_id(previous)
+        checkpoint_ns = _get(current, "checkpoint_ns", None)
+        previous_checkpoint_ns = _get(previous, "checkpoint_ns", None)
         if not current_id or not parent_id:
             continue
         if parent_id == previous_id:
@@ -534,7 +536,10 @@ def _find_unexpected_parent_checkpoints(checkpoints: list[Any]) -> list[dict[str
                 "parent_checkpoint_id": parent_id,
                 "expected_previous_checkpoint_id": previous_id,
                 "parent_present_in_timeline": parent_id in seen_ids,
-                "checkpoint_ns": _get(current, "checkpoint_ns", None),
+                "checkpoint_ns": checkpoint_ns,
+                "previous_checkpoint_ns": previous_checkpoint_ns,
+                "same_namespace_as_previous": checkpoint_ns == previous_checkpoint_ns,
+                "suggested_action": "Confirm the intended resume checkpoint, checkpoint_ns, and branch before treating this lineage jump as application state corruption.",
             }
         )
     return anomalies

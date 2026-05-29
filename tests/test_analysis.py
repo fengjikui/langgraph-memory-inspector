@@ -271,6 +271,8 @@ def test_run_diagnostics_detects_unexpected_parent_checkpoint() -> None:
     assert anomaly["parent_checkpoint_id"] == "cp-1"
     assert anomaly["expected_previous_checkpoint_id"] == "cp-2"
     assert anomaly["parent_present_in_timeline"] is True
+    assert anomaly["same_namespace_as_previous"] is True
+    assert "resume checkpoint" in anomaly["suggested_action"]
 
 
 def test_run_diagnostics_detects_checkpoint_namespace_confusion() -> None:

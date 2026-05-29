@@ -1,0 +1,87 @@
+{
+  "fixture_id": "synthetic_unexpected_parent_checkpoint_v1",
+  "source_safety": "synthetic",
+  "backend": "synthetic_json",
+  "langgraph_version": "synthetic",
+  "checkpointer": "synthetic",
+  "thread_id": "fixture-thread-wrong-resume",
+  "checkpoint_ns": "",
+  "checkpoint_ns_shape": "single default namespace with one non-linear parent jump",
+  "bug_pattern_tags": [
+    "unexpected_parent_checkpoint",
+    "wrong_resume_point",
+    "checkpoint_lineage_jump"
+  ],
+  "state_channels": [
+    "checkpoints"
+  ],
+  "expected_diagnostics": [
+    "unexpected_parent_checkpoint"
+  ],
+  "state": {
+    "messages": []
+  },
+  "writes": [],
+  "checkpoints": [
+    {
+      "thread_id": "fixture-thread-wrong-resume",
+      "checkpoint_ns": "",
+      "checkpoint_id": "resume-cp-1",
+      "parent_checkpoint_id": null,
+      "rowid": 1,
+      "byte_size": 900,
+      "checkpoint": {
+        "value": {
+          "channel_values": {
+            "messages": [
+              {
+                "type": "human",
+                "content": "synthetic user starts a support workflow"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "thread_id": "fixture-thread-wrong-resume",
+      "checkpoint_ns": "",
+      "checkpoint_id": "resume-cp-2",
+      "parent_checkpoint_id": "resume-cp-1",
+      "rowid": 2,
+      "byte_size": 1100,
+      "checkpoint": {
+        "value": {
+          "channel_values": {
+            "messages": [
+              {
+                "type": "ai",
+                "content": "synthetic assistant asks for missing account details"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "thread_id": "fixture-thread-wrong-resume",
+      "checkpoint_ns": "",
+      "checkpoint_id": "resume-cp-4",
+      "parent_checkpoint_id": "resume-cp-1",
+      "rowid": 3,
+      "byte_size": 1250,
+      "checkpoint": {
+        "value": {
+          "channel_values": {
+            "messages": [
+              {
+                "type": "ai",
+                "content": "synthetic assistant resumed from an older checkpoint branch"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -84,8 +84,10 @@ def test_diagnostic_matrix_tracks_demo_and_unit_only_gaps() -> None:
     assert by_diagnostic["reducer_append_duplicate_state"]["Fixture ID"] == (
         "synthetic_reducer_append_duplicate_memory_v1"
     )
+    assert by_diagnostic["unexpected_parent_checkpoint"]["Fixture ID"] == (
+        "synthetic_unexpected_parent_checkpoint_v1"
+    )
     assert "Unit-only coverage" in by_diagnostic["repeated_retrieved_context"]["Status"]
-    assert "Unit-only coverage" in by_diagnostic["unexpected_parent_checkpoint"]["Status"]
 
 
 def _load_fixture(path: Path) -> dict[str, Any]:

@@ -536,3 +536,28 @@
 
 - `uv run pytest tests/test_analysis.py tests/test_fixtures.py tests/test_export_bundle.py -q`
 - `git diff --check`
+
+### Wrong-resume lineage fixture
+
+用户价值改进：
+
+- 新增 `synthetic_unexpected_parent_checkpoint_v1` 安全 fixture，保护
+  `unexpected_parent_checkpoint` 诊断。
+- 该 fixture 模拟同一 thread / namespace 下从 `resume-cp-1` 跳到
+  `resume-cp-4`，而 timeline 上一个 checkpoint 是 `resume-cp-2` 的 wrong
+  resume point 场景。
+- `unexpected_parent_checkpoint` evidence 现在会标注当前 checkpoint namespace、
+  previous checkpoint namespace、是否同 namespace，以及建议先确认 resume
+  checkpoint、checkpoint namespace 和 branch。
+
+为什么重要：
+
+- LangGraph 应用出现“为什么从旧状态继续跑”的问题时，开发者需要先排除 checkpoint
+  lineage / resume point 错误，而不是直接去怀疑 reducer 或业务状态。
+- 这个 fixture 把 wrong resume point 从 unit-only 保护升级成诊断矩阵中的可复现
+  bug pattern。
+
+已验证：
+
+- `uv run pytest tests/test_analysis.py tests/test_fixtures.py -q`
+- `git diff --check`
