@@ -18,12 +18,12 @@ demo locally.
 
 ## Pre-Public Checklist
 
-- Confirm repository visibility and license choice.
-- Add `LICENSE`.
-- Add `CONTRIBUTING.md`.
+- Confirm repository visibility.
+- [x] Add `LICENSE`.
+- [x] Add `CONTRIBUTING.md`.
 - Add issue templates for bug reports and feature requests.
-- Add a release checklist.
-- Add a short "known limitations" section to README.
+- [x] Add a release checklist.
+- [x] Add a short "known limitations" section to README.
 - Verify README quickstart from a fresh clone.
 - Keep generated checkpoint DBs and export artifacts out of commits.
 

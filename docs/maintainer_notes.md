@@ -141,3 +141,22 @@
 - `cd web && npm run build`
 - `cd web && npm run test:e2e`
 - Browser 渲染检查：diagnostic -> Writes 高亮 -> Export -> 显示 bundle path、size、diagnostic id。
+
+### Release candidate 文档底座
+
+用户价值改进：
+
+- 新增 MIT `LICENSE`，让外部开发者知道项目能否被使用和分发。
+- 新增 `CONTRIBUTING.md`，把本地启动、测试、issue workflow、存储卫生和 PR 形状写清楚。
+- 新增 `docs/release_checklist.md`，把公开发布前需要证明的 CI、demo GIF、SQLite quickstart、Postgres integration 和 launch assets 固定下来。
+- README 顶部链接 license/contributing/release checklist，并新增 Known Limitations。
+
+为什么重要：
+
+- 一个能被 star 和采用的开发者工具，不能只靠 demo 动效。陌生开发者会先判断许可、贡献门槛和限制是否诚实。
+- Known Limitations 主动说明 large production stores、namespace handling、Postgres schema 和 debug bundle 隐私边界，能减少误用，也让项目显得更可信。
+
+已验证：
+
+- `uv run pytest -q`
+- `uv build`

@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Local-first tools for inspecting LangGraph checkpoints and memory."
 readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
 dependencies = [
     "fastapi>=0.136.3",
     "langchain-openai>=0.3.0",
