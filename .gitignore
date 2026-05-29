@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+.pytest_cache/
+web/node_modules/
+web/test-results/
+web/playwright-report/
+
+# Demo checkpoint artifacts. They are reproducible and safe to delete.
+examples/relocation_policy_agent/data/*.sqlite
+examples/relocation_policy_agent/data/*.sqlite-shm
+examples/relocation_policy_agent/data/*.sqlite-wal
+
+# Inspector export artifacts should be explicit user outputs, not accidental commits.
+exports/
+web/dist/

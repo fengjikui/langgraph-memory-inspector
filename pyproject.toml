@@ -1,0 +1,35 @@
+[project]
+name = "langgraph-memory-inspector"
+version = "0.1.0"
+description = "Local-first tools for inspecting LangGraph checkpoints and memory."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.136.3",
+    "langchain-openai>=0.3.0",
+    "langgraph>=0.6.0",
+    "langgraph-checkpoint-sqlite>=2.0.0",
+    "rich>=13.9.0",
+    "uvicorn>=0.48.0",
+]
+
+[project.scripts]
+lgmi = "lgmi.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[tool.uv]
+package = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lgmi"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
